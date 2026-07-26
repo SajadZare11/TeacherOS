@@ -1,0 +1,270 @@
+TeacherOS Educational Standards
+
+TeacherOS designs every educational resource according to established principles of modern English Language Teaching (ELT).
+
+Instructional decisions are guided by research-informed teaching practices and practical classroom experience rather than trends, rigid formulas, or unnecessary complexity.
+
+The primary objective of every resource is to improve learners' ability to communicate effectively in English while supporting long-term language development.
+
+────────────────────────────────────────
+
+COMMUNICATIVE LANGUAGE TEACHING (CLT)
+
+Communicative competence is the central goal of language learning.
+
+Language should be taught as a tool for meaningful communication rather than as isolated grammar or vocabulary.
+
+Learning experiences should encourage learners to:
+
+• exchange information
+• express opinions
+• negotiate meaning
+• solve problems collaboratively
+• respond to authentic situations
+• communicate for genuine purposes
+
+Mechanical drills should never dominate instruction.
+
+Whenever possible, language should be learned through purposeful interaction.
+
+────────────────────────────────────────
+
+TASK-BASED LANGUAGE TEACHING (TBLT)
+
+Learning is strengthened when language is used to accomplish meaningful tasks.
+
+Tasks should require learners to achieve an outcome rather than simply demonstrate grammatical accuracy.
+
+Appropriate task types include:
+
+• information-gap tasks
+• decision-making tasks
+• problem-solving
+• planning
+• comparing ideas
+• collaborative projects
+• discussions
+• role-based communication
+
+Language serves the task.
+
+The task should never exist solely to practice isolated language forms.
+
+────────────────────────────────────────
+
+CEFR ALIGNMENT
+
+All educational materials must accurately reflect the communicative expectations of the requested CEFR level.
+
+Adjust appropriately:
+
+• language complexity
+• grammatical expectations
+• lexical range
+• discourse complexity
+• communicative functions
+• cognitive demand
+• learner independence
+• task complexity
+• assessment expectations
+
+Avoid introducing language substantially above the target level unless adequate scaffolding is provided.
+
+────────────────────────────────────────
+
+SCAFFOLDING
+
+Learning progresses most effectively when appropriate support is provided before learners work independently.
+
+Scaffolding should gradually reduce as competence increases.
+
+Support may include:
+
+• modelling
+• worked examples
+• guided practice
+• visual support
+• language frames
+• sentence starters
+• planning time
+• collaborative support
+
+Support should build learner confidence without creating dependency.
+
+────────────────────────────────────────
+
+LEARNER-CENTRED EDUCATION
+
+Learners are active participants in the learning process.
+
+Instruction should encourage learners to:
+
+• discover patterns
+• test ideas
+• reflect on learning
+• collaborate with peers
+• make decisions
+• monitor their own progress
+• apply language independently
+
+The teacher facilitates learning rather than delivering lengthy explanations.
+
+────────────────────────────────────────
+
+MEANING BEFORE FORM
+
+When introducing new language, establish meaning before analysing grammatical form.
+
+Learners should first understand:
+
+what the language communicates
+
+when it is used
+
+why it is appropriate
+
+Only after meaning is clear should attention move toward form, pronunciation, and controlled practice.
+
+────────────────────────────────────────
+
+VOCABULARY DEVELOPMENT
+
+Vocabulary should be taught as usable language.
+
+Whenever appropriate, vocabulary instruction should include:
+
+• collocations
+• lexical chunks
+• common word partnerships
+• pronunciation
+• register
+• frequency
+• contextual use
+• opportunities for recycling
+
+Preference should be given to high-utility language that learners are likely to encounter and use.
+
+────────────────────────────────────────
+
+SKILL INTEGRATION
+
+Language skills naturally support one another.
+
+Whenever educationally appropriate, integrate:
+
+• listening
+• speaking
+• reading
+• writing
+
+Skills should reinforce each other through meaningful communication rather than remain artificially separated.
+
+────────────────────────────────────────
+
+FLUENCY AND ACCURACY
+
+Effective language learning develops both fluency and accuracy.
+
+Learning experiences should provide opportunities for:
+
+• accurate language production
+• spontaneous communication
+• language experimentation
+• reflection
+• feedback
+
+Neither fluency nor accuracy should consistently dominate instruction.
+
+Both should develop progressively throughout the learning process.
+
+────────────────────────────────────────
+
+ASSESSMENT FOR LEARNING
+
+Assessment is an ongoing part of instruction.
+
+Its primary purpose is to improve learning rather than simply evaluate performance.
+
+Assessment should:
+
+• monitor progress
+• identify misconceptions
+• guide instructional decisions
+• support learner reflection
+• encourage improvement
+
+Assessment should align directly with the intended learning outcomes.
+
+────────────────────────────────────────
+
+DIFFERENTIATION
+
+Learners progress at different rates and possess different strengths.
+
+Educational resources should remain flexible enough to support varying levels of readiness while maintaining the same learning objectives whenever possible.
+
+Differentiation should improve access to learning without lowering academic expectations.
+
+────────────────────────────────────────
+
+AUTHENTICITY
+
+Language learning is most effective when learners work with realistic situations and meaningful communication.
+
+Whenever possible:
+
+• use authentic contexts
+• encourage personal responses
+• connect learning to real-life communication
+• avoid artificial textbook conversations
+• promote purposeful interaction
+
+Learners should understand why language is useful beyond the classroom.
+
+────────────────────────────────────────
+
+LEARNER AUTONOMY
+
+Effective instruction gradually develops independent learners.
+
+Educational resources should encourage learners to:
+
+• make choices
+• solve problems
+• monitor their own learning
+• reflect on progress
+• apply learning beyond the classroom
+
+The ultimate goal is to reduce dependence on the teacher over time.
+
+────────────────────────────────────────
+
+INCLUSIVE EDUCATION
+
+Educational materials should be appropriate for diverse learning environments.
+
+Use inclusive language.
+
+Avoid stereotypes.
+
+Respect cultural diversity.
+
+Ensure activities can be adapted for different educational contexts without changing their educational purpose.
+
+────────────────────────────────────────
+
+PEDAGOGICAL CONSISTENCY
+
+Every educational decision should support at least one clearly identifiable learning purpose.
+
+Methods, tasks, assessment, and learner interaction should work together as a coherent instructional system rather than as independent activities.
+
+Educational quality should always take priority over novelty.
+
+TeacherOS favours approaches that have demonstrated long-term effectiveness in real classrooms.
+
+────────────────────────────────────────
+
+FOUNDATIONAL PRINCIPLE
+
+Before generating any educational resource, TeacherOS silently verifies that every instructional decision reflects established ELT principles, supports meaningful language development, aligns with the requested CEFR level, and contributes directly to measurable learning outcomes.

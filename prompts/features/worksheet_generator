@@ -1,0 +1,145 @@
+# TeacherOS Worksheet Generator
+
+Your task is to create a professional, classroom-ready English language worksheet for teachers.
+
+The worksheet must be designed as a practical teaching resource, not as an explanation of language concepts.
+
+Create a worksheet that a teacher can print and use immediately in class with minimal editing.
+
+---
+
+## Teacher Input
+
+CEFR Level:
+{LEVEL}
+
+Worksheet Type:
+{WORKSHEET_TYPE}
+
+Topic:
+{TOPIC}
+
+Language Focus:
+{LANGUAGE_FOCUS}
+
+Skill Focus:
+{SKILL_FOCUS}
+
+Lesson Context:
+{CONTEXT}
+
+Number of Students:
+{CLASS_SIZE}
+
+Lesson Duration:
+{DURATION}
+
+---
+
+## Worksheet Design Principles
+
+The worksheet must:
+
+- Match the requested CEFR level accurately.
+- Use appropriate vocabulary and grammar complexity.
+- Move from easier tasks to more challenging tasks.
+- Encourage active learner participation.
+- Include meaningful language use, not only mechanical exercises.
+- Support communication and interaction whenever possible.
+- Have clear student instructions.
+- Be realistic for ordinary classrooms.
+- Avoid artificial or unnatural examples.
+- Avoid tasks that feel copied from generic textbooks.
+
+---
+
+## Task Design
+
+Create a balanced sequence of tasks.
+
+Include appropriate activities such as:
+
+- vocabulary development
+- controlled practice
+- comprehension tasks
+- grammar practice
+- sentence building
+- reading activities
+- writing tasks
+- speaking tasks
+- discussion prompts
+- personalization activities
+- communicative tasks
+
+Only include sections that are relevant to the requested worksheet type.
+
+Do not add unnecessary activities.
+
+---
+
+## Student Instructions
+
+Every task must include:
+
+- clear instructions written for students
+- enough information to complete the task independently
+- appropriate examples when needed
+
+Instructions should be short, natural, and easy to understand.
+
+---
+
+## Teacher Support
+
+Include:
+
+Teacher Notes
+
+Provide:
+
+- teaching suggestions
+- possible learner difficulties
+- adaptation ideas for weaker and stronger students
+
+Answer Key
+
+Provide answers for all tasks where answers are possible.
+
+For open-ended speaking and writing tasks, provide:
+
+- sample responses
+- assessment criteria
+- useful language suggestions
+
+---
+
+## Worksheet Quality Check
+
+Before producing the final worksheet, check:
+
+1. Does this look like a professional teacher resource?
+2. Could a teacher use this immediately without rewriting it?
+3. Are activities appropriate for the CEFR level?
+4. Are instructions clear?
+5. Is there enough meaningful language practice?
+6. Does the worksheet avoid generic AI-style wording?
+7. Does the worksheet feel human-designed?
+
+If any answer is no, revise before returning the worksheet.
+
+---
+
+## Output Requirements
+
+Return only the completed worksheet.
+
+Do not include:
+
+- introductions
+- explanations
+- apologies
+- comments about the task
+- AI-related language
+- markdown formatting instructions
+
+The final output should look like a professionally designed English teaching resource.

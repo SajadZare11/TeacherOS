@@ -2,7 +2,32 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2f8c80dd-4603-4739-acc5-3186d760b328" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/activity_generator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/check_project.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/keyboards.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/lesson_planner.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/openrouter_client.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/core/classroom_design_standards" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/core/educational_standards.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/core/formatting_standards" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/core/humanization_rules" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/core/quality_assurance" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/core/teacheros_identity" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/core/writing_standards" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/features/activity_generator" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/features/lesson_planner" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/features/quiz_generator" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/features/worksheet_generator" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/templates/ lesson_template" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/templates/activity_template" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/templates/quiz_template" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompts/templates/worksheet_template" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/prompt_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/prompt_loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/test_openrouter.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/test_openrouter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,6 +60,7 @@
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;Python.gemini_test.executor&quot;: &quot;Run&quot;,
     &quot;Python.gemini_test_v2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.keyboards.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.test_openrouter.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -93,6 +119,29 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="keyboards" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Pycharm ode" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/backend/keyboards.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Pycharm ode" />
       <option name="ENV_FILES" value="" />
@@ -142,6 +191,7 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.keyboards" />
         <item itemvalue="Python.test_openrouter" />
         <item itemvalue="Python.gemini_test" />
         <item itemvalue="Python.gemini_test_v2" />

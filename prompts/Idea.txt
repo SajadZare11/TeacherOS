@@ -1,0 +1,22 @@
+I have created the following prompts.
+prompts/
+│
+├── core/
+│   ├── teacheros_identity.txt
+        classroom_design_standards.txt
+│   ├── writing_standards.txt
+│   ├── educational_standards.txt
+│   ├── formatting_standards.txt
+│   ├── quality_assurance.txt
+│
+├── features/
+│   ├── lesson_planner.txt
+│   ├── activity_generator.txt
+│   ├── worksheet_generator.txt
+│   ├── quiz_generator.txt
+│
+└── templates/
+    ├── lesson_template.txt
+    ├── activity_template.txt
+    ├── worksheet_template.txt
+    └── quiz_template.txt
