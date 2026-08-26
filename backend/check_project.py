@@ -37,6 +37,7 @@ _REQUIRED_REQUIREMENTS = {
     "python-docx",
     "reportlab",
     "tzdata",
+    "openpyxl",
 }
 
 
@@ -175,6 +176,7 @@ def main() -> None:
         "python-docx": package_version("python-docx"),
         "reportlab": package_version("reportlab"),
         "tzdata": package_version("tzdata"),
+        "openpyxl": package_version("openpyxl"),
     }
 
     for name, installed_version in packages.items():

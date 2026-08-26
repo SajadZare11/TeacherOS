@@ -15,9 +15,11 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .idea/
+.codex-tmp/
 
 # Private runtime data and generated artifacts
 backups/
+research_private/
 database/*.db
 database/*.db-shm
 database/*.db-wal
