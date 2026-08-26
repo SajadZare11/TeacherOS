@@ -1,0 +1,208 @@
+{
+  "schema_version": "1.0.0",
+  "contract_status": "draft_blocked_by_research",
+  "as_of": "2026-08-26",
+  "product_promise": "TeacherOS remembers each class, turns evidence into the next best teaching action, and produces classroom-ready English materials in minutes—under teacher control.",
+  "north_star": {
+    "metric": "weekly_completed_teaching_loops",
+    "event": "loop_completed",
+    "definition": "Distinct class loops completed in a seven-day reporting window after an accepted follow-up is attached to the next lesson for the same class.",
+    "unit": "distinct loop_id",
+    "deduplication_key": "loop_id",
+    "reporting_timezone": "UTC",
+    "owner": "Product",
+    "privacy_class": "pseudonymous_product"
+  },
+  "privacy_classes": {
+    "operational": "Service health or configuration data with no teacher or classroom identifier.",
+    "pseudonymous_product": "Internal random IDs and action metadata; no names, handles, prompt text, generated content, student work, or free text.",
+    "sensitive_aggregate": "Counts or derived labels computed from classroom evidence; never raw evidence and accessible only to authorized product analysis.",
+    "billing_restricted": "Payment/subscription metadata; no card or bank credentials and restricted to billing operations."
+  },
+  "analytics_rules": {
+    "timestamp_standard": "Server-generated UTC ISO-8601 at successful durable commit unless the event explicitly says otherwise.",
+    "identity": "Use internal user_id, class_id, loop_id, and resource_id only. Never send Telegram user IDs to analytics.",
+    "prohibited_properties": [
+      "teacher_name",
+      "telegram_handle",
+      "telegram_user_id",
+      "class_name",
+      "student_name",
+      "student_work",
+      "evidence_blob",
+      "prompt_text",
+      "generated_material_text",
+      "free_text",
+      "payment_credentials"
+    ],
+    "retention": "Raw product events: 13 months; aggregated cohorts: 25 months; deletion requests remove or irreversibly anonymize user-linked raw events within 30 days.",
+    "late_or_duplicate_policy": "Event UUIDs are idempotent. Use occurred_at for funnels and received_at for operations; accept events up to 72 hours late."
+  },
+  "events": [
+    {
+      "name": "class_created",
+      "definition": "A teacher-owned class profile is durably created with the minimum required fields.",
+      "timestamp": "occurred_at: server UTC at class transaction commit",
+      "owner": "Product",
+      "privacy_class": "pseudonymous_product",
+      "required_properties": ["event_id", "user_id", "class_id", "entry_point", "occurred_at"],
+      "allowed_properties": ["level_band", "learner_count_band", "cadence_band", "setup_seconds", "feature_flag_variant"]
+    },
+    {
+      "name": "class_resource_generated",
+      "definition": "A classroom-ready resource for a class is durably saved after a successful generation.",
+      "timestamp": "occurred_at: server UTC after resource and usage records commit",
+      "owner": "Product",
+      "privacy_class": "pseudonymous_product",
+      "required_properties": ["event_id", "user_id", "class_id", "resource_id", "loop_id", "resource_type", "occurred_at"],
+      "allowed_properties": ["generation_seconds", "regeneration_count", "plan_code", "feature_flag_variant"]
+    },
+    {
+      "name": "lesson_marked_taught",
+      "definition": "The teacher confirms that the planned lesson was taught; repeated taps do not create another event.",
+      "timestamp": "occurred_at: server UTC at taught-status commit; taught_on is a separate teacher-selected date",
+      "owner": "Product",
+      "privacy_class": "pseudonymous_product",
+      "required_properties": ["event_id", "user_id", "class_id", "resource_id", "loop_id", "occurred_at"],
+      "allowed_properties": ["taught_on", "days_from_generation", "feature_flag_variant"]
+    },
+    {
+      "name": "outcome_saved",
+      "definition": "The 30-second structured outcome is durably saved for a taught lesson.",
+      "timestamp": "occurred_at: server UTC at outcome transaction commit",
+      "owner": "Product",
+      "privacy_class": "sensitive_aggregate",
+      "required_properties": ["event_id", "user_id", "class_id", "loop_id", "outcome_id", "occurred_at"],
+      "allowed_properties": ["goal_result", "confidence_band", "support_needed_band", "capture_seconds", "feature_flag_variant"]
+    },
+    {
+      "name": "evidence_approved",
+      "definition": "The teacher explicitly approves the structured extraction from uploaded or entered evidence; upload alone does not count.",
+      "timestamp": "occurred_at: server UTC at approval commit",
+      "owner": "Trust & Product",
+      "privacy_class": "sensitive_aggregate",
+      "required_properties": ["event_id", "user_id", "class_id", "loop_id", "evidence_id", "occurred_at"],
+      "allowed_properties": ["evidence_type", "extraction_count_band", "teacher_correction_band", "processing_seconds", "feature_flag_variant"]
+    },
+    {
+      "name": "followup_accepted",
+      "definition": "The teacher accepts a proposed next teaching action, with or without an explicit teacher edit.",
+      "timestamp": "occurred_at: server UTC at accepted-action commit",
+      "owner": "Product",
+      "privacy_class": "sensitive_aggregate",
+      "required_properties": ["event_id", "user_id", "class_id", "loop_id", "followup_id", "occurred_at"],
+      "allowed_properties": ["action_type", "teacher_edited", "diagnosis_approved", "decision_seconds", "feature_flag_variant"]
+    },
+    {
+      "name": "loop_completed",
+      "definition": "Emitted once when an accepted follow-up is attached to the next lesson for the same class and loop.",
+      "timestamp": "occurred_at: server UTC at atomic loop-completion commit",
+      "owner": "Product",
+      "privacy_class": "pseudonymous_product",
+      "required_properties": ["event_id", "user_id", "class_id", "loop_id", "next_resource_id", "occurred_at"],
+      "allowed_properties": ["loop_elapsed_hours", "active_minutes_band", "plan_code", "feature_flag_variant"]
+    },
+    {
+      "name": "teacher_control_used",
+      "definition": "A teacher edits, rejects, retries, or deletes an AI-derived object through a supported control.",
+      "timestamp": "occurred_at: server UTC after the requested control succeeds",
+      "owner": "Trust & Product",
+      "privacy_class": "pseudonymous_product",
+      "required_properties": ["event_id", "user_id", "object_type", "control", "occurred_at"],
+      "allowed_properties": ["class_id", "loop_id", "reason_code", "feature_flag_variant"]
+    },
+    {
+      "name": "time_saved_verified",
+      "definition": "A teacher confirms a bounded time-saved estimate after comparing TeacherOS with their remembered manual workflow; estimates above 120 minutes require review and are excluded by default.",
+      "timestamp": "occurred_at: server UTC at response commit",
+      "owner": "Research",
+      "privacy_class": "sensitive_aggregate",
+      "required_properties": ["event_id", "user_id", "workflow", "minutes_band", "verification_method", "occurred_at"],
+      "allowed_properties": ["class_id", "loop_id", "baseline_minutes_band", "teacheros_minutes_band"]
+    },
+    {
+      "name": "paywall_viewed",
+      "definition": "A teacher is shown an upgrade screen because of a quota or gated capability.",
+      "timestamp": "occurred_at: server UTC when the paywall message is successfully sent",
+      "owner": "Growth",
+      "privacy_class": "pseudonymous_product",
+      "required_properties": ["event_id", "user_id", "source", "plan_code", "occurred_at"],
+      "allowed_properties": ["class_id", "feature", "quota_remaining", "feature_flag_variant"]
+    },
+    {
+      "name": "subscription_activated",
+      "definition": "A non-sandbox paid entitlement becomes active after idempotent payment verification.",
+      "timestamp": "occurred_at: server UTC at subscription activation commit",
+      "owner": "Billing",
+      "privacy_class": "billing_restricted",
+      "required_properties": ["event_id", "user_id", "plan_code", "order_id", "occurred_at"],
+      "allowed_properties": ["price_toman", "duration_days", "payment_provider"]
+    }
+  ],
+  "activation_funnel": [
+    "class_created",
+    "class_resource_generated",
+    "lesson_marked_taught",
+    "outcome_saved",
+    "evidence_approved",
+    "followup_accepted",
+    "loop_completed"
+  ],
+  "callback_contract": {
+    "transport_limit_bytes": 64,
+    "new_pattern": "v1|<domain>|<action>|<base36_object_id>|<base36_revision>",
+    "regex": "^v1\\|[a-z]{2,4}\\|[a-z0-9]{1,8}\\|[0-9a-z]{1,13}\\|[0-9a-z]{1,6}$",
+    "domains": {"cl": "class", "lp": "lesson plan", "tc": "teach", "oc": "outcome", "ev": "evidence", "dg": "diagnosis", "fu": "follow-up", "nx": "next lesson", "dl": "deletion", "rc": "recovery"},
+    "navigation": {
+      "home": "v1|cl|home|0|0",
+      "back_rule": "Every state has a visible callback-driven Back, Cancel, Done, or Main menu route. Slash commands are optional accelerators only.",
+      "stale_rule": "Unknown, expired, unauthorized, or revision-mismatched callbacks answer the query and replace the keyboard with REC01 recovery actions.",
+      "security_rule": "Payloads are locators, never authority. Resolve ownership and current revision server-side before every read or mutation.",
+      "idempotency_rule": "Mutating actions use a server-side idempotency key derived from user, object, revision, and action."
+    },
+    "examples": ["v1|cl|open|2s|1", "v1|oc|save|9x|2", "v1|ev|approve|a4|3", "v1|rc|home|0|0"]
+  },
+  "feature_flags": [
+    {"key": "classes_v1", "default": false, "owner": "Product", "depends_on": [], "rollout": "owner -> internal cohort -> pilot allowlist -> percentage", "rollback": "Disable flag; preserve existing class rows read-only."},
+    {"key": "class_planning_v1", "default": false, "owner": "Product", "depends_on": ["classes_v1"], "rollout": "pilot allowlist after class CRUD checks", "rollback": "Disable class entry point; legacy generators remain available."},
+    {"key": "teach_outcome_v1", "default": false, "owner": "Product", "depends_on": ["classes_v1", "class_planning_v1"], "rollout": "pilot allowlist after idempotency tests", "rollback": "Disable capture; retain saved outcomes for export/deletion."},
+    {"key": "evidence_review_v1", "default": false, "owner": "Trust", "depends_on": ["teach_outcome_v1"], "rollout": "owner with synthetic data -> consented pilot", "rollback": "Stop uploads and processing; retain only according to consent/retention state."},
+    {"key": "diagnosis_approval_v1", "default": false, "owner": "Trust", "depends_on": ["evidence_review_v1"], "rollout": "consented pilot after evaluation threshold", "rollback": "Hide proposals; never auto-apply an unapproved diagnosis."},
+    {"key": "followup_v1", "default": false, "owner": "Product", "depends_on": ["diagnosis_approval_v1"], "rollout": "consented pilot after comprehension test", "rollback": "Disable generation; preserve accepted follow-ups."},
+    {"key": "loop_analytics_v1", "default": false, "owner": "Data", "depends_on": ["classes_v1"], "rollout": "internal validation -> pilot", "rollback": "Stop emitting new events without blocking the product loop."},
+    {"key": "class_entitlements_v1", "default": false, "owner": "Billing", "depends_on": ["classes_v1"], "rollout": "shadow decisions -> sandbox billing -> pilot", "rollback": "Fail open for already-created pilot classes; never delete data on downgrade."}
+  ],
+  "entitlements": {
+    "status": "pricing_hypothesis_not_validated",
+    "baseline_preserved": "Current production behavior remains 10 successful generations/day on Free and unlimited generations on Pro/Premium; Premium may use a configured priority model.",
+    "proposed_class_loop_limits": [
+      {"plan": "free", "active_classes": 1, "completed_loops_per_rolling_30_days": 2, "evidence_retention_days": 7, "exports": "current formats", "priority_model": false},
+      {"plan": "pro", "active_classes": 10, "completed_loops_per_rolling_30_days": null, "evidence_retention_days": 30, "exports": "current formats", "priority_model": false},
+      {"plan": "premium", "active_classes": null, "completed_loops_per_rolling_30_days": null, "evidence_retention_days": 90, "exports": "current formats", "priority_model": true}
+    ],
+    "rules": [
+      "Do not enforce proposed class limits until willingness-to-pay evidence and billing tests approve class_entitlements_v1.",
+      "Downgrade never deletes classes, resources, outcomes, or evidence; excess classes become read-only and remain exportable/deletable.",
+      "A quota is consumed only after the corresponding durable object is successfully created.",
+      "Sandbox subscriptions never count as paid conversion."
+    ]
+  },
+  "deletion": [
+    {"object": "generated resource", "actor": "owner teacher", "confirmation": "required", "effect": "Hard-delete owned resource and derived exports; keep an anonymized deletion audit event.", "recovery": "No content recovery after confirmation; Cancel returns to detail.", "sla": "immediate"},
+    {"object": "raw evidence", "actor": "owner teacher", "confirmation": "required", "effect": "Delete blob, OCR text, thumbnails, and processing cache; keep approved aggregate only if separately disclosed and teacher chooses it.", "recovery": "No recovery after confirmation.", "sla": "immediate, including object storage"},
+    {"object": "approved evidence summary", "actor": "owner teacher", "confirmation": "required", "effect": "Delete summary and invalidate dependent unapproved diagnoses/follow-ups.", "recovery": "Existing accepted teaching artifacts remain but lose evidence linkage.", "sla": "immediate"},
+    {"object": "class", "actor": "owner teacher", "confirmation": "typed class label or two-step callback", "effect": "Cascade-delete class profile, loops, outcomes, evidence, diagnoses, follow-ups, and class-resource links; independently saved resource copies require explicit choice.", "recovery": "Seven-day soft-delete window for metadata only; raw evidence is purged immediately and cannot be restored.", "sla": "hidden immediately; purge by day 7"},
+    {"object": "account", "actor": "authenticated teacher", "confirmation": "fresh confirmation plus explanation", "effect": "Revoke sessions/subscriptions, purge content and identifiers, and anonymize legally retained billing/audit records.", "recovery": "No recovery after purge begins.", "sla": "access revoked immediately; completion within 30 days"},
+    {"object": "analytics identity", "actor": "system after deletion request", "confirmation": "inherits account request", "effect": "Remove or irreversibly anonymize user-linked raw events; aggregates no longer permit re-identification.", "recovery": "not applicable", "sla": "within 30 days"}
+  ],
+  "release_gates": [
+    {"id": "G1_RESEARCH", "owner": "Research", "status": "blocked", "criterion": "Day 2 gate prints OPEN: at least five eligible interviews, 10-15 confirmed pilot recruits, repeated problems, and all product feature mappings witnessed or deferred.", "evidence": "backend/day2_research_gate.py output"},
+    {"id": "G2_COMPREHENSION", "owner": "Product", "status": "pending", "criterion": "At least one eligible teacher, unaided, correctly explains Home and all eight loop stages from the wireflow and identifies how to go back, reject a diagnosis, and delete evidence.", "evidence": "De-identified signed test record; target three sessions before implementation freeze."},
+    {"id": "G3_NAVIGATION", "owner": "Engineering", "status": "specified", "criterion": "Every contracted screen exposes a non-command escape path; callback payloads stay at or under 64 bytes and stale/unauthorized actions recover safely.", "evidence": "Day 3 contract validator plus later interaction tests."},
+    {"id": "G4_ANALYTICS", "owner": "Data", "status": "specified", "criterion": "Every metric event has a definition, timestamp, owner, privacy class, idempotency behavior, and prohibited-content enforcement.", "evidence": "Day 3 contract validator plus later schema tests."},
+    {"id": "G5_TRUST", "owner": "Trust", "status": "pending", "criterion": "Evidence consent, teacher approval, deletion cascade, access control, retention jobs, and model evaluation pass with synthetic then consented data.", "evidence": "Threat model, evaluation report, deletion integration tests."},
+    {"id": "G6_VALUE", "owner": "Product", "status": "pending", "criterion": "Pilot evidence improves at least one governing measure without breaching trust thresholds: activation, weekly completed loops, verified time saved, retention, or paid conversion.", "evidence": "Pilot scorecard with denominators and confidence caveats."},
+    {"id": "G7_ROLLBACK", "owner": "Engineering", "status": "specified", "criterion": "Each class-intelligence capability can be disabled independently without deleting teacher data or breaking legacy generation.", "evidence": "Feature-flag and rollback drill."}
+  ],
+  "governing_measures": ["activation", "weekly_completed_teaching_loops", "verified_time_saved", "trust", "retention", "paid_conversion"]
+}
