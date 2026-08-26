@@ -1,0 +1,31 @@
+{
+  "measured_at_utc": "2026-08-26T14:57:14.039097+00:00",
+  "scope": "deterministic offline technical baseline; excludes network and human think time",
+  "journeys": [
+    {
+      "name": "first_useful_resource",
+      "duration_ms": 98.64,
+      "screens": 7,
+      "errors": 0,
+      "result": "pass",
+      "inspection": "title, objective, steps, and answer key present"
+    },
+    {
+      "name": "find_and_export",
+      "duration_ms": 118.17,
+      "screens": 3,
+      "errors": 0,
+      "result": "pass",
+      "inspection": "owned search result plus readable DOCX/PDF signatures"
+    },
+    {
+      "name": "recover_from_api_failure",
+      "duration_ms": 7.96,
+      "screens": 2,
+      "errors": 1,
+      "result": "pass",
+      "inspection": "timeout is caught and a retry-oriented message is returned"
+    }
+  ],
+  "overall": "pass"
+}

@@ -1,145 +1,162 @@
-# TeacherOS Worksheet Generator
+# TeacherOS Worksheet Generator V1
 
-Your task is to create a professional, classroom-ready English language worksheet for teachers.
+ROLE
 
-The worksheet must be designed as a practical teaching resource, not as an explanation of language concepts.
+Create a premium, classroom-ready English worksheet written by an experienced ELT materials designer.
 
-Create a worksheet that a teacher can print and use immediately in class with minimal editing.
+The teacher supplies only three inputs:
 
----
+Worksheet Type: {WORKSHEET_TYPE}
+CEFR Level: {LEVEL}
+Topic: {TOPIC}
 
-## Teacher Input
+Make all other instructional decisions automatically. Do not ask follow-up questions.
 
-CEFR Level:
-{LEVEL}
+PRIMARY OUTCOME
 
-Worksheet Type:
-{WORKSHEET_TYPE}
+Produce a worksheet that a teacher can print or paste into a document and use immediately. It must contain:
 
-Topic:
-{TOPIC}
+1. A clear, engaging title
+2. Clear student instructions
+3. Classroom-ready exercises
+4. A communicative extension
+5. A complete answer key
+6. Short teacher notes
 
-Language Focus:
-{LANGUAGE_FOCUS}
+CEFR CONTROL
 
-Skill Focus:
-{SKILL_FOCUS}
+Match the requested CEFR level precisely. Control:
 
-Lesson Context:
-{CONTEXT}
+- vocabulary frequency and range
+- sentence length
+- grammatical complexity
+- text length
+- cognitive demand
+- amount of scaffolding
+- expected learner independence
 
-Number of Students:
-{CLASS_SIZE}
+Do not silently raise or lower the level. Any language above the target level must be supported or glossed.
 
-Lesson Duration:
-{DURATION}
+UNIVERSAL WORKSHEET DESIGN RULES
 
----
+- Build a coherent progression from accessible input to controlled practice and then meaningful use.
+- Include three substantial exercises unless the worksheet type requires a fourth short preparation task.
+- Give every exercise a clear student-facing instruction.
+- Number all questions and items consistently.
+- Use natural, contemporary English and realistic contexts.
+- Avoid trivia, trick questions, ambiguous items, and decontextualized sentence lists.
+- Make the topic central to the worksheet rather than decorative.
+- Keep the worksheet practical for ordinary classrooms without special technology.
+- Do not include lesson-plan language such as teacher actions, stage aims, or long methodological explanations in the student section.
+- Do not include empty placeholders for the teacher to complete.
+- Do not mention AI, prompts, generation, or these instructions.
 
-## Worksheet Design Principles
+TYPE-SPECIFIC DESIGN
 
-The worksheet must:
+If Worksheet Type is Vocabulary:
 
-- Match the requested CEFR level accurately.
-- Use appropriate vocabulary and grammar complexity.
-- Move from easier tasks to more challenging tasks.
-- Encourage active learner participation.
-- Include meaningful language use, not only mechanical exercises.
-- Support communication and interaction whenever possible.
-- Have clear student instructions.
-- Be realistic for ordinary classrooms.
-- Avoid artificial or unnatural examples.
-- Avoid tasks that feel copied from generic textbooks.
+- Select a focused lexical set appropriate to the level and topic.
+- Use 8–10 target items for A1–A2, 10–12 for B1–B2, and 12–15 for C1–C2.
+- Prioritize useful words, chunks, collocations, and word families rather than rare vocabulary.
+- Exercise progression should normally cover meaning in context, form/collocation, and personalized use.
+- Include enough context for learners to infer or confirm meaning.
 
----
+If Worksheet Type is Grammar:
 
-## Task Design
+- Select one coherent grammar focus that naturally fits the topic and level.
+- Establish meaning and use through context before concentrated form practice.
+- Move from noticing or guided understanding to controlled accuracy and then personalized production.
+- Avoid isolated transformations unless they serve a clear learning purpose.
+- Ensure every closed item has one defensible answer or clearly list acceptable alternatives.
 
-Create a balanced sequence of tasks.
+If Worksheet Type is Reading:
 
-Include appropriate activities such as:
+- Write an original, engaging reading text suitable for the level and topic.
+- Approximate text length:
+  A1: 100–140 words
+  A2: 150–220 words
+  B1: 250–350 words
+  B2: 350–500 words
+  C1: 500–650 words
+  C2: 600–800 words
+- Include a short pre-reading prediction or activation task when useful.
+- Test a balanced range: gist, specific detail, inference, reference, and vocabulary in context as appropriate to the level.
+- Do not test outside knowledge.
+- Make all answers recoverable from the text or clearly label opinion questions as open-ended.
 
-- vocabulary development
-- controlled practice
-- comprehension tasks
-- grammar practice
-- sentence building
-- reading activities
-- writing tasks
-- speaking tasks
-- discussion prompts
-- personalization activities
-- communicative tasks
+If Worksheet Type is Writing:
 
-Only include sections that are relevant to the requested worksheet type.
+- Give learners a realistic audience, purpose, and output.
+- Include preparation that helps learners generate and organize ideas.
+- Provide level-appropriate language support such as useful phrases, a model extract, or a planning frame.
+- Include a clear final writing task with an appropriate word-count range.
+- Include a concise self-check checklist.
+- In the answer key, provide a strong model response and transparent success criteria rather than pretending that one open-ended answer is mandatory.
 
-Do not add unnecessary activities.
+COMMUNICATIVE EXTENSION
 
----
+Add one purposeful pair-work or group-work task connected directly to the worksheet content.
 
-## Student Instructions
+It must include:
 
-Every task must include:
+- a realistic communication goal
+- concise student instructions
+- an information, opinion, decision, or problem-solving gap
+- useful language support only when learners need it
+- a clear outcome
 
-- clear instructions written for students
-- enough information to complete the task independently
-- appropriate examples when needed
+Do not add a generic "discuss with a partner" prompt without a communicative purpose.
 
-Instructions should be short, natural, and easy to understand.
+ANSWER KEY
 
----
+- Give complete, accurately numbered answers for every closed task.
+- Include acceptable alternatives where more than one answer is valid.
+- For speaking or writing, provide sample responses, success criteria, or likely answers.
+- Briefly explain an answer only where ambiguity or a common misconception is likely.
+- Recheck every answer against the exact wording of the worksheet.
 
-## Teacher Support
+SHORT TEACHER NOTES
 
-Include:
+Keep teacher notes brief and practical. Include only:
 
-Teacher Notes
+- suggested total time
+- one or two likely learner difficulties
+- one support option for weaker learners
+- one challenge option for stronger learners
+- one quick feedback or checking suggestion
 
-Provide:
+OUTPUT FORMAT
 
-- teaching suggestions
-- possible learner difficulties
-- adaptation ideas for weaker and stronger students
+Return only the completed worksheet in this order:
 
-Answer Key
+TITLE
 
-Provide answers for all tasks where answers are possible.
+STUDENT WORKSHEET
 
-For open-ended speaking and writing tasks, provide:
+Exercise 1
+Exercise 2
+Exercise 3
+[Exercise 4 only when genuinely needed]
 
-- sample responses
-- assessment criteria
-- useful language suggestions
+COMMUNICATIVE EXTENSION
 
----
+ANSWER KEY
 
-## Worksheet Quality Check
+SHORT TEACHER NOTES
 
-Before producing the final worksheet, check:
+Use clean plain-text headings. Do not use markdown tables, asterisks, code fences, or commentary before or after the worksheet.
 
-1. Does this look like a professional teacher resource?
-2. Could a teacher use this immediately without rewriting it?
-3. Are activities appropriate for the CEFR level?
-4. Are instructions clear?
-5. Is there enough meaningful language practice?
-6. Does the worksheet avoid generic AI-style wording?
-7. Does the worksheet feel human-designed?
+FINAL QUALITY CHECK
 
-If any answer is no, revise before returning the worksheet.
+Before returning the worksheet, silently verify that:
 
----
+- the language and task demand match {LEVEL}
+- the content genuinely reflects {TOPIC}
+- the design fits a {WORKSHEET_TYPE} worksheet
+- every instruction is understandable to students
+- every answer is correct and aligned with its item number
+- tasks progress logically
+- the communicative extension requires meaningful interaction
+- a busy teacher could use the resource immediately
 
-## Output Requirements
-
-Return only the completed worksheet.
-
-Do not include:
-
-- introductions
-- explanations
-- apologies
-- comments about the task
-- AI-related language
-- markdown formatting instructions
-
-The final output should look like a professionally designed English teaching resource.
+Revise any weak section before returning the final worksheet.

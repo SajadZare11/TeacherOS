@@ -1,0 +1,20 @@
+[Unit]
+Description=TeacherOS Telegram Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=teacheros
+Group=teacheros
+WorkingDirectory=/opt/teacheros
+EnvironmentFile=/opt/teacheros/.env
+ExecStart=/opt/teacheros/.venv/bin/python /opt/teacheros/backend/main.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

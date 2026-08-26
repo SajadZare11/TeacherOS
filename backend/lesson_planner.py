@@ -6,17 +6,26 @@ from telegram import Update
 from telegram.error import NetworkError, TimedOut
 from telegram.ext import ContextTypes
 
+from database import save_generated_material
+
 from keyboards import (
     GRAMMAR_OPTIONS,
     back_cancel_keyboard,
+    generated_material_export_keyboard,
     duration_keyboard,
     grammar_keyboard,
     lesson_confirm_keyboard,
     level_keyboard,
     start_menu_keyboard,
+    subscription_limit_keyboard,
 )
 from openrouter_client import generate_text
 from prompt_loader import load_feature_prompt
+from subscription_service import (
+    generation_access_for_user,
+    generation_block_message,
+    selected_openrouter_model,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +51,8 @@ async def _expired_session(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     query = update.callback_query
     if query is not None:
         await query.edit_message_text(
-            "⌛ This lesson-planner session expired.\n\nSend /start and begin again."
+            "⌛ This lesson-planner session expired.\n\nChoose an option below.",
+            reply_markup=start_menu_keyboard(),
         )
 
 
@@ -216,7 +226,8 @@ async def lesson_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if data == "lesson_cancel":
         context.user_data.pop("lesson", None)
         await query.edit_message_text(
-            "❌ Lesson Planner cancelled.\n\nSend /start to return to the main menu."
+            "❌ Lesson Planner cancelled.",
+            reply_markup=start_menu_keyboard(),
         )
         return
 
@@ -232,7 +243,7 @@ async def get_lesson_topic(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if lesson is None or lesson.get("state") != "topic" or update.message is None:
         return
 
-    topic = (update.message.text or "").strip()
+    topic = " ".join((update.message.text or "").split())
     if len(topic) < 2:
         await update.message.reply_text("Please type a topic with at least 2 characters.")
         return
@@ -264,37 +275,96 @@ async def generate_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await _expired_session(update, context)
         return
 
+    user = update.effective_user
+    if user is None or not isinstance(getattr(user, "id", None), int):
+        await _expired_session(update, context)
+        return
+
+    access = generation_access_for_user(user.id)
+    if not bool(access.get("allowed")):
+        context.user_data.pop("lesson", None)
+        await query.edit_message_text(
+            generation_block_message(access),
+            reply_markup=subscription_limit_keyboard(),
+        )
+        return
+
+    # Prevent repeated Generate taps from creating duplicate API calls or records.
+    lesson["state"] = "generating"
     await query.edit_message_text(
         "🧠 Generating your lesson plan...\n\n"
-        "This usually takes 10–20 seconds.\n\n"
-        "Please don't close Telegram."
+        "TeacherOS is preparing the complete classroom-ready lesson."
     )
 
     try:
         prompt = load_feature_prompt("lesson_planner", "lesson_template")
-        prompt = (
-            prompt.replace("{{level}}", str(lesson["level"]))
-            .replace("{{topic}}", str(lesson["topic"]))
-            .replace("{{grammar}}", str(lesson["grammar"]))
-            .replace("{{duration}}", str(lesson["duration"]))
-            .replace("{{vocabulary}}", "Not specified")
-            .replace("{{goals}}", "Not specified")
-        )
 
-        result = await generate_text([{"role": "user", "content": prompt}])
+        replacements = {
+            "{LEVEL}": str(lesson["level"]),
+            "{TOPIC}": str(lesson["topic"]),
+            "{GRAMMAR}": str(lesson["grammar"]),
+            "{VOCABULARY}": "Not specified",
+            "{DURATION}": str(lesson["duration"]),
+            "{GOALS}": "Create a complete classroom-ready lesson for the stated topic and language focus.",
+        }
+        for placeholder, value in replacements.items():
+            prompt = prompt.replace(placeholder, value)
+
+        result = await generate_text(
+            [{"role": "user", "content": prompt}],
+            model=selected_openrouter_model(access),
+        )
     except Exception:
         logger.exception("Lesson generation failed")
-        context.user_data.pop("lesson", None)
+        lesson["state"] = "confirm"
         await query.edit_message_text(
-            "❌ I could not generate the lesson.\n\n"
-            "Check your internet connection, OpenRouter key, model availability, and prompt files. "
-            "Then send /start and try again."
+            "❌ I could not generate the lesson right now.\n\n"
+            "Your choices are still saved. Check your connection or OpenRouter settings, "
+            "then tap Generate Lesson to retry.",
+            reply_markup=lesson_confirm_keyboard(),
         )
         return
 
-    await query.edit_message_text("✅ Lesson generated. It appears below.")
-    for start in range(0, len(result), 4000):
-        await query.message.reply_text(result[start : start + 4000])
+    material_id: int | None = None
+    save_message = "✅ Lesson generated. It appears below."
+    try:
+        if update.effective_user is None:
+            raise ValueError("Telegram user details are unavailable.")
+        material_id = save_generated_material(
+            telegram_user=update.effective_user,
+            material_type="lesson",
+            subtype="Lesson Plan",
+            title=f"{lesson['topic']} Lesson Plan ({lesson['level']})",
+            level=str(lesson["level"]),
+            topic=str(lesson["topic"]),
+            content=result,
+            metadata={
+                "grammar": str(lesson["grammar"]),
+                "duration_minutes": int(str(lesson["duration"])),
+            },
+        )
+        save_message = (
+            "✅ Lesson generated and saved automatically.\n"
+            f"Library ID: {material_id}\n\n"
+            "Use the buttons below to download Word or PDF immediately."
+        )
+    except Exception:
+        logger.exception("Lesson was generated but could not be saved")
+        save_message = (
+            "⚠️ Lesson generated, but TeacherOS could not save it.\n\n"
+            "The lesson still appears below, but export buttons are unavailable."
+        )
+
+    await query.edit_message_text(
+        save_message,
+        reply_markup=(
+            generated_material_export_keyboard(material_id)
+            if material_id is not None
+            else None
+        ),
+    )
+    if query.message is not None:
+        for start in range(0, len(result), 4000):
+            await query.message.reply_text(result[start : start + 4000])
 
     context.user_data.pop("lesson", None)
-

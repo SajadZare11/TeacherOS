@@ -1,14 +1,30 @@
+# Secrets and local configuration
 .env
+.env.*
+!.env.example
+!.env.*.example
+docs/secrets*.txt
+*.pem
+*.key
+
+# Python/editor state
 .venv/
-__pycache__/
-.idea/
-__pycache__/
-*.pyc
-
-.env
-
+.venv-*/
 venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
 .idea/
 
-database/
-exports/
+# Private runtime data and generated artifacts
+backups/
+database/*.db
+database/*.db-shm
+database/*.db-wal
+database/*.sqlite
+database/*.sqlite3
+exports/*
+!exports/.gitkeep
+
+# Legacy source is retained locally for reference, not shipped.
+oldversion/

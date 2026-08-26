@@ -1,0 +1,6 @@
+# Keep local TeacherOS databases and SQLite helper files out of GitHub.
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3

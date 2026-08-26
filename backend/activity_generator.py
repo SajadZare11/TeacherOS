@@ -6,16 +6,25 @@ from telegram import Update
 from telegram.error import NetworkError, TimedOut
 from telegram.ext import ContextTypes
 
+from database import save_generated_material
+
 from keyboards import (
     ACTIVITY_TYPE_OPTIONS,
     activity_confirm_keyboard,
     activity_type_keyboard,
     back_cancel_keyboard,
+    generated_material_export_keyboard,
     level_keyboard,
     start_menu_keyboard,
+    subscription_limit_keyboard,
 )
 from openrouter_client import generate_text
 from prompt_loader import load_feature_prompt
+from subscription_service import (
+    generation_access_for_user,
+    generation_block_message,
+    selected_openrouter_model,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +50,8 @@ async def _expired_session(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     query = update.callback_query
     if query is not None:
         await query.edit_message_text(
-            "⌛ This activity-generator session expired.\n\nSend /start and begin again."
+            "⌛ This activity-generator session expired.\n\nChoose an option below.",
+            reply_markup=start_menu_keyboard(),
         )
 
 
@@ -174,7 +184,8 @@ async def activity_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if data == "activity_cancel":
         context.user_data.pop("activity", None)
         await query.edit_message_text(
-            "❌ Activity Generator cancelled.\n\nSend /start to return to the main menu."
+            "❌ Activity Generator cancelled.",
+            reply_markup=start_menu_keyboard(),
         )
         return
 
@@ -190,7 +201,7 @@ async def get_activity_topic(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if activity is None or activity.get("state") != "topic" or update.message is None:
         return
 
-    topic = (update.message.text or "").strip()
+    topic = " ".join((update.message.text or "").split())
     if len(topic) < 2:
         await update.message.reply_text("Please type a topic with at least 2 characters.")
         return
@@ -225,34 +236,93 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         await _expired_session(update, context)
         return
 
+    user = update.effective_user
+    if user is None or not isinstance(getattr(user, "id", None), int):
+        await _expired_session(update, context)
+        return
+
+    access = generation_access_for_user(user.id)
+    if not bool(access.get("allowed")):
+        context.user_data.pop("activity", None)
+        await query.edit_message_text(
+            generation_block_message(access),
+            reply_markup=subscription_limit_keyboard(),
+        )
+        return
+
+    # Prevent repeated Generate taps from creating duplicate API calls or records.
+    activity["state"] = "generating"
     await query.edit_message_text(
         "🧠 Generating your activity...\n\n"
-        "This usually takes 10–20 seconds.\n\n"
-        "Please don't close Telegram."
+        "TeacherOS is preparing the classroom instructions and materials."
     )
 
     try:
         prompt = load_feature_prompt("activity_generator", "activity_template")
-        prompt = (
-            prompt.replace("{{activity}}", str(activity["type"]))
-            .replace("{{level}}", str(activity["level"]))
-            .replace("{{topic}}", str(activity["topic"]))
-        )
 
-        result = await generate_text([{"role": "user", "content": prompt}])
+        replacements = {
+            "{{activity_type}}": str(activity["type"]),
+            "{{activity}}": str(activity["type"]),
+            "{{level}}": str(activity["level"]),
+            "{{topic}}": str(activity["topic"]),
+            "{{target_language}}": "Not specified",
+            "{{context}}": "General English class",
+        }
+        for placeholder, value in replacements.items():
+            prompt = prompt.replace(placeholder, value)
+
+        result = await generate_text(
+            [{"role": "user", "content": prompt}],
+            model=selected_openrouter_model(access),
+        )
     except Exception:
         logger.exception("Activity generation failed")
-        context.user_data.pop("activity", None)
+        activity["state"] = "confirm"
         await query.edit_message_text(
-            "❌ I could not generate the activity.\n\n"
-            "Check your internet connection, OpenRouter key, model availability, and prompt files. "
-            "Then send /start and try again."
+            "❌ I could not generate the activity right now.\n\n"
+            "Your choices are still saved. Check your connection or OpenRouter settings, "
+            "then tap Generate Activity to retry.",
+            reply_markup=activity_confirm_keyboard(),
         )
         return
 
-    await query.edit_message_text("✅ Activity generated. It appears below.")
-    for start in range(0, len(result), 4000):
-        await query.message.reply_text(result[start : start + 4000])
+    material_id: int | None = None
+    save_message = "✅ Activity generated. It appears below."
+    try:
+        if update.effective_user is None:
+            raise ValueError("Telegram user details are unavailable.")
+        material_id = save_generated_material(
+            telegram_user=update.effective_user,
+            material_type="activity",
+            subtype=str(activity["type"]),
+            title=f"{activity['type']} — {activity['topic']} ({activity['level']})",
+            level=str(activity["level"]),
+            topic=str(activity["topic"]),
+            content=result,
+            metadata={},
+        )
+        save_message = (
+            "✅ Activity generated and saved automatically.\n"
+            f"Library ID: {material_id}\n\n"
+            "Use the buttons below to download Word or PDF immediately."
+        )
+    except Exception:
+        logger.exception("Activity was generated but could not be saved")
+        save_message = (
+            "⚠️ Activity generated, but TeacherOS could not save it.\n\n"
+            "The activity still appears below, but export buttons are unavailable."
+        )
+
+    await query.edit_message_text(
+        save_message,
+        reply_markup=(
+            generated_material_export_keyboard(material_id)
+            if material_id is not None
+            else None
+        ),
+    )
+    if query.message is not None:
+        for start in range(0, len(result), 4000):
+            await query.message.reply_text(result[start : start + 4000])
 
     context.user_data.pop("activity", None)
-

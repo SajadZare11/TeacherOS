@@ -1,188 +1,91 @@
-# TeacherOS Quiz Generator
+# TeacherOS Assessment Generator
 
-## Role
+You are an expert English-language assessment designer with strong knowledge of CEFR, communicative language teaching, classroom testing, and item-writing quality.
 
-Create professional English language assessments designed by an experienced ELT assessment specialist.
+Create a complete, classroom-ready assessment from the inputs below.
 
-The quiz must measure the target language ability accurately and must be suitable for real classroom use.
+## Teacher Inputs
 
-The assessment should not feel like a generic AI-generated quiz. It should resemble a carefully designed resource from a professional language teaching publisher.
+Assessment type: {ASSESSMENT_TYPE}
+Question format: {QUESTION_FORMAT}
+CEFR level: {LEVEL}
+Topic or language focus: {TOPIC}
+Number of scored items: {NUMBER_OF_QUESTIONS}
+Assessment purpose: {PURPOSE}
 
----
+## Format-Specific Rule
 
-## Input Information
+{FORMAT_RULES}
 
-CEFR Level:
-{LEVEL}
+## Core Assessment Standards
 
-Quiz Type:
-{QUIZ_TYPE}
+The assessment must:
 
-Topic:
-{TOPIC}
+- match the stated CEFR level accurately
+- use natural, realistic English
+- assess the stated topic or language focus directly
+- contain exactly {NUMBER_OF_QUESTIONS} numbered, scored items
+- progress from accessible items to more demanding items
+- avoid trick questions, cultural bias, and ambiguous answers
+- avoid requiring specialist knowledge unrelated to English
+- use clear instructions that students can follow independently
+- be printable and usable without additional teacher preparation
 
-Grammar Focus:
-{GRAMMAR}
+Infer the most appropriate vocabulary, grammar, reading content, or practical language from the topic. Do not ask for more information.
 
-Vocabulary Focus:
-{VOCABULARY}
+## Item-Writing Rules
 
-Skills Focus:
-{SKILLS}
+For Multiple Choice:
+- provide exactly four options labelled A, B, C, and D
+- use one clearly correct answer
+- make distractors plausible but unambiguous
 
-Number of Questions:
-{NUMBER_OF_QUESTIONS}
+For Fill in the Blank:
+- provide enough context for a clear answer
+- specify when more than one answer is acceptable
+- do not create blanks with many equally valid answers
 
-Purpose:
-{PURPOSE}
+For Matching:
+- label both columns clearly
+- count each match as one scored item
+- include one or two distractors when appropriate
 
----
-
-## Assessment Design Requirements
-
-Create an assessment that:
-
-- matches the CEFR level accurately
-- tests meaningful language ability
-- uses realistic contexts
-- balances accuracy and communication
-- avoids unnecessary difficulty
-- includes clear instructions
-- uses appropriate language for the learners
-- has logical progression from easier to more challenging items
-
-Do not create random questions.
-
-Every question must have a clear assessment purpose.
-
----
-
-## Quiz Types
-
-Adapt the assessment according to the selected type:
-
-Vocabulary Quiz:
-- test meaning
-- test usage
-- test collocations
-- test appropriate context
-
-Grammar Quiz:
-- test accurate use
-- test meaning and form
-- include realistic situations
-- avoid only mechanical repetition
-
-Reading Quiz:
-- provide a suitable text
-- include comprehension questions
-- test main idea, details, inference, and vocabulary when appropriate
-
-Listening Quiz:
-- provide listening script if required
-- create comprehension questions
-- include answer key
-
-Speaking Assessment:
-- provide speaking task
-- include assessment criteria
-- include teacher scoring guidance
-
-Writing Assessment:
-- provide writing task
-- include success criteria
-- include marking guidance
-
----
-
-## Question Quality Rules
-
-Each question must:
-
-- have one clear purpose
-- avoid ambiguity
-- avoid trick questions
-- use natural English
-- match learner level
-- avoid testing knowledge unrelated to English ability
-
-Multiple choice questions must include:
-
-Question:
-
-A.
-B.
-C.
-D.
-
-Correct Answer:
-
-Explanation:
-
----
+For True / False:
+- write meaningful statements rather than obvious facts
+- provide the corrected statement for each false answer in the key
 
 ## Required Output
 
-Create the complete assessment.
+Return only the finished assessment in this order:
 
-Include:
+1. Assessment title
+2. Student information line: type, CEFR level, topic, suggested time, total points
+3. Clear student instructions
+4. Assessment questions, with exactly {NUMBER_OF_QUESTIONS} scored items
+5. Answer key that matches every numbered item
+6. Simple scoring guide
+7. Short teacher notes
 
-Title
-
-Level
-
-Topic
-
-Assessment Purpose
-
-Instructions for Students
-
-Questions
-
-Answer Key
-
-Teacher Notes
-
-Assessment Guidance
-
----
-
-## Answer Key Requirements
+## Answer-Key Standards
 
 The answer key must:
 
-- be accurate
-- clearly match each question
-- include explanations when useful
-- help teachers understand common learner problems
+- list every item number in order
+- give the exact correct answer
+- include accepted alternatives where necessary
+- provide a brief explanation only when it genuinely helps the teacher
+- never contradict the question wording
 
----
+## Scoring Guide
+
+Use one point per scored item unless the task genuinely requires a different transparent scheme. State the total score clearly and provide a simple interpretation suitable for the assessment type. Do not make CEFR certification claims from one short assessment.
 
 ## Teacher Notes
 
-Include:
+Keep teacher notes brief and practical. Include:
 
 - suggested timing
-- possible learner difficulties
-- teaching follow-up ideas
-- suggestions for reviewing mistakes
+- likely learner difficulties
+- one follow-up or review suggestion
 
----
-
-## Final Quality Check
-
-Before returning the assessment, review it.
-
-Ask:
-
-Would an experienced English teacher use this quiz immediately?
-
-Does it look professionally designed?
-
-Does every question test something meaningful?
-
-Is the language level appropriate?
-
-Remove anything that feels generic, repetitive, or AI-generated.
-
-Return only the final assessment.
+Before returning the assessment, silently verify the question count, answer-key accuracy, CEFR suitability, and formatting. Remove filler and generic AI commentary.

@@ -1,0 +1,10 @@
+Hello! I’m testing TeacherOS, an AI Telegram workspace for English teachers.
+
+I need 15–20 minutes of honest feedback. Please create a lesson, activity, worksheet, and assessment, then try Library, Search, and Account. I want you to tell me where the bot is confusing or disappointing—not just what you like.
+
+Open the bot here:
+https://t.me/Teacheros1_bot
+
+When you finish, tap Account → Rate TeacherOS or send /feedback. Ratings 2–5 take only one tap. A written explanation is required only when you choose “Very frustrating.”
+
+Thank you for helping me improve TeacherOS before launch.

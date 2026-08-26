@@ -98,4 +98,6 @@ def validate_prompt_files() -> None:
     load_system_prompt()
     load_feature_prompt("lesson_planner", "lesson_template")
     load_feature_prompt("activity_generator", "activity_template")
+    load_feature_prompt("worksheet_generator", "worksheet_template")
+    load_feature_prompt("quiz_generator", "quiz_template")
 

@@ -27,9 +27,13 @@ def get_client() -> AsyncOpenAI:
     return _client
 
 
-async def generate_text(messages: Sequence[dict[str, Any]]) -> str:
+async def generate_text(
+    messages: Sequence[dict[str, Any]],
+    *,
+    model: str | None = None,
+) -> str:
     response = await get_client().chat.completions.create(
-        model=OPENROUTER_MODEL,
+        model=(model or OPENROUTER_MODEL),
         messages=list(messages),
     )
 
