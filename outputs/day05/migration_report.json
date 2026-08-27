@@ -1,0 +1,222 @@
+{
+  "day": 5,
+  "passed": true,
+  "privacy": "Counts and schema hashes only; no user content or identifiers.",
+  "rollback": {
+    "all_surfaces_disabled": true,
+    "quick_create_default": true,
+    "strategy": "additive_schema_feature_flags_off"
+  },
+  "scenario_count": 4,
+  "scenarios": [
+    {
+      "duplicate_columns": {
+        "feedback": false,
+        "materials": false,
+        "payments": false,
+        "subscriptions": false,
+        "usage_events": false,
+        "users": false
+      },
+      "exports": {
+        "not_applicable": true,
+        "pdf": true,
+        "word": true
+      },
+      "foreign_key_error_count": 0,
+      "label": "empty",
+      "legacy_counts_after": {
+        "feedback": 0,
+        "materials": 0,
+        "payments": 0,
+        "subscriptions": 0,
+        "usage_events": 0,
+        "users": 0
+      },
+      "legacy_counts_before": {
+        "feedback": 0,
+        "materials": 0,
+        "payments": 0,
+        "subscriptions": 0,
+        "usage_events": 0,
+        "users": 0
+      },
+      "legacy_data_preserved": true,
+      "missing_legacy_columns": {
+        "feedback": [],
+        "materials": [],
+        "payments": [],
+        "subscriptions": [],
+        "usage_events": [],
+        "users": []
+      },
+      "new_table_counts": {
+        "class_lessons": 0,
+        "class_objectives": 0,
+        "classes": 0,
+        "lesson_outcomes": 0,
+        "product_events": 0
+      },
+      "passed": true,
+      "schema_fingerprint_sha256": "2fb6db2aec82d967f473ba742f7db8bb0affc2fd901c07da5ab2e5b04e43c06a",
+      "schema_version": 6
+    },
+    {
+      "duplicate_columns": {
+        "feedback": false,
+        "materials": false,
+        "payments": false,
+        "subscriptions": false,
+        "usage_events": false,
+        "users": false
+      },
+      "exports": {
+        "not_applicable": true,
+        "pdf": true,
+        "word": true
+      },
+      "foreign_key_error_count": 0,
+      "label": "legacy-v5",
+      "legacy_counts_after": {
+        "feedback": 0,
+        "materials": 0,
+        "payments": 0,
+        "subscriptions": 0,
+        "usage_events": 0,
+        "users": 0
+      },
+      "legacy_counts_before": {
+        "feedback": 0,
+        "materials": 0,
+        "payments": 0,
+        "subscriptions": 0,
+        "usage_events": 0,
+        "users": 0
+      },
+      "legacy_data_preserved": true,
+      "missing_legacy_columns": {
+        "feedback": [],
+        "materials": [],
+        "payments": [],
+        "subscriptions": [],
+        "usage_events": [],
+        "users": []
+      },
+      "new_table_counts": {
+        "class_lessons": 0,
+        "class_objectives": 0,
+        "classes": 0,
+        "lesson_outcomes": 0,
+        "product_events": 0
+      },
+      "passed": true,
+      "schema_fingerprint_sha256": "2fb6db2aec82d967f473ba742f7db8bb0affc2fd901c07da5ab2e5b04e43c06a",
+      "schema_version": 6
+    },
+    {
+      "duplicate_columns": {
+        "feedback": false,
+        "materials": false,
+        "payments": false,
+        "subscriptions": false,
+        "usage_events": false,
+        "users": false
+      },
+      "exports": {
+        "not_applicable": false,
+        "pdf": true,
+        "word": true
+      },
+      "foreign_key_error_count": 0,
+      "label": "populated-v5",
+      "legacy_counts_after": {
+        "feedback": 1,
+        "materials": 1,
+        "payments": 1,
+        "subscriptions": 1,
+        "usage_events": 1,
+        "users": 1
+      },
+      "legacy_counts_before": {
+        "feedback": 1,
+        "materials": 1,
+        "payments": 1,
+        "subscriptions": 1,
+        "usage_events": 1,
+        "users": 1
+      },
+      "legacy_data_preserved": true,
+      "missing_legacy_columns": {
+        "feedback": [],
+        "materials": [],
+        "payments": [],
+        "subscriptions": [],
+        "usage_events": [],
+        "users": []
+      },
+      "new_table_counts": {
+        "class_lessons": 0,
+        "class_objectives": 0,
+        "classes": 0,
+        "lesson_outcomes": 0,
+        "product_events": 0
+      },
+      "passed": true,
+      "schema_fingerprint_sha256": "2fb6db2aec82d967f473ba742f7db8bb0affc2fd901c07da5ab2e5b04e43c06a",
+      "schema_version": 6
+    },
+    {
+      "duplicate_columns": {
+        "feedback": false,
+        "materials": false,
+        "payments": false,
+        "subscriptions": false,
+        "usage_events": false,
+        "users": false
+      },
+      "exports": {
+        "not_applicable": false,
+        "pdf": true,
+        "word": true
+      },
+      "foreign_key_error_count": 0,
+      "label": "real-populated-v5-copy",
+      "legacy_counts_after": {
+        "feedback": 1,
+        "materials": 7,
+        "payments": 4,
+        "subscriptions": 1,
+        "usage_events": 10,
+        "users": 4
+      },
+      "legacy_counts_before": {
+        "feedback": 1,
+        "materials": 7,
+        "payments": 4,
+        "subscriptions": 1,
+        "usage_events": 10,
+        "users": 4
+      },
+      "legacy_data_preserved": true,
+      "missing_legacy_columns": {
+        "feedback": [],
+        "materials": [],
+        "payments": [],
+        "subscriptions": [],
+        "usage_events": [],
+        "users": []
+      },
+      "new_table_counts": {
+        "class_lessons": 0,
+        "class_objectives": 0,
+        "classes": 0,
+        "lesson_outcomes": 0,
+        "product_events": 0
+      },
+      "passed": true,
+      "schema_fingerprint_sha256": "2fb6db2aec82d967f473ba742f7db8bb0affc2fd901c07da5ab2e5b04e43c06a",
+      "schema_version": 6
+    }
+  ],
+  "schema_version": 6
+}

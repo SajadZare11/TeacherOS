@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
+from day5_migration import apply_schema_v6
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -36,10 +37,11 @@ _VALID_FEEDBACK_AREAS = {
 
 
 @contextmanager
-def _connection() -> Iterator[sqlite3.Connection]:
+def _connection(database_path: Path | None = None) -> Iterator[sqlite3.Connection]:
     """Open one short-lived SQLite connection with safe defaults."""
-    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(DATABASE_PATH, timeout=10)
+    target_path = Path(database_path or DATABASE_PATH).expanduser().resolve()
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(target_path, timeout=10)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute("PRAGMA busy_timeout = 10000")
@@ -88,11 +90,12 @@ def _usage_day_start_utc() -> str:
     return _utc_text(local_start)
 
 
-def initialize_database() -> Path:
+def initialize_database(database_path: Path | None = None) -> Path:
     """Create the TeacherOS database and tables when they do not exist."""
-    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    target_path = Path(database_path or DATABASE_PATH).expanduser().resolve()
+    target_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with _connection() as connection:
+    with _connection(target_path) as connection:
         connection.execute("PRAGMA journal_mode = WAL")
         connection.executescript(
             """
@@ -266,8 +269,19 @@ def initialize_database() -> Path:
         )
         _ensure_column(connection, "payments", "product_code", "TEXT")
         _ensure_column(connection, "payments", "subscription_days", "INTEGER")
+        apply_schema_v6(connection)
 
-    return DATABASE_PATH
+    return target_path
+
+
+@contextmanager
+def database_connection(
+    database_path: Path | None = None,
+) -> Iterator[sqlite3.Connection]:
+    """Yield an initialized database connection for ownership-safe services."""
+    target_path = initialize_database(database_path)
+    with _connection(target_path) as connection:
+        yield connection
 
 
 def _upsert_user(connection: sqlite3.Connection, telegram_user: Any) -> int:
@@ -308,6 +322,11 @@ def _upsert_user(connection: sqlite3.Connection, telegram_user: Any) -> int:
     if row is None:
         raise RuntimeError("TeacherOS could not create or find the database user.")
     return int(row["id"])
+
+
+def ensure_database_user(connection: sqlite3.Connection, telegram_user: Any) -> int:
+    """Create or refresh a Telegram user inside an existing transaction."""
+    return _upsert_user(connection, telegram_user)
 
 
 def register_telegram_user(telegram_user: Any) -> int:
@@ -410,6 +429,19 @@ def database_healthcheck() -> dict[str, int | str]:
         feedback_count = int(
             connection.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
         )
+        class_count = int(connection.execute("SELECT COUNT(*) FROM classes").fetchone()[0])
+        objective_count = int(
+            connection.execute("SELECT COUNT(*) FROM class_objectives").fetchone()[0]
+        )
+        class_lesson_count = int(
+            connection.execute("SELECT COUNT(*) FROM class_lessons").fetchone()[0]
+        )
+        outcome_count = int(
+            connection.execute("SELECT COUNT(*) FROM lesson_outcomes").fetchone()[0]
+        )
+        product_event_count = int(
+            connection.execute("SELECT COUNT(*) FROM product_events").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -423,6 +455,11 @@ def database_healthcheck() -> dict[str, int | str]:
         "payments": payment_count,
         "subscriptions": subscription_count,
         "feedback": feedback_count,
+        "classes": class_count,
+        "class_objectives": objective_count,
+        "class_lessons": class_lesson_count,
+        "lesson_outcomes": outcome_count,
+        "product_events": product_event_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:

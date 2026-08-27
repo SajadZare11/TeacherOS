@@ -1,0 +1,344 @@
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import shutil
+import sqlite3
+import tempfile
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Iterator
+
+from database import initialize_database
+from day5_migration import SCHEMA_VERSION
+from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
+from pdf_document import create_pdf_export
+from word_document import create_word_export
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+LEGACY_TABLES = (
+    "users",
+    "materials",
+    "usage_events",
+    "payments",
+    "subscriptions",
+    "feedback",
+)
+NEW_TABLES = (
+    "classes",
+    "class_objectives",
+    "class_lessons",
+    "lesson_outcomes",
+    "product_events",
+)
+
+
+@contextmanager
+def _connect(path: Path) -> Iterator[sqlite3.Connection]:
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
+    try:
+        yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def _counts(connection: sqlite3.Connection, tables: tuple[str, ...]) -> dict[str, int]:
+    return {
+        table: int(connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+        for table in tables
+    }
+
+
+def _schema_fingerprint(connection: sqlite3.Connection) -> str:
+    objects = connection.execute(
+        """
+        SELECT type, name, tbl_name, sql
+        FROM sqlite_master
+        WHERE name NOT LIKE 'sqlite_%'
+        ORDER BY type, name
+        """
+    ).fetchall()
+    payload = [tuple(row) for row in objects]
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _legacy_data_fingerprint(connection: sqlite3.Connection) -> str:
+    digest = hashlib.sha256()
+    for table in LEGACY_TABLES:
+        columns = [row[1] for row in connection.execute(f"PRAGMA table_info({table})")]
+        legacy_columns = [column for column in columns if column != "class_id"]
+        order = "id" if "id" in legacy_columns else "rowid"
+        rows = connection.execute(
+            f"SELECT {', '.join(legacy_columns)} FROM {table} ORDER BY {order}"
+        ).fetchall()
+        digest.update(table.encode("utf-8"))
+        digest.update(json.dumps([tuple(row) for row in rows], default=str).encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _strip_v6_to_legacy_fixture(path: Path) -> None:
+    """Convert a new empty temp DB into the exact additive pre-v6 shape."""
+    with _connect(path) as connection:
+        connection.execute("PRAGMA foreign_keys = OFF")
+        for trigger in (
+            "trg_materials_class_owner_insert",
+            "trg_materials_class_owner_update",
+            "trg_lessons_material_owner_insert",
+            "trg_lessons_material_owner_update",
+            "trg_product_events_owner_insert",
+            "trg_product_events_owner_update",
+        ):
+            connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
+        for index in (
+            "idx_materials_id_user",
+            "idx_materials_user_class_created",
+        ):
+            connection.execute(f"DROP INDEX IF EXISTS {index}")
+        for table in (
+            "product_events",
+            "lesson_outcomes",
+            "class_lessons",
+            "class_objectives",
+            "classes",
+        ):
+            connection.execute(f"DROP TABLE IF EXISTS {table}")
+        connection.execute("ALTER TABLE materials DROP COLUMN class_id")
+        connection.execute("DELETE FROM schema_versions WHERE version = ?", (SCHEMA_VERSION,))
+        connection.commit()
+
+
+def _build_legacy_fixture(path: Path, *, populated: bool) -> None:
+    initialize_database(path)
+    _strip_v6_to_legacy_fixture(path)
+    if not populated:
+        return
+    with _connect(path) as connection:
+        connection.execute(
+            """
+            INSERT INTO users (
+                telegram_user_id, username, first_name, last_name, language_code
+            ) VALUES (51001, 'migration_teacher', 'Migration', 'Teacher', 'en')
+            """
+        )
+        user_id = int(connection.execute("SELECT last_insert_rowid()").fetchone()[0])
+        connection.execute(
+            """
+            INSERT INTO materials (
+                user_id, material_type, subtype, title, level, topic,
+                content, metadata_json
+            ) VALUES (?, 'lesson', 'baseline', 'Legacy migration lesson', 'B1',
+                      'Travel', '# Legacy lesson\n\nANSWER KEY\n1. Verified', '{}')
+            """,
+            (user_id,),
+        )
+        material_id = int(connection.execute("SELECT last_insert_rowid()").fetchone()[0])
+        connection.execute(
+            """
+            INSERT INTO usage_events (user_id, event_type, material_type, material_id)
+            VALUES (?, 'generation', 'lesson', ?)
+            """,
+            (user_id, material_id),
+        )
+        connection.execute(
+            """
+            INSERT INTO payments (
+                user_id, order_id, purpose, amount, currency, status,
+                callback_token_hash, is_sandbox, product_code, subscription_days
+            ) VALUES (?, 'MIGRATION-ORDER', 'Migration verification', 149000, 'IRT',
+                      'paid', 'migration-token-hash', 1, 'pro', 30)
+            """,
+            (user_id,),
+        )
+        payment_id = int(connection.execute("SELECT last_insert_rowid()").fetchone()[0])
+        connection.execute(
+            """
+            INSERT INTO subscriptions (
+                user_id, plan_code, source, source_payment_id, starts_at,
+                expires_at, status, is_sandbox
+            ) VALUES (?, 'pro', 'payment', ?, '2026-08-01T00:00:00Z',
+                      '2026-09-01T00:00:00Z', 'active', 1)
+            """,
+            (user_id, payment_id),
+        )
+        connection.execute(
+            """
+            INSERT INTO feedback (user_id, rating, area, message)
+            VALUES (?, 5, 'lesson', 'Migration verification feedback')
+            """,
+            (user_id,),
+        )
+
+
+@contextmanager
+def _flags_disabled() -> Iterator[None]:
+    previous = {env_name: os.environ.get(env_name) for env_name in FEATURE_ENV_VARS.values()}
+    try:
+        for env_name in FEATURE_ENV_VARS.values():
+            os.environ[env_name] = "false"
+        yield
+    finally:
+        for env_name, value in previous.items():
+            if value is None:
+                os.environ.pop(env_name, None)
+            else:
+                os.environ[env_name] = value
+
+
+def _verify_exports(connection: sqlite3.Connection) -> dict[str, bool]:
+    row = connection.execute("SELECT * FROM materials ORDER BY id LIMIT 1").fetchone()
+    if row is None:
+        return {"word": True, "pdf": True, "not_applicable": True}
+    material = dict(row)
+    word_stream, _ = create_word_export(material)
+    pdf_stream, _ = create_pdf_export(material)
+    word_bytes = word_stream.read()
+    pdf_bytes = pdf_stream.read()
+    return {
+        "word": word_bytes.startswith(b"PK"),
+        "pdf": pdf_bytes.startswith(b"%PDF-"),
+        "not_applicable": False,
+    }
+
+
+def verify_database(path: Path, label: str) -> dict[str, Any]:
+    with _connect(path) as connection:
+        before_counts = _counts(connection, LEGACY_TABLES)
+        before_data = _legacy_data_fingerprint(connection)
+        before_columns = {
+            table: [row[1] for row in connection.execute(f"PRAGMA table_info({table})")]
+            for table in LEGACY_TABLES
+        }
+
+    initialize_database(path)
+    initialize_database(path)
+
+    with _connect(path) as connection:
+        after_counts = _counts(connection, LEGACY_TABLES)
+        after_data = _legacy_data_fingerprint(connection)
+        after_columns = {
+            table: [row[1] for row in connection.execute(f"PRAGMA table_info({table})")]
+            for table in LEGACY_TABLES
+        }
+        new_counts = _counts(connection, NEW_TABLES)
+        version = int(connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0])
+        foreign_key_errors = [tuple(row) for row in connection.execute("PRAGMA foreign_key_check")]
+        exports = _verify_exports(connection)
+        schema_fingerprint = _schema_fingerprint(connection)
+
+    duplicate_columns = {
+        table: len(columns) != len(set(columns)) for table, columns in after_columns.items()
+    }
+    missing_legacy_columns = {
+        table: sorted(set(before_columns[table]) - set(after_columns[table]))
+        for table in LEGACY_TABLES
+    }
+    passed = all(
+        (
+            before_counts == after_counts,
+            before_data == after_data,
+            version == SCHEMA_VERSION,
+            not foreign_key_errors,
+            not any(duplicate_columns.values()),
+            not any(missing_legacy_columns.values()),
+            exports["word"],
+            exports["pdf"],
+        )
+    )
+    return {
+        "label": label,
+        "passed": passed,
+        "schema_version": version,
+        "legacy_counts_before": before_counts,
+        "legacy_counts_after": after_counts,
+        "new_table_counts": new_counts,
+        "legacy_data_preserved": before_data == after_data,
+        "duplicate_columns": duplicate_columns,
+        "missing_legacy_columns": missing_legacy_columns,
+        "foreign_key_error_count": len(foreign_key_errors),
+        "exports": exports,
+        "schema_fingerprint_sha256": schema_fingerprint,
+    }
+
+
+def run_checks(real_copy: Path | None = None) -> dict[str, Any]:
+    scenarios: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory(prefix="teacheros-day5-migration-") as temp_dir:
+        temp_root = Path(temp_dir)
+        empty_path = temp_root / "empty.db"
+        initialize_database(empty_path)
+        scenarios.append(verify_database(empty_path, "empty"))
+
+        legacy_path = temp_root / "legacy-v5.db"
+        _build_legacy_fixture(legacy_path, populated=False)
+        scenarios.append(verify_database(legacy_path, "legacy-v5"))
+
+        populated_path = temp_root / "populated-v5.db"
+        _build_legacy_fixture(populated_path, populated=True)
+        scenarios.append(verify_database(populated_path, "populated-v5"))
+
+        if real_copy is not None:
+            source = real_copy.expanduser().resolve()
+            if not source.is_file():
+                raise FileNotFoundError(f"Real-schema copy not found: {source}")
+            copied_path = temp_root / "real-populated-copy.db"
+            shutil.copy2(source, copied_path)
+            scenarios.append(verify_database(copied_path, "real-populated-v5-copy"))
+
+    with _flags_disabled():
+        flag_state = feature_flag_snapshot()
+        rollback = {
+            "all_surfaces_disabled": all(
+                not state["effective"] for state in flag_state.values()
+            ),
+            "quick_create_default": quick_create_is_default(),
+            "strategy": "additive_schema_feature_flags_off",
+        }
+
+    passed = all(scenario["passed"] for scenario in scenarios) and all(
+        (rollback["all_surfaces_disabled"], rollback["quick_create_default"])
+    )
+    return {
+        "day": 5,
+        "passed": passed,
+        "schema_version": SCHEMA_VERSION,
+        "scenario_count": len(scenarios),
+        "scenarios": scenarios,
+        "rollback": rollback,
+        "privacy": "Counts and schema hashes only; no user content or identifiers.",
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Verify the TeacherOS Day 5 migration twice.")
+    parser.add_argument(
+        "--real-copy",
+        type=Path,
+        help="Optional consistent v5 backup to migrate only inside a temporary copy.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=PROJECT_ROOT / "outputs" / "day05" / "migration_report.json",
+    )
+    args = parser.parse_args()
+    report = run_checks(args.real_copy)
+    output = args.output.expanduser().resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if report["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
