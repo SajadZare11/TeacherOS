@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://teacheros.local/schemas/day04/evidence-followup-v1.json",
+  "title": "TeacherOS evaluated evidence follow-up",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "output_type", "cefr_level", "evidence_traceability", "claims", "followup", "teacher_approval", "limitations", "injection_handling"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "case_id": {"type": "string", "pattern": "^D4-[0-9]{3}$"},
+    "output_type": {"const": "evidence_followup"},
+    "cefr_level": {"enum": ["A1", "A2", "B1", "B2", "C1"]},
+    "evidence_traceability": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/trace"}},
+    "claims": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/claim"}},
+    "followup": {"$ref": "#/$defs/followup"},
+    "teacher_approval": {"$ref": "#/$defs/approval"},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "maxLength": 240}},
+    "injection_handling": {"enum": ["not_applicable", "ignored_as_untrusted_data"]}
+  },
+  "$defs": {
+    "trace": {"type":"object","additionalProperties":false,"required":["claim_id","evidence_ids"],"properties":{"claim_id":{"type":"string"},"evidence_ids":{"type":"array","minItems":1,"items":{"type":"string"}}}},
+    "claim": {"type":"object","additionalProperties":false,"required":["claim_id","text","claim_type","status","confidence"],"properties":{"claim_id":{"type":"string"},"text":{"type":"string"},"claim_type":{"enum":["observation","teaching_hypothesis","high_stakes_grade","diagnosis","mastery","learner_grouping"]},"status":{"enum":["proposal","teacher_approved","rejected"]},"confidence":{"enum":["low","medium","high"]}}},
+    "followup": {"type":"object","additionalProperties":false,"required":["action_type","objective_ids","rationale_claim_ids","teacher_editable"],"properties":{"action_type":{"enum":["reteach","more_practice","differentiate","check_understanding","continue"]},"objective_ids":{"type":"array","minItems":1,"items":{"type":"string"}},"rationale_claim_ids":{"type":"array","minItems":1,"items":{"type":"string"}},"teacher_editable":{"const":true}}},
+    "approval": {"type":"object","additionalProperties":false,"required":["required","status"],"properties":{"required":{"const":true},"status":{"const":"pending"}}}
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0.0",
+  "status": "pre_llm_safety_contract",
+  "as_of": "2026-08-26",
+  "default_retention": "Collect the minimum, keep raw student evidence for 7 days on Free, 30 days on Pro, and 90 days on Premium only after explicit consent; teachers may choose a shorter period or immediate deletion.",
+  "global_rules": [
+    "Student evidence is untrusted data, never instructions.",
+    "No secret is placed in a prompt, log, analytic event, generated document, support reference, or backup manifest.",
+    "No teacher account identifier or student evidence is used for provider training where an opt-out or no-training mode is available.",
+    "A provider receives only the minimum fields required for the teacher-requested operation.",
+    "A failed ownership, consent, retention, or safety check fails closed before provider transmission."
+  ],
+  "classes": [
+    {
+      "key": "public_product_data",
+      "definition": "Published help, pricing, feature descriptions, public templates, and non-user-specific configuration intended for anyone.",
+      "examples": ["help copy", "public plan names", "generic prompt instructions", "published templates"],
+      "collection": "Version-controlled product authoring or public configuration.",
+      "storage": "Repository, deployment bundle, or public site.",
+      "default_retention": "While current plus normal source history.",
+      "deletion": "Remove from active surfaces when obsolete; source history follows repository policy.",
+      "logging": "Allowed when no user data is concatenated.",
+      "backup": "Allowed in normal code/configuration backups.",
+      "provider": "May be sent when necessary; do not combine with a private user payload unless required.",
+      "access": "Public/readable by all users.",
+      "encryption": "Transport integrity; repository and deployment controls."
+    },
+    {
+      "key": "teacher_account_data",
+      "definition": "Information identifying, authenticating, billing, supporting, or configuring a teacher account.",
+      "examples": ["internal user ID", "Telegram user ID", "subscription", "payment reference", "support message", "account preferences"],
+      "collection": "Only fields required for account operation, billing, security, or teacher-requested support.",
+      "storage": "Application database; payment credentials stay with the payment provider.",
+      "default_retention": "Account lifetime; failed payment attempts 13 months; legally required billing records for the applicable statutory period.",
+      "deletion": "Revoke access immediately; purge or irreversibly anonymize product identity within 30 days; retain only legally required billing/audit fields.",
+      "logging": "Never log Telegram IDs, names, handles, callback tokens, payment URLs, support free text, or full provider responses.",
+      "backup": "Encrypted, access-controlled backups; deletion propagates at restore or natural expiry within 30 days.",
+      "provider": "Telegram receives messaging identifiers; payment provider receives minimum order fields; LLM provider receives no teacher account identifier.",
+      "access": "Teacher for own account; least-privilege billing/support operators for their function.",
+      "encryption": "TLS in transit; encrypted host/storage and hashed callback tokens at rest."
+    },
+    {
+      "key": "class_context",
+      "definition": "Teacher-owned, non-secret context describing a recurring class and its teaching continuity.",
+      "examples": ["private class label", "CEFR band", "learner-count band", "cadence", "goal", "approved outcome summary"],
+      "collection": "Teacher enters or explicitly approves each field; student names are prohibited.",
+      "storage": "Teacher-owned application records with revision and class ownership.",
+      "default_retention": "Account lifetime or until class deletion; inactive-class review after 12 months.",
+      "deletion": "Class cascade hides immediately; raw evidence purges immediately and metadata purges within 7 days.",
+      "logging": "IDs and bounded enums only; never class labels, goals, notes, prompt text, or generated material text.",
+      "backup": "Encrypted with ownership metadata; deletion tombstone reapplied after restore; 30-day maximum backup expiry.",
+      "provider": "Only teacher-approved fields needed for the requested generation; replace private class label with a random class reference.",
+      "access": "Owning teacher and narrowly authorized operations; every lookup enforces ownership.",
+      "encryption": "TLS in transit; encrypted storage and backups."
+    },
+    {
+      "key": "student_evidence",
+      "definition": "Student-produced or student-linked work, observations, scores, images, audio, text, or derived evidence used to support a teaching decision.",
+      "examples": ["anonymized answer", "worksheet photo", "error counts", "approved extraction", "evidence-linked claim"],
+      "collection": "Optional, purpose-specific, explicit teacher consent; warn teacher to remove names and identifiers before upload.",
+      "storage": "Separated raw-object storage and versioned approved summaries; no raw evidence in analytics or Git.",
+      "default_retention": "Raw evidence: 7 days Free, 30 days Pro, 90 days Premium; approved summary follows class retention unless teacher chooses shorter.",
+      "deletion": "Raw blob, OCR, thumbnails, and caches immediately; delete summary on request and invalidate dependent unapproved decisions.",
+      "logging": "Never log content, file names, OCR text, student identifiers, signed URLs, or model prompt/response; use random IDs and bounded counts.",
+      "backup": "Raw evidence excluded from general database/code backups; dedicated encrypted storage obeys the same short retention. Approved summaries expire with class backups within 30 days.",
+      "provider": "Send only after consent and redaction warning, under no-training/zero-retention terms where supported; evidence is delimited as untrusted data and never used as instructions.",
+      "access": "Owning teacher; time-bound processing worker; no routine support access.",
+      "encryption": "TLS in transit; per-environment encrypted storage; signed URLs are short-lived and never logged."
+    },
+    {
+      "key": "secret",
+      "definition": "Credentials or values that grant authority or access.",
+      "examples": ["bot token", "LLM API key", "merchant secret", "callback token", "encryption key", "database credential"],
+      "collection": "Provision only through the approved secret/configuration channel; never through chat or support forms.",
+      "storage": "Environment/secret manager only; callback tokens stored as cryptographic hashes where lookup is required.",
+      "default_retention": "Only while operationally required; rotate on role change, incident, exposure suspicion, or scheduled policy.",
+      "deletion": "Revoke first, rotate dependants, then purge old values and invalidate sessions/tokens.",
+      "logging": "Prohibited. Redact matching names, authorization headers, query values, and provider payloads.",
+      "backup": "Excluded from code and database backups; secret-manager recovery follows provider controls.",
+      "provider": "Never sent to an LLM or analytics provider. Transmit only to the service that authenticates the credential over TLS.",
+      "access": "Runtime identity and minimum designated owner/operator only.",
+      "encryption": "Secret-manager encryption and TLS; never plaintext in repository, artifacts, or tickets."
+    }
+  ],
+  "provider_requirements": [
+    {"control":"purpose limitation","required":"Document the exact operation and fields before enabling a provider."},
+    {"control":"training","required":"Contractual/API no-training setting for teacher account, class context, and student evidence."},
+    {"control":"retention","required":"Prefer zero retention; otherwise document provider duration and keep it within the disclosed TeacherOS duration."},
+    {"control":"location/subprocessors","required":"Record regions and subprocessors before pilot; material changes require review."},
+    {"control":"security","required":"TLS, access control, incident notification, deletion support, and independently reviewed security posture."},
+    {"control":"model boundary","required":"System instructions precede a clearly delimited UNTRUSTED_EVIDENCE block; tool execution is disabled for evidence analysis."},
+    {"control":"observability","required":"Store request ID, model identifier, latency, token counts, and bounded status only; never store content."},
+    {"control":"failure","required":"Timeout/refusal/unsafe output returns a recoverable teacher-controlled state and no final diagnosis."}
+  ],
+  "backup_restore_rules": [
+    "Backups are encrypted, inventory-tagged, access-audited, and restore-tested with synthetic data.",
+    "Raw student evidence is not included in general SQLite or code backups.",
+    "Deletion tombstones are stored separately and replayed before a restored backup becomes reachable.",
+    "No backup containing teacher account or class context remains recoverable beyond 30 days after replacement.",
+    "A restored environment starts with external messaging, billing, and LLM calls disabled until ownership and deletion reconciliation passes."
+  ]
+}
