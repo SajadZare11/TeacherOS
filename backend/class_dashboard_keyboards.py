@@ -36,7 +36,7 @@ def class_dashboard_keyboard(class_id: int, revision: int) -> InlineKeyboardMark
                 InlineKeyboardButton("📈 Progress", callback_data=_cb("progress", class_id, revision)),
             ],
             [
-                InlineKeyboardButton("📁 Library", callback_data="library_start"),
+                InlineKeyboardButton("📁 Library", callback_data=_cb("library", class_id, revision)),
                 InlineKeyboardButton("👤 Profile", callback_data=_cb("profile", class_id, revision)),
             ],
             [InlineKeyboardButton("More details", callback_data=_cb("details", class_id, revision))],
@@ -176,18 +176,23 @@ def today_queue_keyboard(items: list[dict[str, Any]]) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(rows)
 
 
-def class_action_keyboard(class_id: int, revision: int, action: str) -> InlineKeyboardMarkup:
+def class_action_keyboard(
+    class_id: int, revision: int, action: str, *, class_aware: bool = False
+) -> InlineKeyboardMarkup:
     rows: list[list[InlineKeyboardButton]] = []
     if action == "plan":
-        rows.append([InlineKeyboardButton("Use one-off Lesson Planner", callback_data="lesson")])
+        rows.append([InlineKeyboardButton(
+            "Plan with saved class" if class_aware else "Use one-off Lesson Planner",
+            callback_data=(f"cg|ls|{class_id:x}|{revision:x}" if class_aware else "lesson"),
+        )])
     elif action == "create":
         rows.extend(
             [
                 [
-                    InlineKeyboardButton("🎲 Activity", callback_data="activity_start"),
-                    InlineKeyboardButton("📝 Worksheet", callback_data="worksheet_start"),
+                    InlineKeyboardButton("🎲 Activity", callback_data=(f"cg|ac|{class_id:x}|{revision:x}" if class_aware else "activity_start")),
+                    InlineKeyboardButton("📝 Worksheet", callback_data=(f"cg|ws|{class_id:x}|{revision:x}" if class_aware else "worksheet_start")),
                 ],
-                [InlineKeyboardButton("✅ Assessment", callback_data="quiz_start")],
+                [InlineKeyboardButton("✅ Assessment", callback_data=(f"cg|as|{class_id:x}|{revision:x}" if class_aware else "quiz_start"))],
             ]
         )
     elif action == "library":

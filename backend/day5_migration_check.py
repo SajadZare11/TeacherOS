@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day9_migration import SCHEMA_VERSION
+from day10_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -33,7 +33,17 @@ NEW_TABLES = (
     "class_lessons",
     "lesson_outcomes",
     "product_events",
+    "class_setup_drafts",
+    "class_action_items",
+    "ai_generation_audits",
+    "material_objective_links",
 )
+
+_POST_LEGACY_MATERIAL_COLUMNS = {
+    "class_id", "ai_prompt_contract", "ai_prompt_version",
+    "ai_prompt_hash_sha256", "ai_context_hash_sha256",
+    "ai_source_record_ids_json", "quality_scores_json",
+}
 
 
 @contextmanager
@@ -77,7 +87,9 @@ def _legacy_data_fingerprint(connection: sqlite3.Connection) -> str:
     digest = hashlib.sha256()
     for table in LEGACY_TABLES:
         columns = [row[1] for row in connection.execute(f"PRAGMA table_info({table})")]
-        legacy_columns = [column for column in columns if column != "class_id"]
+        legacy_columns = [
+            column for column in columns if column not in _POST_LEGACY_MATERIAL_COLUMNS
+        ]
         order = "id" if "id" in legacy_columns else "rowid"
         rows = connection.execute(
             f"SELECT {', '.join(legacy_columns)} FROM {table} ORDER BY {order}"
@@ -100,6 +112,8 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_product_events_owner_update",
             "trg_ai_audits_class_owner_insert",
             "trg_ai_audits_class_owner_update",
+            "trg_material_objectives_owner_insert",
+            "trg_material_objectives_owner_update",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
@@ -108,6 +122,7 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "material_objective_links",
             "ai_generation_audits",
             "class_action_items",
             "class_setup_drafts",
@@ -118,7 +133,9 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "classes",
         ):
             connection.execute(f"DROP TABLE IF EXISTS {table}")
-        connection.execute("ALTER TABLE materials DROP COLUMN class_id")
+        for column in _POST_LEGACY_MATERIAL_COLUMNS:
+            if column in {str(row[1]) for row in connection.execute("PRAGMA table_info(materials)")}:
+                connection.execute(f"ALTER TABLE materials DROP COLUMN {column}")
         connection.execute("DELETE FROM schema_versions WHERE version >= 6")
         connection.commit()
 
@@ -298,7 +315,7 @@ def run_checks(real_copy: Path | None = None) -> dict[str, Any]:
                 raise FileNotFoundError(f"Real-schema copy not found: {source}")
             copied_path = temp_root / "real-populated-copy.db"
             shutil.copy2(source, copied_path)
-            scenarios.append(verify_database(copied_path, "real-populated-v5-copy"))
+            scenarios.append(verify_database(copied_path, "real-populated-copy"))
 
     with _flags_disabled():
         flag_state = feature_flag_snapshot()
@@ -329,7 +346,7 @@ def main() -> int:
     parser.add_argument(
         "--real-copy",
         type=Path,
-        help="Optional consistent v5 backup to migrate only inside a temporary copy.",
+        help="Optional consistent older-schema backup to migrate only inside a temporary copy.",
     )
     parser.add_argument(
         "--output",

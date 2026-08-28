@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from typing import Mapping
 
 from prompt_contracts import PromptContract
 
@@ -12,6 +13,7 @@ class ValidationResult:
     content: str | None
     schema_errors: tuple[str, ...]
     pedagogical_errors: tuple[str, ...]
+    quality_scores: dict[str, int]
 
     @property
     def valid(self) -> bool:
@@ -85,10 +87,52 @@ def _pedagogical_errors(content: str, contract: PromptContract) -> list[str]:
     return errors
 
 
-def validate_model_response(raw: object, contract: PromptContract) -> ValidationResult:
+def _quality_errors(
+    content: str,
+    requirements: Mapping[str, object],
+) -> tuple[list[str], dict[str, int]]:
+    """Apply visible, deterministic Day 10 checks before teacher display."""
+    normalized = re.sub(r"\s+", " ", content.casefold())
+    errors: list[str] = []
+    scores: dict[str, int] = {}
+
+    expected_level = str(requirements.get("level") or "").strip().casefold()
+    duration = str(requirements.get("duration_minutes") or "").strip()
+    objective_required = bool(requirements.get("objective_alignment"))
+    answer_key_required = bool(requirements.get("answer_key"))
+
+    checks = {
+        "timing": bool(re.search(r"\b(time|timing|minutes?|mins?)\b", normalized))
+        and (not duration or bool(re.search(rf"\b{re.escape(duration)}\b", normalized))),
+        "instructions": bool(re.search(r"\b(instructions?|procedure|steps?|directions?)\b", normalized)),
+        "level": not expected_level
+        or bool(re.search(rf"(?<![a-z0-9]){re.escape(expected_level)}(?![a-z0-9])", normalized)),
+        "resource_requirements": bool(
+            re.search(r"\b(materials?|resources?|equipment|required resources)\b", normalized)
+        ),
+        "answer_key": not answer_key_required or "answer key" in normalized,
+        "objective_alignment": not objective_required
+        or bool(re.search(r"\b(objective alignment|aligned objectives?|learning objectives?)\b", normalized)),
+    }
+    for name, passed in checks.items():
+        scores[name] = 100 if passed else 0
+        if not passed:
+            errors.append(f"quality_failed:{name}")
+    scores["overall"] = int(round(sum(scores.values()) / len(scores)))
+    return errors, scores
+
+
+def validate_model_response(
+    raw: object,
+    contract: PromptContract,
+    quality_requirements: Mapping[str, object] | None = None,
+) -> ValidationResult:
     """Validate schema first and pedagogy second; invalid content is never renderable."""
     content, schema_errors = _parse_schema(raw)
     if schema_errors or content is None:
-        return ValidationResult(None, tuple(schema_errors), ())
+        return ValidationResult(None, tuple(schema_errors), (), {})
     pedagogy = _pedagogical_errors(content, contract)
-    return ValidationResult(content, (), tuple(pedagogy))
+    quality_errors, quality_scores = _quality_errors(
+        content, quality_requirements or {}
+    ) if quality_requirements else ([], {})
+    return ValidationResult(content, (), tuple([*pedagogy, *quality_errors]), quality_scores)

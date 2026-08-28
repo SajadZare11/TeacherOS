@@ -13,6 +13,7 @@ from day5_migration import apply_schema_v6
 from day7_migration import apply_schema_v7
 from day8_migration import apply_schema_v8
 from day9_migration import apply_schema_v9
+from day10_migration import apply_schema_v10
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -276,6 +277,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v7(connection)
         apply_schema_v8(connection)
         apply_schema_v9(connection)
+        apply_schema_v10(connection)
 
     return target_path
 
@@ -352,6 +354,10 @@ def save_generated_material(
     level: str | None = None,
     topic: str | None = None,
     metadata: Mapping[str, Any] | None = None,
+    class_id: int | None = None,
+    objective_ids: tuple[int, ...] | list[int] = (),
+    ai_provenance: Mapping[str, Any] | None = None,
+    quality_scores: Mapping[str, Any] | None = None,
 ) -> int:
     """Save one completed TeacherOS generation and return its library ID."""
     normalized_type = material_type.strip().lower()
@@ -370,6 +376,13 @@ def save_generated_material(
         ensure_ascii=False,
         sort_keys=True,
     )
+    provenance = dict(ai_provenance or {})
+    sources = provenance.get("source_record_ids", {})
+    if not isinstance(sources, Mapping):
+        sources = {}
+    normalized_objective_ids = tuple(dict.fromkeys(int(value) for value in objective_ids))
+    if any(value < 1 for value in normalized_objective_ids):
+        raise ValueError("Objective IDs must be positive integers.")
 
     initialize_database()
     with _connection() as connection:
@@ -384,9 +397,20 @@ def save_generated_material(
                 level,
                 topic,
                 content,
-                metadata_json
+                metadata_json,
+                class_id,
+                ai_prompt_contract,
+                ai_prompt_version,
+                ai_prompt_hash_sha256,
+                ai_context_hash_sha256,
+                ai_source_record_ids_json,
+                quality_scores_json
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            WHERE ? IS NULL OR EXISTS (
+                SELECT 1 FROM classes
+                WHERE id = ? AND user_id = ? AND status = 'active'
+            )
             """,
             (
                 user_id,
@@ -397,11 +421,35 @@ def save_generated_material(
                 topic.strip() if isinstance(topic, str) and topic.strip() else None,
                 normalized_content,
                 metadata_json,
+                class_id,
+                provenance.get("prompt_contract"),
+                provenance.get("prompt_version"),
+                provenance.get("prompt_hash_sha256"),
+                provenance.get("context_hash_sha256"),
+                json.dumps(dict(sources), ensure_ascii=False, sort_keys=True),
+                json.dumps(dict(quality_scores or {}), ensure_ascii=False, sort_keys=True),
+                class_id,
+                class_id,
+                user_id,
             ),
         )
         material_id = cursor.lastrowid
-        if material_id is None:
+        if material_id is None or cursor.rowcount != 1:
             raise RuntimeError("TeacherOS could not save the generated material.")
+
+        for objective_id in normalized_objective_ids:
+            objective = connection.execute(
+                "SELECT 1 FROM class_objectives WHERE id = ? AND class_id = ? "
+                "AND user_id = ? AND status = 'current'",
+                (objective_id, class_id, user_id),
+            ).fetchone()
+            if class_id is None or objective is None:
+                raise ValueError("Objective link does not belong to the active class.")
+            connection.execute(
+                "INSERT INTO material_objective_links "
+                "(material_id, objective_id, class_id, user_id) VALUES (?, ?, ?, ?)",
+                (int(material_id), objective_id, class_id, user_id),
+            )
 
         connection.execute(
             """
@@ -457,6 +505,9 @@ def database_healthcheck() -> dict[str, int | str]:
         ai_generation_audit_count = int(
             connection.execute("SELECT COUNT(*) FROM ai_generation_audits").fetchone()[0]
         )
+        material_objective_link_count = int(
+            connection.execute("SELECT COUNT(*) FROM material_objective_links").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -478,6 +529,7 @@ def database_healthcheck() -> dict[str, int | str]:
         "class_setup_drafts": setup_draft_count,
         "class_action_items": class_action_item_count,
         "ai_generation_audits": ai_generation_audit_count,
+        "material_objective_links": material_objective_link_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:
@@ -558,6 +610,29 @@ def list_user_materials(
         return [dict(row) for row in rows]
 
 
+def list_class_materials(
+    *, telegram_user_id: int, class_id: int, limit: int = 20
+) -> list[dict[str, Any]]:
+    """Return materials linked to one active, owned class."""
+    if class_id < 1 or limit < 1 or limit > 50:
+        raise ValueError("Invalid class-library request.")
+    initialize_database()
+    with _connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT m.id, m.material_type, m.subtype, m.title, m.level, m.topic,
+                   m.created_at
+            FROM materials AS m
+            JOIN users AS u ON u.id = m.user_id
+            JOIN classes AS c ON c.id = m.class_id AND c.user_id = m.user_id
+            WHERE u.telegram_user_id = ? AND c.id = ? AND c.status = 'active'
+            ORDER BY m.created_at DESC, m.id DESC LIMIT ?
+            """,
+            (telegram_user_id, class_id, limit),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
 def get_user_material(
     *,
     telegram_user_id: int,
@@ -580,6 +655,13 @@ def get_user_material(
                 m.topic,
                 m.content,
                 m.metadata_json,
+                m.class_id,
+                m.ai_prompt_contract,
+                m.ai_prompt_version,
+                m.ai_prompt_hash_sha256,
+                m.ai_context_hash_sha256,
+                m.ai_source_record_ids_json,
+                m.quality_scores_json,
                 m.created_at
             FROM materials AS m
             JOIN users AS u ON u.id = m.user_id
@@ -597,6 +679,23 @@ def get_user_material(
     except json.JSONDecodeError:
         metadata = {}
     material["metadata"] = metadata if isinstance(metadata, dict) else {}
+    for source, target in (
+        ("ai_source_record_ids_json", "ai_source_record_ids"),
+        ("quality_scores_json", "quality_scores"),
+    ):
+        try:
+            decoded = json.loads(str(material.get(source) or "{}"))
+        except json.JSONDecodeError:
+            decoded = {}
+        material[target] = decoded if isinstance(decoded, dict) else {}
+        material.pop(source, None)
+    with _connection() as connection:
+        links = connection.execute(
+            "SELECT objective_id FROM material_objective_links "
+            "WHERE material_id = ? ORDER BY objective_id",
+            (material_id,),
+        ).fetchall()
+    material["objective_ids"] = [int(row[0]) for row in links]
     material.pop("metadata_json", None)
     return material
 
@@ -623,6 +722,42 @@ def delete_user_material(
             (material_id, telegram_user_id),
         )
         return cursor.rowcount == 1
+
+
+def plan_material_as_next_lesson(
+    *, telegram_user_id: int, material_id: int
+) -> tuple[dict[str, Any] | None, bool]:
+    """Idempotently add an owned, class-linked lesson to the class plan."""
+    initialize_database()
+    with _connection() as connection:
+        material = connection.execute(
+            """
+            SELECT m.id, m.user_id, m.class_id, m.title
+            FROM materials AS m JOIN users AS u ON u.id = m.user_id
+            JOIN classes AS c ON c.id = m.class_id AND c.user_id = m.user_id
+            WHERE u.telegram_user_id = ? AND m.id = ?
+              AND m.material_type = 'lesson' AND c.status = 'active'
+            """,
+            (telegram_user_id, material_id),
+        ).fetchone()
+        if material is None:
+            return None, False
+        existing = connection.execute(
+            "SELECT * FROM class_lessons WHERE user_id = ? AND class_id = ? "
+            "AND material_id = ? AND status IN ('draft', 'planned') ORDER BY id DESC LIMIT 1",
+            (material["user_id"], material["class_id"], material_id),
+        ).fetchone()
+        if existing is not None:
+            return dict(existing), False
+        cursor = connection.execute(
+            "INSERT INTO class_lessons (class_id, user_id, material_id, title, status) "
+            "VALUES (?, ?, ?, ?, 'planned')",
+            (material["class_id"], material["user_id"], material_id, material["title"]),
+        )
+        row = connection.execute(
+            "SELECT * FROM class_lessons WHERE id = ?", (cursor.lastrowid,)
+        ).fetchone()
+        return (dict(row) if row is not None else None), True
 
 
 

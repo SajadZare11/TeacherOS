@@ -470,10 +470,12 @@ def duration_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(keyboard)
 
 
-def lesson_confirm_keyboard() -> InlineKeyboardMarkup:
+def lesson_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
+    override = [[InlineKeyboardButton("✏ ONE-TIME level/duration override", callback_data="lesson_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("🚀 Generate Lesson", callback_data="lesson_generate")],
+            *override,
             [
                 InlineKeyboardButton("⬅ Back", callback_data="lesson_back_duration"),
                 InlineKeyboardButton("❌ Cancel", callback_data="lesson_cancel"),
@@ -510,10 +512,12 @@ def activity_type_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(keyboard)
 
 
-def activity_confirm_keyboard() -> InlineKeyboardMarkup:
+def activity_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
+    override = [[InlineKeyboardButton("✏ ONE-TIME level override", callback_data="activity_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("🚀 Generate Activity", callback_data="activity_generate")],
+            *override,
             [
                 InlineKeyboardButton("⬅ Back", callback_data="activity_back_topic"),
                 InlineKeyboardButton("❌ Cancel", callback_data="activity_cancel"),
@@ -548,7 +552,8 @@ def worksheet_type_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(keyboard)
 
 
-def worksheet_confirm_keyboard() -> InlineKeyboardMarkup:
+def worksheet_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
+    override = [[InlineKeyboardButton("✏ ONE-TIME level override", callback_data="worksheet_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
             [
@@ -557,6 +562,7 @@ def worksheet_confirm_keyboard() -> InlineKeyboardMarkup:
                     callback_data="worksheet_generate",
                 )
             ],
+            *override,
             [
                 InlineKeyboardButton("⬅ Back", callback_data="worksheet_back_topic"),
                 InlineKeyboardButton("❌ Cancel", callback_data="worksheet_cancel"),
@@ -652,10 +658,20 @@ def quiz_question_count_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def generated_material_export_keyboard(material_id: int) -> InlineKeyboardMarkup:
-    """Show Word/PDF actions immediately after a material is generated."""
+def generated_material_export_keyboard(
+    material_id: int, *, material_type: str | None = None, class_id: int | None = None
+) -> InlineKeyboardMarkup:
+    """Day 10 post-generation toolbar; export callbacks remain backward compatible."""
+    actions = [
+        InlineKeyboardButton("💾 Save", callback_data=f"ma|sv|{material_id}"),
+        InlineKeyboardButton("✏ Adapt", callback_data=f"ma|ad|{material_id}"),
+    ]
+    extra = []
+    if material_type == "lesson" and class_id is not None:
+        extra.append([InlineKeyboardButton("➡ Use as Next Lesson", callback_data=f"ma|nx|{material_id}")])
     return InlineKeyboardMarkup(
         [
+            actions,
             [
                 InlineKeyboardButton(
                     "📄 Download Word",
@@ -667,6 +683,11 @@ def generated_material_export_keyboard(material_id: int) -> InlineKeyboardMarkup
                 ),
             ],
             [
+                InlineKeyboardButton("🔁 Regenerate with change", callback_data=f"ma|rg|{material_id}"),
+                InlineKeyboardButton("🚩 Report Problem", callback_data=f"ma|rp|{material_id}"),
+            ],
+            *extra,
+            [
                 InlineKeyboardButton("📁 Open Library", callback_data="library_start"),
                 InlineKeyboardButton("🏠 Main Menu", callback_data="account_main"),
             ],
@@ -674,7 +695,8 @@ def generated_material_export_keyboard(material_id: int) -> InlineKeyboardMarkup
     )
 
 
-def quiz_confirm_keyboard() -> InlineKeyboardMarkup:
+def quiz_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
+    override = [[InlineKeyboardButton("✏ ONE-TIME level override", callback_data="quiz_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
             [
@@ -683,12 +705,27 @@ def quiz_confirm_keyboard() -> InlineKeyboardMarkup:
                     callback_data="quiz_generate",
                 )
             ],
+            *override,
             [
                 InlineKeyboardButton("⬅ Back", callback_data="quiz_back_topic"),
                 InlineKeyboardButton("❌ Cancel", callback_data="quiz_cancel"),
             ],
         ]
     )
+
+
+def class_library_keyboard(
+    materials: list[dict[str, object]], class_id: int, revision: int
+) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(str(item["title"])[:48], callback_data=f"library_item_{item['id']}_0")]
+        for item in materials[:20]
+    ]
+    rows.append([InlineKeyboardButton(
+        "⬅ Class Home",
+        callback_data=f"v1|cl|open|{_base36(class_id)}|{_base36(revision)}",
+    )])
+    return InlineKeyboardMarkup(rows)
 
 _LIBRARY_FILTER_LABELS: dict[str, str] = {
     "all": "All",

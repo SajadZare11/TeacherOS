@@ -1,5 +1,5 @@
 {
-  "automated_test_count": 72,
+  "automated_test_count": 79,
   "context_matrix": {
     "adversarial": true,
     "empty": true,
@@ -69,7 +69,7 @@
     "quiz_generator.py": true,
     "worksheet_generator.py": true
   },
-  "schema_version": 9,
+  "schema_version": 10,
   "visible_retry_paths": {
     "activity_generator.py": true,
     "lesson_planner.py": true,

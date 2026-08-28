@@ -1,0 +1,113 @@
+{
+  "audited_at_utc": "2026-08-28T18:41:29.142121+00:00",
+  "automated_tests": {
+    "count": 79,
+    "status": "PASS"
+  },
+  "days": {
+    "1": {
+      "engineering": "PASS",
+      "evidence": "Critical-path suite included in 79 passing tests."
+    },
+    "10": {
+      "engineering": "PASS",
+      "input_reduction": 0.5,
+      "passed": true
+    },
+    "2": {
+      "blockers": [
+        "Need at least 5 completed eligible interviews; found 0.",
+        "Need 10-15 confirmed eligible pilot recruits; found 0.",
+        "No problem is independently repeated by at least 3 eligible teachers.",
+        "Decision research_status must remain hypothesis until evidence is complete, then be set to validated.",
+        "Decision record must select at least one repeated problem and no more than three.",
+        "D6-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D7-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D7-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D7-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F03 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F05 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D10-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D10-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D11-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D11-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D11-F03 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D12-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D12-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D13-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D13-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D15-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D16-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D17-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D17-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D18-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D18-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F03 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D20-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D20-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D21-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D21-F05 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D22-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it."
+      ],
+      "engineering": "PASS",
+      "external_gate": "CLOSED",
+      "metrics": {
+        "approved_or_deferred_features": 57,
+        "artifact_walkthroughs": 0,
+        "completed_eligible_interviews": 0,
+        "confirmed_pilot_recruits": 0,
+        "deferred_features": 0,
+        "eligible_recruits": 0,
+        "feature_total": 90,
+        "repeated_problem_codes": 0
+      }
+    },
+    "3": {
+      "blockers": [
+        "G1_RESEARCH: Day 2 gate is CLOSED; target segment, jobs, and product mappings are not validated.",
+        "G2_COMPREHENSION: no de-identified record shows an eligible teacher passed the unaided wireflow test."
+      ],
+      "engineering": "PASS",
+      "errors": [],
+      "external_gate": "BLOCKED"
+    },
+    "4": {
+      "engineering": "PASS",
+      "fixture_gate": "PASS",
+      "live_gate": "NOT_RUN"
+    },
+    "5": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "6": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "7": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "8": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "9": {
+      "engineering": "PASS",
+      "passed": true,
+      "production_p95": "NOT_RUN"
+    }
+  },
+  "engineering_status": "PASS",
+  "external_evidence_note": "Day 2 interviews, Day 3 unaided teacher comprehension, Day 4 live model scoring, and Day 9 production p95 require real external evidence. Their blocked/not-run states are preserved honestly.",
+  "external_evidence_status": "BLOCKED_NOT_FABRICATED",
+  "passed": true,
+  "schema_version": 10,
+  "scope": "TeacherOS master-plan Days 1\u201310"
+}

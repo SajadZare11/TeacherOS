@@ -41,7 +41,7 @@ _CONTRACTS = {
     "general_chat": PromptContract(
         "general_chat",
         "teacheros.general_chat",
-        "2026-08-28.1",
+        "2026-08-28.2",
         None,
         None,
         1,
@@ -51,7 +51,7 @@ _CONTRACTS = {
     "lesson": PromptContract(
         "lesson",
         "teacheros.lesson_plan",
-        "2026-08-28.1",
+        "2026-08-28.2",
         "lesson_planner",
         "lesson_template",
         300,
@@ -67,7 +67,7 @@ _CONTRACTS = {
     "activity": PromptContract(
         "activity",
         "teacheros.classroom_activity",
-        "2026-08-28.1",
+        "2026-08-28.2",
         "activity_generator",
         "activity_template",
         250,
@@ -85,7 +85,7 @@ _CONTRACTS = {
     "worksheet": PromptContract(
         "worksheet",
         "teacheros.worksheet",
-        "2026-08-28.1",
+        "2026-08-28.2",
         "worksheet_generator",
         "worksheet_template",
         300,
@@ -101,7 +101,7 @@ _CONTRACTS = {
     "assessment": PromptContract(
         "assessment",
         "teacheros.assessment",
-        "2026-08-28.1",
+        "2026-08-28.2",
         "quiz_generator",
         "quiz_template",
         250,

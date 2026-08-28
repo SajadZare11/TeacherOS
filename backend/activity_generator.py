@@ -97,12 +97,20 @@ async def activity_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return
 
     if data == "activity_back_type":
-        if activity.get("state") != "level":
+        if activity.get("state") != "level" and not (
+            activity.get("class_mode") and activity.get("state") == "topic"
+        ):
             await _expired_session(update, context)
             return
 
-        activity.clear()
-        activity["state"] = "type"
+        if activity.get("class_mode"):
+            activity.pop("type", None)
+            activity.pop("topic", None)
+            activity["level"] = activity.get("inherited_level") or activity.get("level")
+            activity["state"] = "type"
+        else:
+            activity.clear()
+            activity["state"] = "type"
         await query.edit_message_text(
             "🎲 Activity Generator\n\n"
             "Step 1 of 4\n\n"
@@ -138,7 +146,10 @@ async def activity_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             "🎲 Activity Generator\n\n"
             "Step 3 of 4\n\n"
             "Type the lesson topic.",
-            reply_markup=back_cancel_keyboard("activity_back_level", "activity_cancel"),
+            reply_markup=back_cancel_keyboard(
+                "activity_back_type" if activity.get("class_mode") else "activity_back_level",
+                "activity_cancel",
+            ),
         )
         return
 
@@ -151,8 +162,16 @@ async def activity_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             return
 
         activity["type"] = activity_type
-        activity.pop("level", None)
         activity.pop("topic", None)
+        if activity.get("class_mode") and activity.get("level"):
+            activity["state"] = "topic"
+            await query.edit_message_text(
+                f"🎲 Activity Generator · {activity['class_name']}\n\n"
+                f"Inherited level: {activity['level']}\n\nType the lesson topic.",
+                reply_markup=back_cancel_keyboard("activity_back_type", "activity_cancel"),
+            )
+            return
+        activity.pop("level", None)
         activity["state"] = "level"
         await query.edit_message_text(
             "🎲 Activity Generator\n\n"
@@ -179,7 +198,47 @@ async def activity_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         )
         return
 
+    if data == "activity_override" and activity.get("class_mode"):
+        activity["state"] = "override_level"
+        await query.edit_message_text(
+            "✏ ONE-TIME level override\n\nChoose a level for this activity only. The class profile will not change.",
+            reply_markup=level_keyboard("activity_override", "activity_back_override"),
+        )
+        return
+
+    if data == "activity_back_override" and activity.get("class_mode"):
+        activity["state"] = "confirm"
+        await query.edit_message_text(
+            "ONE-TIME override cancelled. The class profile is unchanged.",
+            reply_markup=activity_confirm_keyboard(class_mode=True),
+        )
+        return
+
+    if data.startswith("activity_override_level_") and activity.get("state") == "override_level":
+        level = data.removeprefix("activity_override_level_")
+        if level not in {"A1", "A2", "B1", "B2", "C1", "C2"}:
+            await _expired_session(update, context)
+            return
+        activity["level"] = level
+        activity["one_time_overrides"] = ["level"]
+        activity["state"] = "confirm"
+        await query.edit_message_text(
+            f"✏ ONE-TIME level: {level}\n\nThe saved class profile is unchanged.",
+            reply_markup=activity_confirm_keyboard(class_mode=True),
+        )
+        return
+
     if data == "activity_cancel":
+        if activity.get("class_mode"):
+            from class_dashboard_keyboards import class_dashboard_keyboard
+            class_id = int(activity["class_id"])
+            revision = int(activity["class_revision"])
+            context.user_data.pop("activity", None)
+            await query.edit_message_text(
+                "❌ Activity Generator cancelled. No class data changed.",
+                reply_markup=class_dashboard_keyboard(class_id, revision),
+            )
+            return
         context.user_data.pop("activity", None)
         await query.edit_message_text(
             "❌ Activity Generator cancelled.",
@@ -217,7 +276,7 @@ async def get_activity_topic(update: Update, context: ContextTypes.DEFAULT_TYPE)
         f"📖 Level: {activity['level']}\n"
         f"📝 Topic: {activity['topic']}\n\n"
         "Ready to generate?",
-        reply_markup=activity_confirm_keyboard(),
+        reply_markup=activity_confirm_keyboard(class_mode=bool(activity.get("class_mode"))),
     )
 
 
@@ -273,6 +332,8 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 f"about {activity['topic']}."
             ),
             prompt_replacements=replacements,
+            class_id=int(activity["class_id"]) if activity.get("class_mode") else None,
+            quality_requirements={"level": str(activity["level"])},
         )
         result = generation.content
     except Exception:
@@ -282,7 +343,7 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             "❌ I could not generate the activity right now.\n\n"
             "Your choices are still saved. Check your connection or OpenRouter settings, "
             "then tap Generate Activity to retry.",
-            reply_markup=activity_confirm_keyboard(),
+            reply_markup=activity_confirm_keyboard(class_mode=bool(activity.get("class_mode"))),
         )
         return
 
@@ -300,6 +361,10 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             topic=str(activity["topic"]),
             content=result,
             metadata={"ai_provenance": generation_provenance(generation)},
+            class_id=int(activity["class_id"]) if activity.get("class_mode") else None,
+            objective_ids=generation.source_record_ids.get("class_objectives", []),
+            ai_provenance=generation_provenance(generation),
+            quality_scores=generation.quality_scores,
         )
         save_message = (
             "✅ Activity generated and saved automatically.\n"
@@ -316,7 +381,11 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await query.edit_message_text(
         save_message,
         reply_markup=(
-            generated_material_export_keyboard(material_id)
+            generated_material_export_keyboard(
+                material_id,
+                material_type="activity",
+                class_id=int(activity["class_id"]) if activity.get("class_mode") else None,
+            )
             if material_id is not None
             else None
         ),

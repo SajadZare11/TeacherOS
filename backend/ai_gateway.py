@@ -51,6 +51,7 @@ class GenerationResult:
     input_tokens: int | None
     output_tokens: int | None
     cost_microusd: int | None
+    quality_scores: dict[str, int]
 
 
 def generation_provenance(result: GenerationResult) -> dict[str, object]:
@@ -63,6 +64,7 @@ def generation_provenance(result: GenerationResult) -> dict[str, object]:
         "prompt_hash_sha256": result.prompt_hash_sha256,
         "context_hash_sha256": result.context_hash_sha256,
         "source_record_ids": result.source_record_ids,
+        "quality_scores": result.quality_scores,
     }
 
 
@@ -85,11 +87,13 @@ def _messages(
     contract: PromptContract,
     task_prompt: str,
     class_context: ClassContext,
+    quality_requirements: Mapping[str, object] | None = None,
 ) -> list[dict[str, str]]:
     payload = json.dumps(
         {
             "TASK_SPECIFICATION": task_prompt,
             "CLASS_CONTEXT": class_context.payload,
+            "QUALITY_REQUIREMENTS": dict(quality_requirements or {}),
         },
         ensure_ascii=False,
         separators=(",", ":"),
@@ -144,6 +148,7 @@ async def generate_artifact(
     prompt_replacements: Mapping[str, object] | None = None,
     class_id: int | None = None,
     database_path: Path | None = None,
+    quality_requirements: Mapping[str, object] | None = None,
 ) -> GenerationResult:
     """Run the shared request→JSON→validate→repair-once→render pipeline."""
     contract = get_prompt_contract(feature)
@@ -154,7 +159,18 @@ async def generate_artifact(
         current_request=current_request,
         database_path=database_path,
     )
-    messages = _messages(contract, task_prompt, class_context)
+    normalized_quality = dict(quality_requirements or {})
+    if normalized_quality:
+        normalized_quality["required_visible_sections"] = [
+            "Timing", "Instructions or Procedure", "CEFR Level",
+            "Materials or Resource Requirements",
+        ]
+        if contract.feature in {"worksheet", "assessment"}:
+            normalized_quality["answer_key"] = True
+        if class_id is not None and contract.feature == "assessment" and class_context.source_record_ids.get("class_objectives"):
+            normalized_quality["objective_alignment"] = True
+            normalized_quality["required_visible_sections"].append("Objective Alignment")
+    messages = _messages(contract, task_prompt, class_context, normalized_quality)
     context_json = json.dumps(
         class_context.payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     )
@@ -210,7 +226,7 @@ async def generate_artifact(
         )
         raise SafeGenerationError(code) from last_error
 
-    validation = validate_model_response(first.content, contract)
+    validation = validate_model_response(first.content, contract, normalized_quality)
     final = first
     if not validation.valid:
         repair_attempted = True
@@ -246,7 +262,7 @@ async def generate_artifact(
                 database_path=database_path,
             )
             raise SafeGenerationError(code) from exc
-        validation = validate_model_response(final.content, contract)
+        validation = validate_model_response(final.content, contract, normalized_quality)
 
     elapsed = int((time.monotonic() - started) * 1_000)
     input_tokens = _sum_optional([item.input_tokens for item in responses])
@@ -294,4 +310,5 @@ async def generate_artifact(
         input_tokens,
         output_tokens,
         cost,
+        validation.quality_scores,
     )

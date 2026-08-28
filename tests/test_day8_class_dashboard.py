@@ -33,7 +33,7 @@ from class_dashboard_service import (  # noqa: E402
 )
 from class_panel import class_callback  # noqa: E402
 from class_setup_service import start_setup_draft  # noqa: E402
-from day9_migration import SCHEMA_VERSION  # noqa: E402
+from day10_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 
 

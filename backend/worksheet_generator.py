@@ -116,12 +116,20 @@ async def worksheet_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     if data == "worksheet_back_type":
-        if worksheet.get("state") != "level":
+        if worksheet.get("state") != "level" and not (
+            worksheet.get("class_mode") and worksheet.get("state") == "topic"
+        ):
             await _expired_session(update, context)
             return
 
-        worksheet.clear()
-        worksheet["state"] = "type"
+        if worksheet.get("class_mode"):
+            worksheet.pop("type", None)
+            worksheet.pop("topic", None)
+            worksheet["level"] = worksheet.get("inherited_level") or worksheet.get("level")
+            worksheet["state"] = "type"
+        else:
+            worksheet.clear()
+            worksheet["state"] = "type"
         await query.edit_message_text(
             "📝 Worksheet Generator\n\n"
             "Step 1 of 4\n\n"
@@ -159,7 +167,7 @@ async def worksheet_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "Type the worksheet topic.\n\n"
             "Examples: Travel, Food, Technology, Jobs, Environment",
             reply_markup=back_cancel_keyboard(
-                "worksheet_back_level",
+                "worksheet_back_type" if worksheet.get("class_mode") else "worksheet_back_level",
                 "worksheet_cancel",
             ),
         )
@@ -174,8 +182,16 @@ async def worksheet_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
             return
 
         worksheet["type"] = worksheet_type
-        worksheet.pop("level", None)
         worksheet.pop("topic", None)
+        if worksheet.get("class_mode") and worksheet.get("level"):
+            worksheet["state"] = "topic"
+            await query.edit_message_text(
+                f"📝 Worksheet Generator · {worksheet['class_name']}\n\n"
+                f"Inherited level: {worksheet['level']}\n\nType the worksheet topic.",
+                reply_markup=back_cancel_keyboard("worksheet_back_type", "worksheet_cancel"),
+            )
+            return
+        worksheet.pop("level", None)
         worksheet["state"] = "level"
         await query.edit_message_text(
             "📝 Worksheet Generator\n\n"
@@ -206,7 +222,47 @@ async def worksheet_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         return
 
+    if data == "worksheet_override" and worksheet.get("class_mode"):
+        worksheet["state"] = "override_level"
+        await query.edit_message_text(
+            "✏ ONE-TIME level override\n\nChoose a level for this worksheet only. The class profile will not change.",
+            reply_markup=level_keyboard("worksheet_override", "worksheet_back_override"),
+        )
+        return
+
+    if data == "worksheet_back_override" and worksheet.get("class_mode"):
+        worksheet["state"] = "confirm"
+        await query.edit_message_text(
+            "ONE-TIME override cancelled. The class profile is unchanged.",
+            reply_markup=worksheet_confirm_keyboard(class_mode=True),
+        )
+        return
+
+    if data.startswith("worksheet_override_level_") and worksheet.get("state") == "override_level":
+        level = data.removeprefix("worksheet_override_level_")
+        if level not in _VALID_LEVELS:
+            await _expired_session(update, context)
+            return
+        worksheet["level"] = level
+        worksheet["one_time_overrides"] = ["level"]
+        worksheet["state"] = "confirm"
+        await query.edit_message_text(
+            f"✏ ONE-TIME level: {level}\n\nThe saved class profile is unchanged.",
+            reply_markup=worksheet_confirm_keyboard(class_mode=True),
+        )
+        return
+
     if data == "worksheet_cancel":
+        if worksheet.get("class_mode"):
+            from class_dashboard_keyboards import class_dashboard_keyboard
+            class_id = int(worksheet["class_id"])
+            revision = int(worksheet["class_revision"])
+            context.user_data.pop("worksheet", None)
+            await query.edit_message_text(
+                "❌ Worksheet Generator cancelled. No class data changed.",
+                reply_markup=class_dashboard_keyboard(class_id, revision),
+            )
+            return
         context.user_data.pop("worksheet", None)
         await query.edit_message_text(
             "❌ Worksheet Generator cancelled.",
@@ -252,7 +308,7 @@ async def get_worksheet_topic(
         f"📖 Level: {worksheet['level']}\n"
         f"📝 Topic: {worksheet['topic']}\n\n"
         "Ready to generate?",
-        reply_markup=worksheet_confirm_keyboard(),
+        reply_markup=worksheet_confirm_keyboard(class_mode=bool(worksheet.get("class_mode"))),
     )
 
 
@@ -302,6 +358,8 @@ async def generate_worksheet(
                 f"about {worksheet['topic']}."
             ),
             prompt_replacements=_prompt_replacements(worksheet),
+            class_id=int(worksheet["class_id"]) if worksheet.get("class_mode") else None,
+            quality_requirements={"level": str(worksheet["level"]), "answer_key": True},
         )
         result = generation.content
     except Exception:
@@ -311,7 +369,7 @@ async def generate_worksheet(
             "❌ I could not generate the worksheet right now.\n\n"
             "Your choices are still saved. Check your connection or OpenRouter settings, "
             "then tap Generate Worksheet to retry.",
-            reply_markup=worksheet_confirm_keyboard(),
+            reply_markup=worksheet_confirm_keyboard(class_mode=bool(worksheet.get("class_mode"))),
         )
         return
 
@@ -329,6 +387,10 @@ async def generate_worksheet(
             topic=str(worksheet["topic"]),
             content=result,
             metadata={"ai_provenance": generation_provenance(generation)},
+            class_id=int(worksheet["class_id"]) if worksheet.get("class_mode") else None,
+            objective_ids=generation.source_record_ids.get("class_objectives", []),
+            ai_provenance=generation_provenance(generation),
+            quality_scores=generation.quality_scores,
         )
         save_message = (
             "✅ Worksheet generated and saved automatically.\n"
@@ -345,7 +407,11 @@ async def generate_worksheet(
     await query.edit_message_text(
         save_message,
         reply_markup=(
-            generated_material_export_keyboard(material_id)
+            generated_material_export_keyboard(
+                material_id,
+                material_type="worksheet",
+                class_id=int(worksheet["class_id"]) if worksheet.get("class_mode") else None,
+            )
             if material_id is not None
             else None
         ),

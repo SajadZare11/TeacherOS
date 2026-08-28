@@ -174,8 +174,14 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             await _expired_session(update, context)
             return
 
-        quiz.clear()
-        quiz["state"] = "assessment_type"
+        if quiz.get("class_mode"):
+            for field in ("assessment_type", "question_format", "question_count", "topic"):
+                quiz.pop(field, None)
+            quiz["level"] = quiz.get("inherited_level") or quiz.get("level")
+            quiz["state"] = "assessment_type"
+        else:
+            quiz.clear()
+            quiz["state"] = "assessment_type"
         await query.edit_message_text(
             "✅ Assessment Generator\n\n"
             "Step 1 of 6\n\n"
@@ -191,7 +197,8 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         quiz.pop("question_format", None)
         quiz.pop("question_count", None)
-        quiz.pop("level", None)
+        if not quiz.get("class_mode"):
+            quiz.pop("level", None)
         quiz.pop("topic", None)
         quiz["state"] = "question_format"
         await query.edit_message_text(
@@ -204,12 +211,15 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     if data == "quiz_back_question_count":
-        if quiz.get("state") not in {"level", "question_count_custom"}:
+        if quiz.get("state") not in {"level", "question_count_custom"} and not (
+            quiz.get("class_mode") and quiz.get("state") == "topic"
+        ):
             await _expired_session(update, context)
             return
 
         quiz.pop("question_count", None)
-        quiz.pop("level", None)
+        if not quiz.get("class_mode"):
+            quiz.pop("level", None)
         quiz.pop("topic", None)
         quiz["state"] = "question_count"
         await query.edit_message_text(
@@ -250,7 +260,10 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "Type the assessment topic or language focus.\n\n"
             "Examples: Travel vocabulary, Present Perfect, Environment, "
             "Reading about technology",
-            reply_markup=back_cancel_keyboard("quiz_back_level", "quiz_cancel"),
+            reply_markup=back_cancel_keyboard(
+                "quiz_back_question_count" if quiz.get("class_mode") else "quiz_back_level",
+                "quiz_cancel",
+            ),
         )
         return
 
@@ -265,7 +278,8 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         quiz["assessment_type"] = assessment_type
         quiz.pop("question_format", None)
         quiz.pop("question_count", None)
-        quiz.pop("level", None)
+        if not quiz.get("class_mode"):
+            quiz.pop("level", None)
         quiz.pop("topic", None)
         quiz["state"] = "question_format"
         await query.edit_message_text(
@@ -286,7 +300,8 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         quiz["question_format"] = question_format
         quiz.pop("question_count", None)
-        quiz.pop("level", None)
+        if not quiz.get("class_mode"):
+            quiz.pop("level", None)
         quiz.pop("topic", None)
         quiz["state"] = "question_count"
         await query.edit_message_text(
@@ -326,8 +341,16 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             return
 
         quiz["question_count"] = count
-        quiz.pop("level", None)
         quiz.pop("topic", None)
+        if quiz.get("class_mode") and quiz.get("level"):
+            quiz["state"] = "topic"
+            await query.edit_message_text(
+                f"✅ Assessment Generator · {quiz['class_name']}\n\n"
+                f"Inherited level: {quiz['level']}\n\nType the assessment topic or language focus.",
+                reply_markup=back_cancel_keyboard("quiz_back_question_count", "quiz_cancel"),
+            )
+            return
+        quiz.pop("level", None)
         quiz["state"] = "level"
         await query.edit_message_text(
             "✅ Assessment Generator\n\n"
@@ -356,7 +379,47 @@ async def quiz_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         )
         return
 
+    if data == "quiz_override" and quiz.get("class_mode"):
+        quiz["state"] = "override_level"
+        await query.edit_message_text(
+            "✏ ONE-TIME level override\n\nChoose a level for this assessment only. The class profile will not change.",
+            reply_markup=level_keyboard("quiz_override", "quiz_back_override"),
+        )
+        return
+
+    if data == "quiz_back_override" and quiz.get("class_mode"):
+        quiz["state"] = "confirm"
+        await query.edit_message_text(
+            "ONE-TIME override cancelled. The class profile is unchanged.",
+            reply_markup=quiz_confirm_keyboard(class_mode=True),
+        )
+        return
+
+    if data.startswith("quiz_override_level_") and quiz.get("state") == "override_level":
+        level = data.removeprefix("quiz_override_level_")
+        if level not in _VALID_LEVELS:
+            await _expired_session(update, context)
+            return
+        quiz["level"] = level
+        quiz["one_time_overrides"] = ["level"]
+        quiz["state"] = "confirm"
+        await query.edit_message_text(
+            f"✏ ONE-TIME level: {level}\n\nThe saved class profile is unchanged.",
+            reply_markup=quiz_confirm_keyboard(class_mode=True),
+        )
+        return
+
     if data == "quiz_cancel":
+        if quiz.get("class_mode"):
+            from class_dashboard_keyboards import class_dashboard_keyboard
+            class_id = int(quiz["class_id"])
+            revision = int(quiz["class_revision"])
+            context.user_data.pop("quiz", None)
+            await query.edit_message_text(
+                "❌ Assessment Generator cancelled. No class data changed.",
+                reply_markup=class_dashboard_keyboard(class_id, revision),
+            )
+            return
         context.user_data.pop("quiz", None)
         await query.edit_message_text(
             "❌ Assessment Generator cancelled.",
@@ -390,6 +453,15 @@ async def get_quiz_topic(
             return
 
         quiz["question_count"] = count
+        if quiz.get("class_mode") and quiz.get("level"):
+            quiz["state"] = "topic"
+            await update.message.reply_text(
+                f"✅ Assessment Generator · {quiz['class_name']}\n\n"
+                f"Question count: {count} · inherited level: {quiz['level']}\n\n"
+                "Type the assessment topic or language focus.",
+                reply_markup=back_cancel_keyboard("quiz_back_question_count", "quiz_cancel"),
+            )
+            return
         quiz["state"] = "level"
         await update.message.reply_text(
             "✅ Assessment Generator\n\n"
@@ -429,7 +501,7 @@ async def get_quiz_topic(
         f"📖 Level: {quiz['level']}\n"
         f"📝 Topic: {quiz['topic']}\n\n"
         "Ready to generate?",
-        reply_markup=quiz_confirm_keyboard(),
+        reply_markup=quiz_confirm_keyboard(class_mode=bool(quiz.get("class_mode"))),
     )
 
 
@@ -486,6 +558,8 @@ async def generate_quiz(
                 f"{quiz['topic']}."
             ),
             prompt_replacements=_prompt_replacements(quiz),
+            class_id=int(quiz["class_id"]) if quiz.get("class_mode") else None,
+            quality_requirements={"level": str(quiz["level"]), "answer_key": True},
         )
         result = generation.content
     except Exception:
@@ -495,7 +569,7 @@ async def generate_quiz(
             "❌ I could not generate the assessment right now.\n\n"
             "Your choices are still saved. Check your connection or OpenRouter settings, "
             "then tap Generate Assessment to retry.",
-            reply_markup=quiz_confirm_keyboard(),
+            reply_markup=quiz_confirm_keyboard(class_mode=bool(quiz.get("class_mode"))),
         )
         return
 
@@ -518,6 +592,10 @@ async def generate_quiz(
                 "question_count": question_count,
                 "ai_provenance": generation_provenance(generation),
             },
+            class_id=int(quiz["class_id"]) if quiz.get("class_mode") else None,
+            objective_ids=generation.source_record_ids.get("class_objectives", []),
+            ai_provenance=generation_provenance(generation),
+            quality_scores=generation.quality_scores,
         )
         save_message = (
             "✅ Assessment generated and saved automatically.\n"
@@ -534,7 +612,11 @@ async def generate_quiz(
     await query.edit_message_text(
         save_message,
         reply_markup=(
-            generated_material_export_keyboard(material_id)
+            generated_material_export_keyboard(
+                material_id,
+                material_type="assessment",
+                class_id=int(quiz["class_id"]) if quiz.get("class_mode") else None,
+            )
             if material_id is not None
             else None
         ),

@@ -51,15 +51,19 @@
         "users": []
       },
       "new_table_counts": {
+        "ai_generation_audits": 0,
+        "class_action_items": 0,
         "class_lessons": 0,
         "class_objectives": 0,
+        "class_setup_drafts": 0,
         "classes": 0,
         "lesson_outcomes": 0,
+        "material_objective_links": 0,
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "3e1df4484b0cdcc2c44ef041d56522313a67a8bd55761e8d616dcdb385747359",
-      "schema_version": 9
+      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
+      "schema_version": 10
     },
     {
       "duplicate_columns": {
@@ -103,15 +107,19 @@
         "users": []
       },
       "new_table_counts": {
+        "ai_generation_audits": 0,
+        "class_action_items": 0,
         "class_lessons": 0,
         "class_objectives": 0,
+        "class_setup_drafts": 0,
         "classes": 0,
         "lesson_outcomes": 0,
+        "material_objective_links": 0,
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "3e1df4484b0cdcc2c44ef041d56522313a67a8bd55761e8d616dcdb385747359",
-      "schema_version": 9
+      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
+      "schema_version": 10
     },
     {
       "duplicate_columns": {
@@ -155,15 +163,19 @@
         "users": []
       },
       "new_table_counts": {
+        "ai_generation_audits": 0,
+        "class_action_items": 0,
         "class_lessons": 0,
         "class_objectives": 0,
+        "class_setup_drafts": 0,
         "classes": 0,
         "lesson_outcomes": 0,
+        "material_objective_links": 0,
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "3e1df4484b0cdcc2c44ef041d56522313a67a8bd55761e8d616dcdb385747359",
-      "schema_version": 9
+      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
+      "schema_version": 10
     },
     {
       "duplicate_columns": {
@@ -180,7 +192,7 @@
         "word": true
       },
       "foreign_key_error_count": 0,
-      "label": "real-populated-v5-copy",
+      "label": "real-populated-copy",
       "legacy_counts_after": {
         "feedback": 1,
         "materials": 7,
@@ -207,16 +219,20 @@
         "users": []
       },
       "new_table_counts": {
+        "ai_generation_audits": 0,
+        "class_action_items": 0,
         "class_lessons": 0,
         "class_objectives": 0,
+        "class_setup_drafts": 0,
         "classes": 0,
         "lesson_outcomes": 0,
+        "material_objective_links": 0,
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "3e1df4484b0cdcc2c44ef041d56522313a67a8bd55761e8d616dcdb385747359",
-      "schema_version": 9
+      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
+      "schema_version": 10
     }
   ],
-  "schema_version": 9
+  "schema_version": 10
 }

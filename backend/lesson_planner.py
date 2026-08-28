@@ -97,7 +97,30 @@ async def lesson_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await _show_main_menu(update, context)
         return
 
+    if data == "lesson_back_class":
+        from class_dashboard_keyboards import class_dashboard_keyboard
+        context.user_data.pop("lesson", None)
+        await query.edit_message_text(
+            f"🏫 {lesson.get('class_name', 'Class')}",
+            reply_markup=class_dashboard_keyboard(
+                int(lesson["class_id"]), int(lesson["class_revision"])
+            ),
+        )
+        return
+
     if data == "lesson_back_level":
+        if lesson.get("class_mode"):
+            lesson.pop("topic", None)
+            lesson.pop("grammar", None)
+            lesson["level"] = lesson.get("inherited_level") or lesson.get("level")
+            if lesson.get("inherited_duration"):
+                lesson["duration"] = lesson["inherited_duration"]
+            lesson["state"] = "topic"
+            await query.edit_message_text(
+                f"📚 Lesson Planner · {lesson['class_name']}\n\nType today's lesson topic.",
+                reply_markup=back_cancel_keyboard("lesson_back_class", "lesson_cancel"),
+            )
+            return
         lesson.clear()
         lesson["state"] = "level"
         await query.edit_message_text(
@@ -147,6 +170,15 @@ async def lesson_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await _expired_session(update, context)
             return
 
+        if lesson.get("class_mode") and lesson.get("inherited_duration"):
+            lesson.pop("grammar", None)
+            lesson["duration"] = lesson["inherited_duration"]
+            lesson["state"] = "grammar"
+            await query.edit_message_text(
+                "📚 Lesson Planner · class-aware\n\nChoose the grammar focus.",
+                reply_markup=grammar_keyboard(),
+            )
+            return
         lesson.pop("duration", None)
         lesson["state"] = "duration"
         await query.edit_message_text(
@@ -186,6 +218,20 @@ async def lesson_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             return
 
         lesson["grammar"] = grammar
+        if lesson.get("class_mode") and lesson.get("inherited_duration"):
+            lesson["duration"] = str(lesson["inherited_duration"])
+            lesson["state"] = "confirm"
+            await query.edit_message_text(
+                "📚 Lesson Planner · class-aware\n\n"
+                f"🏫 Class: {lesson['class_name']}\n"
+                f"📖 Level: {lesson['level']} (inherited)\n"
+                f"📝 Topic: {lesson['topic']}\n"
+                f"📚 Grammar: {lesson['grammar']}\n"
+                f"⏰ Duration: {lesson['duration']} minutes (inherited)\n\n"
+                "Overrides are ONE-TIME and never edit the class profile.",
+                reply_markup=lesson_confirm_keyboard(class_mode=True),
+            )
+            return
         lesson.pop("duration", None)
         lesson["state"] = "duration"
         await query.edit_message_text(
@@ -217,11 +263,51 @@ async def lesson_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             f"📝 Topic: {lesson['topic']}\n"
             f"📚 Grammar: {lesson['grammar']}\n"
             f"⏰ Duration: {lesson['duration']} minutes",
-            reply_markup=lesson_confirm_keyboard(),
+            reply_markup=lesson_confirm_keyboard(class_mode=bool(lesson.get("class_mode"))),
+        )
+        return
+
+    if data == "lesson_override" and lesson.get("class_mode"):
+        lesson["state"] = "override_level"
+        await query.edit_message_text(
+            "✏ ONE-TIME override\n\nChoose a CEFR level for this lesson only. The saved class profile will not change.",
+            reply_markup=level_keyboard("lesson_override", "lesson_back_override"),
+        )
+        return
+
+    if data == "lesson_back_override" and lesson.get("class_mode"):
+        lesson["state"] = "confirm"
+        await query.edit_message_text(
+            "ONE-TIME override cancelled. Your saved class profile is unchanged.",
+            reply_markup=lesson_confirm_keyboard(class_mode=True),
+        )
+        return
+
+    if data.startswith("lesson_override_level_") and lesson.get("state") == "override_level":
+        level = data.removeprefix("lesson_override_level_")
+        if level not in {"A1", "A2", "B1", "B2", "C1", "C2"}:
+            await _expired_session(update, context)
+            return
+        lesson["level"] = level
+        lesson["one_time_overrides"] = ["level", "duration"]
+        lesson["state"] = "duration"
+        await query.edit_message_text(
+            "✏ ONE-TIME override\n\nChoose a duration for this lesson only.",
+            reply_markup=duration_keyboard(),
         )
         return
 
     if data == "lesson_cancel":
+        if lesson.get("class_mode"):
+            from class_dashboard_keyboards import class_dashboard_keyboard
+            class_id = int(lesson["class_id"])
+            revision = int(lesson["class_revision"])
+            context.user_data.pop("lesson", None)
+            await query.edit_message_text(
+                "❌ Lesson Planner cancelled. No class data changed.",
+                reply_markup=class_dashboard_keyboard(class_id, revision),
+            )
+            return
         context.user_data.pop("lesson", None)
         await query.edit_message_text(
             "❌ Lesson Planner cancelled.",
@@ -312,6 +398,11 @@ async def generate_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 f"{lesson['topic']} with the {lesson['grammar']} grammar focus."
             ),
             prompt_replacements=replacements,
+            class_id=int(lesson["class_id"]) if lesson.get("class_mode") else None,
+            quality_requirements={
+                "level": str(lesson["level"]),
+                "duration_minutes": str(lesson["duration"]),
+            },
         )
         result = generation.content
     except Exception:
@@ -321,7 +412,7 @@ async def generate_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             "❌ I could not generate the lesson right now.\n\n"
             "Your choices are still saved. Check your connection or OpenRouter settings, "
             "then tap Generate Lesson to retry.",
-            reply_markup=lesson_confirm_keyboard(),
+            reply_markup=lesson_confirm_keyboard(class_mode=bool(lesson.get("class_mode"))),
         )
         return
 
@@ -343,6 +434,10 @@ async def generate_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 "duration_minutes": int(str(lesson["duration"])),
                 "ai_provenance": generation_provenance(generation),
             },
+            class_id=int(lesson["class_id"]) if lesson.get("class_mode") else None,
+            objective_ids=generation.source_record_ids.get("class_objectives", []),
+            ai_provenance=generation_provenance(generation),
+            quality_scores=generation.quality_scores,
         )
         save_message = (
             "✅ Lesson generated and saved automatically.\n"
@@ -359,7 +454,11 @@ async def generate_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await query.edit_message_text(
         save_message,
         reply_markup=(
-            generated_material_export_keyboard(material_id)
+            generated_material_export_keyboard(
+                material_id,
+                material_type="lesson",
+                class_id=int(lesson["class_id"]) if lesson.get("class_mode") else None,
+            )
             if material_id is not None
             else None
         ),

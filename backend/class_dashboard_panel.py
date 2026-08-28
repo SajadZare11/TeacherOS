@@ -41,13 +41,16 @@ from class_setup_panel import (
     VALUE_MAPS,
 )
 from keyboards import class_recovery_keyboard
+from feature_flags import feature_enabled
+from database import list_class_materials
+from keyboards import class_library_keyboard
 
 
 logger = logging.getLogger(__name__)
 DASHBOARD_ACTIONS = {
     "open", "today", "details", "plan", "analyze", "create", "outcome",
     "progress", "profile", "pfedit", "edset", "edmulti", "edsave", "edclear",
-    "archask", "archyes", "restask", "restyes",
+    "archask", "archyes", "restask", "restyes", "library",
 }
 FIELD_CODES = {
     "nm": "display_name",
@@ -484,6 +487,17 @@ async def handle_dashboard_callback(
             await _safe_edit(query, "✅ Coursebook cleared\n\n" + "\n".join(_profile_lines(updated)), class_profile_keyboard(class_id, new_revision, archived=False))
             return
 
+        if action == "library":
+            records = list_class_materials(
+                telegram_user_id=user.id, class_id=class_id, limit=20
+            )
+            lines = [f"• #{item['id']} · {item['title']}" for item in records]
+            await _safe_edit(
+                query,
+                f"📁 {class_record['display_name']} Library\n\n" + ("\n".join(lines) if lines else "No class-linked materials yet."),
+                class_library_keyboard(records, class_id, revision),
+            )
+            return
         if action in {"plan", "analyze", "create", "outcome", "progress"}:
             touch_class_activity(telegram_user_id=user.id, class_id=class_id)
             headings = {
@@ -494,16 +508,27 @@ async def handle_dashboard_callback(
                 "progress": "📈 Progress",
             }
             body = {
-                "plan": "The class and its saved profile are selected. Class-aware generation remains behind the continuity rollout; the existing planner below stays one-off until that gate opens.",
+                "plan": (
+                    "The class and its saved profile are selected. The planner asks only lesson-specific questions; any override is clearly ONE-TIME."
+                    if feature_enabled("continuity") else
+                    "Class-aware generation is not enabled yet. The one-off planner below remains available."
+                ),
                 "analyze": "Analysis is linked to this verified class. Evidence processing and approval remain behind their own rollout gates, so no finding is inferred here.",
-                "create": "Choose an existing generator below. Until class-aware generation ships, these remain one-off resources and do not silently change class history.",
+                "create": (
+                    "Choose a generator. Saved class context is inherited, and temporary overrides never edit the class profile."
+                    if feature_enabled("continuity") else
+                    "Choose a one-off generator. It will not silently change class history."
+                ),
                 "outcome": "Record an outcome only after a lesson is explicitly marked taught. No taught lesson is changed from this navigation screen.",
                 "progress": f"Lessons: {snapshot['history_counts'].get('lessons', 0)} · Outcomes: {snapshot['history_counts'].get('outcomes', 0)} · Reviews due: {snapshot['due_review_count']}. Details are recorded facts, never guessed mastery.",
             }
             await _safe_edit(
                 query,
                 f"{headings[action]}\n🏫 Active class: {class_record['display_name']}\n\n{body[action]}",
-                class_action_keyboard(class_id, revision, action),
+                class_action_keyboard(
+                    class_id, revision, action,
+                    class_aware=feature_enabled("continuity"),
+                ),
             )
             return
         await _recover(query, context)

@@ -18,6 +18,8 @@ from ai_gateway import generate_artifact
 from class_panel import class_callback, home_callback
 from class_dashboard_panel import get_class_dashboard_text
 from class_setup_panel import get_class_setup_text
+from class_generation import class_generation_callback_handler
+from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
 from admin_panel import (
@@ -157,6 +159,8 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message is None:
         return
+    if context.user_data.pop("material_action_consumed", False):
+        return
 
     lesson = context.user_data.get("lesson")
     activity = context.user_data.get("activity")
@@ -166,6 +170,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     feedback = context.user_data.get("feedback")
     class_setup = context.user_data.get("class_setup")
     class_edit = context.user_data.get("class_edit")
+    material_action = context.user_data.get("material_action")
 
     # A feature-specific text handler will process the message first.
     if isinstance(lesson, dict) and lesson.get("state"):
@@ -183,6 +188,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if isinstance(class_setup, dict) and class_setup.get("state"):
         return
     if isinstance(class_edit, dict) and class_edit.get("state"):
+        return
+    if isinstance(material_action, dict) and material_action.get("state"):
         return
 
     user_message = (update.message.text or "").strip()
@@ -323,6 +330,8 @@ def main() -> None:
     app.add_handler(CallbackQueryHandler(activity_callback, pattern=r"^activity_"))
     app.add_handler(CallbackQueryHandler(worksheet_callback, pattern=r"^worksheet_"))
     app.add_handler(CallbackQueryHandler(quiz_callback, pattern=r"^quiz_"))
+    app.add_handler(CallbackQueryHandler(class_generation_callback_handler, pattern=r"^cg\|"))
+    app.add_handler(CallbackQueryHandler(material_action_callback, pattern=r"^ma\|"))
     app.add_handler(CallbackQueryHandler(library_callback, pattern=r"^library_"))
     app.add_handler(CallbackQueryHandler(search_callback, pattern=r"^search_"))
     app.add_handler(CallbackQueryHandler(usage_callback, pattern=r"^usage_"))
@@ -348,32 +357,36 @@ def main() -> None:
         group=1,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_search_query),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_material_action_text),
         group=2,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_lesson_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_search_query),
         group=3,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_lesson_topic),
         group=4,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_worksheet_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_topic),
         group=5,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_quiz_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_worksheet_topic),
         group=6,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_feedback_text),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_quiz_topic),
         group=7,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_feedback_text),
         group=8,
+    )
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
+        group=9,
     )
 
     app.add_error_handler(error_handler)

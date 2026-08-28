@@ -1,0 +1,343 @@
+{
+  "checks": {
+    "all_four_saved": true,
+    "callbacks_compact": true,
+    "class_and_general_library": true,
+    "foreign_keys_clean": true,
+    "lesson_inputs_reduced_at_least_50_percent": true,
+    "matrix_complete": true,
+    "next_lesson_idempotent": true,
+    "owner_isolation": true,
+    "post_generation_toolbar": true,
+    "quality_gate": true,
+    "schema_v10": true,
+    "word_pdf_exports": true
+  },
+  "day": 10,
+  "engineering_status": "PASS",
+  "measurement": {
+    "class_aware_teacher_inputs": 2,
+    "day1_teacher_inputs": 4,
+    "input_reduction_fraction": 0.5,
+    "status": "PASS",
+    "target_fraction": 0.5
+  },
+  "passed": true,
+  "privacy": {
+    "raw_prompts_or_outputs_in_report": false
+  },
+  "schema_version": 10,
+  "test_matrix": {
+    "case_count": 48,
+    "cases": [
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "quick"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "quick"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "quick"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "quick"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "quick"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "quick"
+      },
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "class"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "class"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "class"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "class"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "class"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "lesson",
+        "mode": "class"
+      },
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "activity",
+        "mode": "quick"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "activity",
+        "mode": "quick"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "activity",
+        "mode": "quick"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "activity",
+        "mode": "quick"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "activity",
+        "mode": "quick"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "activity",
+        "mode": "quick"
+      },
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "activity",
+        "mode": "class"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "activity",
+        "mode": "class"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "activity",
+        "mode": "class"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "activity",
+        "mode": "class"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "activity",
+        "mode": "class"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "activity",
+        "mode": "class"
+      },
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "quick"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "quick"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "quick"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "quick"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "quick"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "quick"
+      },
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "class"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "class"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "class"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "class"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "class"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "worksheet",
+        "mode": "class"
+      },
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "quick"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "quick"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "quick"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "quick"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "quick"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "quick"
+      },
+      {
+        "behavior": "override",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "class"
+      },
+      {
+        "behavior": "cancel",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "class"
+      },
+      {
+        "behavior": "retry",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "class"
+      },
+      {
+        "behavior": "save",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "class"
+      },
+      {
+        "behavior": "word_export",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "class"
+      },
+      {
+        "behavior": "pdf_export",
+        "covered": true,
+        "generator": "assessment",
+        "mode": "class"
+      }
+    ],
+    "dimensions": {
+      "behaviors": [
+        "override",
+        "cancel",
+        "retry",
+        "save",
+        "word_export",
+        "pdf_export"
+      ],
+      "generators": [
+        "lesson",
+        "activity",
+        "worksheet",
+        "assessment"
+      ],
+      "modes": [
+        "quick",
+        "class"
+      ]
+    }
+  }
+}
