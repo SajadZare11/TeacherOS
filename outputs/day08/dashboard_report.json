@@ -1,0 +1,32 @@
+{
+  "callbacks_checked": 68,
+  "dashboard_primary_action": "Plan Next Lesson",
+  "day": 8,
+  "destructive_confirmations_checked": 2,
+  "engineering_status": "PASS",
+  "invalid_callbacks": [],
+  "maximum_callback_bytes": 35,
+  "over_limit_callbacks": [],
+  "passed": true,
+  "phone_message_character_budget": 700,
+  "primary_action_is_first": true,
+  "profile_fields_editable": 10,
+  "schema_version": 8,
+  "secondary_actions_missing": [],
+  "today_queue_kinds": [
+    "missing_outcome",
+    "pending_analysis",
+    "planned_lesson",
+    "review_due",
+    "unfinished_setup"
+  ],
+  "usability_gate": {
+    "decision": "HOLD_EXTERNAL_VALIDATION",
+    "identification_target_seconds": 5,
+    "minimum_testers": 5,
+    "reason": "No real usability observations were supplied or fabricated.",
+    "recorded_observations": 0,
+    "status": "NOT_RUN",
+    "target_primary_action_selection_rate": 0.8
+  }
+}

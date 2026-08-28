@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day7_migration import SCHEMA_VERSION
+from day8_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -106,6 +106,7 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "class_action_items",
             "class_setup_drafts",
             "product_events",
             "lesson_outcomes",

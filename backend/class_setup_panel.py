@@ -9,6 +9,7 @@ from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
 from class_service import list_classes
+from class_dashboard_keyboards import class_dashboard_keyboard
 from class_setup_keyboards import (
     cancel_keyboard,
     choice_keyboard,
@@ -27,7 +28,7 @@ from class_setup_service import (
     save_setup_draft,
     start_setup_draft,
 )
-from keyboards import class_detail_keyboard, class_recovery_keyboard
+from keyboards import class_recovery_keyboard
 
 
 logger = logging.getLogger(__name__)
@@ -215,7 +216,7 @@ async def handle_setup_callback(
                 query,
                 ("✅ Class created" if created else "✅ Class already created")
                 + f"\n\n🏫 Active class: {class_record['display_name']}\n\nYour saved context is ready.",
-                class_detail_keyboard(int(class_record["id"]), int(class_record["revision"])),
+                class_dashboard_keyboard(int(class_record["id"]), int(class_record["revision"])),
             )
             return
         if draft is None:

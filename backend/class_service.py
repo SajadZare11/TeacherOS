@@ -35,6 +35,7 @@ _CLASS_FIELDS = (
     "equipment_json",
     "teaching_preferences_json",
     "setup_profile_json",
+    "last_active_at",
 )
 _EDITABLE_CLASS_FIELDS = {
     "display_name",

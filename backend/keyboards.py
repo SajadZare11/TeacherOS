@@ -174,6 +174,9 @@ def class_list_keyboard(
             [InlineKeyboardButton("⬅ Active Classes", callback_data="v1|cl|list|0|0")]
         )
     else:
+        keyboard.append(
+            [InlineKeyboardButton("☀ Today", callback_data="v1|cl|today|0|0")]
+        )
         if has_draft:
             keyboard.append(
                 [InlineKeyboardButton("▶ Resume Class Draft", callback_data="v1|cl|resume|0|0")]

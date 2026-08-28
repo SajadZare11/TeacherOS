@@ -30,7 +30,7 @@ from class_setup_service import (  # noqa: E402
     save_setup_draft,
     start_setup_draft,
 )
-from day7_migration import SCHEMA_VERSION  # noqa: E402
+from day8_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 from keyboards import class_list_keyboard  # noqa: E402
 from subscription_service import class_creation_access_for_user  # noqa: E402
@@ -115,7 +115,7 @@ class Day7SetupTests(unittest.IsolatedAsyncioTestCase):
         callback_query.edit_message_text.assert_awaited_once()
         return callback_query, route_context
 
-    def test_schema_v7_is_idempotent_and_has_durable_setup_fields(self) -> None:
+    def test_current_schema_is_idempotent_and_has_durable_setup_fields(self) -> None:
         database.initialize_database(self.database_path)
         database.initialize_database(self.database_path)
         with database.database_connection(self.database_path) as connection:

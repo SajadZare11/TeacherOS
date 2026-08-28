@@ -10,6 +10,7 @@ from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
 from class_service import ClassFeatureDisabledError, get_class, list_classes
+from class_dashboard_panel import DASHBOARD_ACTIONS, handle_dashboard_callback
 from class_setup_panel import CHOICE_LABELS, SETUP_ACTIONS, handle_setup_callback
 from class_setup_service import get_setup_draft
 from feature_flags import feature_enabled
@@ -236,6 +237,15 @@ async def class_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         if domain == "cl" and action in SETUP_ACTIONS:
             await handle_setup_callback(
+                update,
+                context,
+                action=action,
+                object_id=match.group("object_id"),
+                revision_text=match.group("revision"),
+            )
+            return
+        if domain == "cl" and action in DASHBOARD_ACTIONS:
+            await handle_dashboard_callback(
                 update,
                 context,
                 action=action,
