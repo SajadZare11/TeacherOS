@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+from feature_flags import feature_enabled
+
 GRAMMAR_OPTIONS: dict[str, str] = {
     "present_simple": "Present Simple",
     "present_continuous": "Present Continuous",
@@ -62,12 +64,35 @@ ACTIVITY_TYPE_OPTIONS: dict[str, str] = {
 
 
 def start_menu_keyboard(*, show_admin: bool = False) -> InlineKeyboardMarkup:
-    """Compact six-button TeacherOS home screen.
+    """Return the legacy or class-aware TeacherOS home screen.
 
     ``show_admin`` remains in the signature for backward compatibility. The owner-only
     Admin button now lives inside Account so the home screen stays uncluttered.
     """
     del show_admin
+    if feature_enabled("classes"):
+        return InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "🏫 My Classes",
+                        callback_data="v1|cl|list|0|0",
+                    ),
+                    InlineKeyboardButton(
+                        "⚡ Quick Create",
+                        callback_data="home_quick",
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "🔬 Analyze Work",
+                        callback_data="home_analyze",
+                    ),
+                    InlineKeyboardButton("🔎 Search", callback_data="search_start"),
+                ],
+                [InlineKeyboardButton("👤 Account", callback_data="account_home")],
+            ]
+        )
     return InlineKeyboardMarkup(
         [
             [
@@ -82,6 +107,179 @@ def start_menu_keyboard(*, show_admin: bool = False) -> InlineKeyboardMarkup:
                 InlineKeyboardButton("🔎 Search", callback_data="search_start"),
                 InlineKeyboardButton("👤 Account", callback_data="account_home"),
             ],
+        ]
+    )
+
+
+def quick_create_keyboard() -> InlineKeyboardMarkup:
+    """Keep every proven generator callback unchanged under Quick Create."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("📚 Lesson Planner", callback_data="lesson"),
+                InlineKeyboardButton("🎲 Activities", callback_data="activity_start"),
+            ],
+            [
+                InlineKeyboardButton("📝 Worksheets", callback_data="worksheet_start"),
+                InlineKeyboardButton("✅ Assessments", callback_data="quiz_start"),
+            ],
+            [
+                InlineKeyboardButton(
+                    "🏠 Main Menu",
+                    callback_data="v1|cl|home|0|0",
+                )
+            ],
+        ]
+    )
+
+
+def _base36(value: int) -> str:
+    if value < 0:
+        raise ValueError("Callback identifiers cannot be negative.")
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+    if value == 0:
+        return "0"
+    encoded = ""
+    while value:
+        value, remainder = divmod(value, 36)
+        encoded = alphabet[remainder] + encoded
+    return encoded
+
+
+def class_list_keyboard(
+    classes: list[dict[str, object]],
+    *,
+    archived: bool,
+) -> InlineKeyboardMarkup:
+    """Build an owned class list with revisioned compact callbacks."""
+    keyboard: list[list[InlineKeyboardButton]] = []
+    for class_record in classes:
+        class_id = int(class_record["id"])
+        revision = int(class_record["revision"])
+        name = str(class_record.get("display_name") or "Untitled class").strip()
+        label = name if len(name) <= 44 else name[:41].rstrip() + "..."
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    f"🏫 {label}",
+                    callback_data=(
+                        f"v1|cl|open|{_base36(class_id)}|{_base36(revision)}"
+                    ),
+                )
+            ]
+        )
+    if archived:
+        keyboard.append(
+            [InlineKeyboardButton("⬅ Active Classes", callback_data="v1|cl|list|0|0")]
+        )
+    else:
+        keyboard.append(
+            [
+                InlineKeyboardButton("➕ Create a Class", callback_data="v1|cl|new|0|0"),
+                InlineKeyboardButton(
+                    "🗃 Archived",
+                    callback_data="v1|cl|archive|0|0",
+                ),
+            ]
+        )
+    keyboard.append(
+        [
+            InlineKeyboardButton("💡 Why Classes?", callback_data="v1|cl|why|0|0"),
+            InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0"),
+        ]
+    )
+    return InlineKeyboardMarkup(keyboard)
+
+
+def class_intro_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("⬅ My Classes", callback_data="v1|cl|list|0|0")],
+            [InlineKeyboardButton("⚡ Quick Create instead", callback_data="home_quick")],
+            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+        ]
+    )
+
+
+def class_detail_keyboard(
+    class_id: int,
+    revision: int,
+    *,
+    archived: bool = False,
+) -> InlineKeyboardMarkup:
+    encoded_id = _base36(class_id)
+    encoded_revision = _base36(revision)
+    keyboard: list[list[InlineKeyboardButton]] = []
+    if not archived:
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    "🔬 Analyze Work for this Class",
+                    callback_data=(
+                        f"v1|cl|analyze|{encoded_id}|{encoded_revision}"
+                    ),
+                )
+            ]
+        )
+    keyboard.extend(
+        [
+            [InlineKeyboardButton("⚡ Quick Create (one-off)", callback_data="home_quick")],
+            [
+                InlineKeyboardButton("⬅ My Classes", callback_data="v1|cl|list|0|0"),
+                InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0"),
+            ],
+        ]
+    )
+    return InlineKeyboardMarkup(keyboard)
+
+
+def analyze_picker_keyboard(classes: list[dict[str, object]]) -> InlineKeyboardMarkup:
+    keyboard: list[list[InlineKeyboardButton]] = []
+    for class_record in classes:
+        class_id = int(class_record["id"])
+        revision = int(class_record["revision"])
+        name = str(class_record.get("display_name") or "Untitled class").strip()
+        label = name if len(name) <= 40 else name[:37].rstrip() + "..."
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    f"🔬 {label}",
+                    callback_data=(
+                        f"v1|cl|analyze|{_base36(class_id)}|{_base36(revision)}"
+                    ),
+                )
+            ]
+        )
+    keyboard.extend(
+        [
+            [InlineKeyboardButton("🏫 My Classes", callback_data="v1|cl|list|0|0")],
+            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+        ]
+    )
+    return InlineKeyboardMarkup(keyboard)
+
+
+def class_linked_back_keyboard(class_id: int, revision: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "⬅ Back to Class",
+                    callback_data=(
+                        f"v1|cl|open|{_base36(class_id)}|{_base36(revision)}"
+                    ),
+                )
+            ],
+            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+        ]
+    )
+
+
+def class_recovery_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("🔄 Refresh My Classes", callback_data="v1|cl|list|0|0")],
+            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|rc|home|0|0")],
         ]
     )
 

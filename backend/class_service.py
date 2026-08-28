@@ -172,6 +172,7 @@ def list_classes(
     *,
     telegram_user_id: int,
     include_archived: bool = False,
+    status: str | None = None,
     limit: int = 50,
     database_path: Path | None = None,
 ) -> list[dict[str, Any]]:
@@ -179,7 +180,16 @@ def list_classes(
     _require_classes()
     if limit < 1 or limit > 100:
         raise ValueError("Class list size must be between 1 and 100.")
-    status_clause = "" if include_archived else "AND c.status = 'active'"
+    if status is not None and status not in {"active", "archived"}:
+        raise ValueError("Unsupported class status filter.")
+    if status is not None:
+        status_clause = "AND c.status = ?"
+    else:
+        status_clause = "" if include_archived else "AND c.status = 'active'"
+    parameters: list[Any] = [_positive_int(telegram_user_id, "Telegram user ID")]
+    if status is not None:
+        parameters.append(status)
+    parameters.append(limit)
     with database_connection(database_path) as connection:
         rows = connection.execute(
             f"""
@@ -190,7 +200,7 @@ def list_classes(
             ORDER BY c.updated_at DESC, c.id DESC
             LIMIT ?
             """,
-            (_positive_int(telegram_user_id, "Telegram user ID"), limit),
+            parameters,
         ).fetchall()
         return [_row_dict(row, _CLASS_FIELDS) or {} for row in rows]
 

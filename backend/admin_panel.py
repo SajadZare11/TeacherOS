@@ -22,6 +22,7 @@ from database import (
     revoke_user_subscriptions,
     update_feedback_status,
 )
+from home_ui import teacheros_home_text
 from keyboards import admin_feedback_keyboard, admin_keyboard, start_menu_keyboard
 
 logger = logging.getLogger(__name__)
@@ -451,7 +452,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await query.answer()
         await _safe_edit(
             query,
-            "👋 TeacherOS Main Menu\n\nChoose what you'd like to create today.",
+            teacheros_home_text(),
             reply_markup=start_menu_keyboard(show_admin=True),
         )
         return

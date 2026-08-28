@@ -7,6 +7,7 @@ from telegram.error import NetworkError, TimedOut
 from telegram.ext import ContextTypes
 
 from database import save_generated_material
+from home_ui import teacheros_home_text
 
 from keyboards import (
     GRAMMAR_OPTIONS,
@@ -63,9 +64,7 @@ async def _show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
 
     await query.edit_message_text(
-        "👋 Welcome to TeacherOS\n\n"
-        "Your AI assistant for English teachers.\n\n"
-        "Choose what you'd like to create today.",
+        teacheros_home_text(),
         reply_markup=start_menu_keyboard(),
     )
 

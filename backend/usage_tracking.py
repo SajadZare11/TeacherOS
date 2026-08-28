@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from database import get_user_entitlement, get_user_usage_summary, register_telegram_user
+from home_ui import teacheros_home_text
 from keyboards import start_menu_keyboard, usage_keyboard
 from subscription_service import format_subscription_expiry
 
@@ -102,7 +103,7 @@ async def usage_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await query.answer()
         context.user_data.clear()
         await query.edit_message_text(
-            "👋 TeacherOS Main Menu\n\nChoose what you'd like to create today.",
+            teacheros_home_text(),
             reply_markup=start_menu_keyboard(),
         )
         return

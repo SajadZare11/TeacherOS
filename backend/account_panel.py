@@ -9,6 +9,7 @@ from telegram.ext import ContextTypes
 
 from config import is_admin_telegram_user
 from database import get_user_entitlement, register_telegram_user
+from home_ui import teacheros_home_text
 from keyboards import account_home_keyboard, account_plan_keyboard, start_menu_keyboard
 from subscription_service import format_subscription_expiry
 
@@ -117,7 +118,7 @@ async def account_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if data == "account_main":
             await _safe_edit(
                 query,
-                "👋 منوی اصلی TeacherOS\n\nابزار موردنظر خود را انتخاب کنید.",
+                teacheros_home_text(),
                 reply_markup=start_menu_keyboard(),
             )
             return

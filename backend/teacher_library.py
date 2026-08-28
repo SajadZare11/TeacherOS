@@ -15,6 +15,7 @@ from database import (
     list_user_materials,
     register_telegram_user,
 )
+from home_ui import teacheros_home_text
 from keyboards import (
     library_delete_keyboard,
     library_list_keyboard,
@@ -360,7 +361,7 @@ async def library_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             context.user_data.clear()
             await _safe_edit(
                 query,
-                "👋 TeacherOS Main Menu\n\nChoose what you'd like to create today.",
+                teacheros_home_text(),
                 reply_markup=start_menu_keyboard(),
             )
             return

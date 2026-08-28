@@ -34,6 +34,7 @@ from database import (
     record_payment_provider_note,
     set_payment_pending,
 )
+from home_ui import teacheros_home_text
 from keyboards import (
     payment_history_keyboard,
     payment_home_keyboard,
@@ -567,7 +568,7 @@ async def payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await query.answer()
         await _safe_edit(
             query,
-            "👋 منوی اصلی TeacherOS\n\nابزار موردنظر خود را انتخاب کنید.",
+            teacheros_home_text(),
             reply_markup=start_menu_keyboard(
                 show_admin=is_admin_telegram_user(user.id)
             ),

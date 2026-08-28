@@ -15,6 +15,7 @@ from database import (
     register_telegram_user,
     search_user_materials,
 )
+from home_ui import teacheros_home_text
 from keyboards import (
     search_delete_keyboard,
     search_material_keyboard,
@@ -390,7 +391,7 @@ async def _show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if query is not None:
         await _safe_edit(
             query,
-            "👋 TeacherOS Main Menu\n\nChoose what you'd like to create today.",
+            teacheros_home_text(),
             reply_markup=start_menu_keyboard(),
         )
 

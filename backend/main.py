@@ -14,6 +14,7 @@ from telegram.ext import (
 )
 
 from account_panel import account_callback
+from class_panel import class_callback, home_callback
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
 from admin_panel import (
@@ -41,6 +42,7 @@ from database import (
     register_telegram_user,
 )
 from keyboards import start_menu_keyboard, subscription_limit_keyboard
+from home_ui import teacheros_home_text
 from lesson_planner import get_lesson_topic, lesson_callback
 from launch_info import (
     about_command,
@@ -98,10 +100,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             logger.exception("Could not load plan for start menu")
 
     await update.message.reply_text(
-        "👋 Welcome to TeacherOS\n\n"
-        "Your AI assistant for English teachers.\n"
-        f"{plan_line}\n\n"
-        "Choose what you'd like to create today.",
+        teacheros_home_text(plan_line),
         reply_markup=start_menu_keyboard(
             show_admin=is_admin_telegram_user(
                 getattr(update.effective_user, "id", None)
@@ -317,6 +316,10 @@ def main() -> None:
     app.add_handler(CallbackQueryHandler(payment_callback, pattern=r"^(?:payment_|plan_)"))
     app.add_handler(CallbackQueryHandler(word_export_callback, pattern=r"^export_"))
     app.add_handler(CallbackQueryHandler(pdf_export_callback, pattern=r"^pdf_"))
+    app.add_handler(CallbackQueryHandler(home_callback, pattern=r"^home_"))
+    app.add_handler(
+        CallbackQueryHandler(class_callback, pattern=r"^v1\|(?:cl|rc)\|")
+    )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 
     app.add_handler(
@@ -374,4 +377,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

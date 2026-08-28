@@ -1,0 +1,24 @@
+{
+  "archived_class_read_only": true,
+  "callback_limit_bytes": 64,
+  "callbacks_checked": 36,
+  "contract_errors": [],
+  "day": 6,
+  "engineering_status": "PASS",
+  "flag_off_legacy_home_preserved": true,
+  "hallway_gate": {
+    "decision": "HOLD_EXTERNAL_VALIDATION",
+    "reason": "No real participant observations were supplied or fabricated.",
+    "recorded_participants": 0,
+    "required_correct": 4,
+    "required_participants": 5,
+    "status": "NOT_RUN"
+  },
+  "legacy_generator_callbacks_preserved": true,
+  "maximum_callback_bytes": 29,
+  "over_limit_callbacks": [],
+  "passed": true,
+  "screens_checked": 10,
+  "screens_without_escape": [],
+  "unregistered_callbacks": []
+}
