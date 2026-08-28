@@ -150,6 +150,7 @@ def class_list_keyboard(
     classes: list[dict[str, object]],
     *,
     archived: bool,
+    has_draft: bool = False,
 ) -> InlineKeyboardMarkup:
     """Build an owned class list with revisioned compact callbacks."""
     keyboard: list[list[InlineKeyboardButton]] = []
@@ -173,6 +174,10 @@ def class_list_keyboard(
             [InlineKeyboardButton("⬅ Active Classes", callback_data="v1|cl|list|0|0")]
         )
     else:
+        if has_draft:
+            keyboard.append(
+                [InlineKeyboardButton("▶ Resume Class Draft", callback_data="v1|cl|resume|0|0")]
+            )
         keyboard.append(
             [
                 InlineKeyboardButton("➕ Create a Class", callback_data="v1|cl|new|0|0"),

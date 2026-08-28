@@ -5,11 +5,39 @@ from typing import Any
 
 from config import OPENROUTER_MODEL, PREMIUM_OPENROUTER_MODEL, USAGE_TIMEZONE, get_usage_timezone
 from database import get_user_entitlement
+from feature_flags import feature_enabled
+
+
+CLASS_PLAN_LIMITS: dict[str, int | None] = {
+    "free": 1,
+    "pro": 10,
+    "premium": None,
+}
 
 
 def generation_access_for_user(telegram_user_id: int) -> dict[str, Any]:
     """Return the current plan/quota decision used before every OpenRouter call."""
     return get_user_entitlement(telegram_user_id=telegram_user_id)
+
+
+def class_creation_access_for_user(telegram_user_id: int) -> dict[str, Any]:
+    """Return the one central class-limit decision used by every setup surface."""
+    from class_service import count_classes
+
+    entitlement = get_user_entitlement(telegram_user_id=telegram_user_id)
+    plan_code = str(entitlement.get("plan_code") or "free")
+    limit = CLASS_PLAN_LIMITS.get(plan_code, CLASS_PLAN_LIMITS["free"])
+    active_classes = count_classes(telegram_user_id=telegram_user_id, status="active")
+    enforced = feature_enabled("entitlements")
+    allowed = not enforced or limit is None or active_classes < limit
+    return {
+        "allowed": allowed,
+        "enforced": enforced,
+        "plan_code": plan_code,
+        "plan_name": entitlement.get("plan_name") or plan_code.title(),
+        "active_classes": active_classes,
+        "class_limit": limit,
+    }
 
 
 def generation_block_message(access: dict[str, Any]) -> str:

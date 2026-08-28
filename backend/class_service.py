@@ -28,6 +28,13 @@ _CLASS_FIELDS = (
     "created_at",
     "updated_at",
     "archived_at",
+    "lesson_duration_minutes",
+    "weak_areas_json",
+    "coursebook",
+    "coursebook_unit",
+    "equipment_json",
+    "teaching_preferences_json",
+    "setup_profile_json",
 )
 _EDITABLE_CLASS_FIELDS = {
     "display_name",
@@ -203,6 +210,29 @@ def list_classes(
             parameters,
         ).fetchall()
         return [_row_dict(row, _CLASS_FIELDS) or {} for row in rows]
+
+
+def count_classes(
+    *,
+    telegram_user_id: int,
+    status: str = "active",
+    database_path: Path | None = None,
+) -> int:
+    """Count owned classes for central entitlement decisions."""
+    _require_classes()
+    if status not in {"active", "archived"}:
+        raise ValueError("Unsupported class status filter.")
+    with database_connection(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM classes AS c
+            JOIN users AS u ON u.id = c.user_id
+            WHERE u.telegram_user_id = ? AND c.status = ?
+            """,
+            (_positive_int(telegram_user_id, "Telegram user ID"), status),
+        ).fetchone()
+        return int(row[0]) if row is not None else 0
 
 
 def get_class(

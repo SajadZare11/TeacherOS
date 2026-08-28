@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import re
 from typing import Any
@@ -9,6 +10,8 @@ from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
 from class_service import ClassFeatureDisabledError, get_class, list_classes
+from class_setup_panel import CHOICE_LABELS, SETUP_ACTIONS, handle_setup_callback
+from class_setup_service import get_setup_draft
 from feature_flags import feature_enabled
 from home_ui import teacheros_home_text
 from keyboards import (
@@ -47,14 +50,53 @@ def _decode_base36(value: str) -> int:
 
 
 def _profile_lines(class_record: dict[str, Any]) -> list[str]:
+    try:
+        setup_profile = json.loads(str(class_record.get("setup_profile_json") or "{}"))
+    except json.JSONDecodeError:
+        setup_profile = {}
+    if not isinstance(setup_profile, dict):
+        setup_profile = {}
+    level = class_record.get("level") or setup_profile.get("level_choice")
+    age_group = class_record.get("age_group") or setup_profile.get("age_group_choice")
+    class_size = class_record.get("learner_count_band") or setup_profile.get(
+        "learner_count_band_choice"
+    )
+    duration = class_record.get("lesson_duration_minutes")
+    if isinstance(duration, int):
+        duration = f"{duration} minutes"
+    coursebook = class_record.get("coursebook")
+    if coursebook and class_record.get("coursebook_unit"):
+        coursebook = f"{coursebook} · {class_record['coursebook_unit']}"
+    elif not coursebook:
+        coursebook = setup_profile.get("coursebook_state")
+
+    def choice_text(field: str) -> str:
+        choices = setup_profile.get(field)
+        if not isinstance(choices, list):
+            return ""
+        labels = CHOICE_LABELS[field]
+        return ", ".join(
+            labels.get(str(choice), str(choice).replace("_", " ").title())
+            for choice in choices
+        )
+
     values = (
-        ("Level", class_record.get("level")),
-        ("Age group", class_record.get("age_group")),
-        ("Class size", class_record.get("learner_count_band")),
+        ("Level", level),
+        ("Age group", age_group),
+        ("Class size", class_size),
         ("Cadence", class_record.get("cadence")),
         ("Goal", class_record.get("goal")),
+        ("Usual duration", duration),
+        ("Weak areas", choice_text("weak_areas")),
+        ("Coursebook", coursebook),
+        ("Equipment", choice_text("equipment")),
+        ("Teaching preference", choice_text("teaching_preferences")),
     )
-    return [f"{label}: {value}" for label, value in values if value]
+    return [
+        f"{label}: {str(value).replace('_', ' ').title()}"
+        for label, value in values
+        if value
+    ]
 
 
 async def _recover(query: Any, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -77,6 +119,7 @@ async def _show_class_list(
     context.user_data.pop("active_class", None)
     status = "archived" if archived else "active"
     records = list_classes(telegram_user_id=telegram_user_id, status=status, limit=50)
+    draft = None if archived else get_setup_draft(telegram_user_id=telegram_user_id)
     if archived:
         text = (
             "🗃 Archived Classes\n\n"
@@ -101,7 +144,11 @@ async def _show_class_list(
     await _safe_edit(
         query,
         text,
-        reply_markup=class_list_keyboard(records, archived=archived),
+        reply_markup=class_list_keyboard(
+            records,
+            archived=archived,
+            has_draft=draft is not None,
+        ),
     )
 
 
@@ -187,6 +234,15 @@ async def class_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     action = match.group("action")
 
     try:
+        if domain == "cl" and action in SETUP_ACTIONS:
+            await handle_setup_callback(
+                update,
+                context,
+                action=action,
+                object_id=match.group("object_id"),
+                revision_text=match.group("revision"),
+            )
+            return
         if domain == "rc" and action == "home":
             context.user_data.clear()
             await _safe_edit(
@@ -219,12 +275,10 @@ async def class_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 archived=True,
             )
             return
-        if domain == "cl" and action in {"why", "new"}:
+        if domain == "cl" and action == "why":
             context.user_data.pop("active_class", None)
             lead = (
-                "➕ Before You Create a Class"
-                if action == "new"
-                else "💡 Why Use My Classes?"
+                "💡 Why Use My Classes?"
             )
             await _safe_edit(
                 query,

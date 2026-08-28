@@ -15,6 +15,7 @@ from telegram.ext import (
 
 from account_panel import account_callback
 from class_panel import class_callback, home_callback
+from class_setup_panel import get_class_setup_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
 from admin_panel import (
@@ -162,6 +163,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     quiz = context.user_data.get("quiz")
     library_search = context.user_data.get("library_search")
     feedback = context.user_data.get("feedback")
+    class_setup = context.user_data.get("class_setup")
 
     # A feature-specific text handler will process the message first.
     if isinstance(lesson, dict) and lesson.get("state"):
@@ -175,6 +177,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if isinstance(library_search, dict) and library_search.get("state"):
         return
     if isinstance(feedback, dict) and feedback.get("state"):
+        return
+    if isinstance(class_setup, dict) and class_setup.get("state"):
         return
 
     user_message = (update.message.text or "").strip()
@@ -323,32 +327,36 @@ def main() -> None:
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_search_query),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_class_setup_text),
         group=0,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_lesson_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_search_query),
         group=1,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_lesson_topic),
         group=2,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_worksheet_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_activity_topic),
         group=3,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_quiz_topic),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_worksheet_topic),
         group=4,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, get_feedback_text),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_quiz_topic),
         group=5,
     )
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, get_feedback_text),
         group=6,
+    )
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
+        group=7,
     )
 
     app.add_error_handler(error_handler)

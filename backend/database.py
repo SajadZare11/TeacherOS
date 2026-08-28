@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from day5_migration import apply_schema_v6
+from day7_migration import apply_schema_v7
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -270,6 +271,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         _ensure_column(connection, "payments", "product_code", "TEXT")
         _ensure_column(connection, "payments", "subscription_days", "INTEGER")
         apply_schema_v6(connection)
+        apply_schema_v7(connection)
 
     return target_path
 
@@ -442,6 +444,9 @@ def database_healthcheck() -> dict[str, int | str]:
         product_event_count = int(
             connection.execute("SELECT COUNT(*) FROM product_events").fetchone()[0]
         )
+        setup_draft_count = int(
+            connection.execute("SELECT COUNT(*) FROM class_setup_drafts").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -460,6 +465,7 @@ def database_healthcheck() -> dict[str, int | str]:
         "class_lessons": class_lesson_count,
         "lesson_outcomes": outcome_count,
         "product_events": product_event_count,
+        "class_setup_drafts": setup_draft_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:

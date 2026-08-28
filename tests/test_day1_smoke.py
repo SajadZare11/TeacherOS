@@ -48,7 +48,7 @@ class Day1CriticalPathSmokeTests(unittest.IsolatedAsyncioTestCase):
         cls.owner = user(9001)
         cls.other = user(9002, "Other Teacher")
 
-    def test_01_schema_v6_and_all_four_generation_types(self) -> None:
+    def test_01_schema_v7_and_all_four_generation_types(self) -> None:
         expected_types = ("lesson", "activity", "worksheet", "assessment")
         for material_type in expected_types:
             material_id = database.save_generated_material(
@@ -75,7 +75,7 @@ class Day1CriticalPathSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("ANSWER KEY", saved["content"])
 
         health = database.database_healthcheck()
-        self.assertEqual(health["schema_version"], 6)
+        self.assertEqual(health["schema_version"], 7)
         self.assertEqual(
             database.count_user_materials(telegram_user_id=self.owner.id),
             4,
