@@ -6,6 +6,7 @@ from telegram import Update
 from telegram.error import NetworkError, TimedOut
 from telegram.ext import ContextTypes
 
+from ai_gateway import generate_artifact, generation_provenance
 from database import save_generated_material
 from home_ui import teacheros_home_text
 
@@ -19,8 +20,6 @@ from keyboards import (
     start_menu_keyboard,
     subscription_limit_keyboard,
 )
-from openrouter_client import generate_text
-from prompt_loader import load_feature_prompt
 from subscription_service import (
     generation_access_for_user,
     generation_block_message,
@@ -257,8 +256,6 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     )
 
     try:
-        prompt = load_feature_prompt("activity_generator", "activity_template")
-
         replacements = {
             "{{activity_type}}": str(activity["type"]),
             "{{activity}}": str(activity["type"]),
@@ -267,13 +264,17 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             "{{target_language}}": "Not specified",
             "{{context}}": "General English class",
         }
-        for placeholder, value in replacements.items():
-            prompt = prompt.replace(placeholder, value)
-
-        result = await generate_text(
-            [{"role": "user", "content": prompt}],
+        generation = await generate_artifact(
+            feature="activity",
+            telegram_user_id=user.id,
             model=selected_openrouter_model(access),
+            current_request=(
+                f"Create a {activity['type']} activity for {activity['level']} learners "
+                f"about {activity['topic']}."
+            ),
+            prompt_replacements=replacements,
         )
+        result = generation.content
     except Exception:
         logger.exception("Activity generation failed")
         activity["state"] = "confirm"
@@ -298,7 +299,7 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             level=str(activity["level"]),
             topic=str(activity["topic"]),
             content=result,
-            metadata={},
+            metadata={"ai_provenance": generation_provenance(generation)},
         )
         save_message = (
             "✅ Activity generated and saved automatically.\n"

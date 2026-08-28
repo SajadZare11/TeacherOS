@@ -48,7 +48,7 @@ class Day1CriticalPathSmokeTests(unittest.IsolatedAsyncioTestCase):
         cls.owner = user(9001)
         cls.other = user(9002, "Other Teacher")
 
-    def test_01_schema_v8_and_all_four_generation_types(self) -> None:
+    def test_01_schema_v9_and_all_four_generation_types(self) -> None:
         expected_types = ("lesson", "activity", "worksheet", "assessment")
         for material_type in expected_types:
             material_id = database.save_generated_material(
@@ -75,7 +75,7 @@ class Day1CriticalPathSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("ANSWER KEY", saved["content"])
 
         health = database.database_healthcheck()
-        self.assertEqual(health["schema_version"], 8)
+        self.assertEqual(health["schema_version"], 9)
         self.assertEqual(
             database.count_user_materials(telegram_user_id=self.owner.id),
             4,
@@ -201,14 +201,14 @@ class Day1CriticalPathSmokeTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(bot_main, "generation_access_for_user", return_value=access),
             patch.object(bot_main, "selected_openrouter_model", return_value="offline-model"),
-            patch.object(bot_main, "generate_text", AsyncMock(side_effect=TimeoutError("offline"))),
+            patch.object(bot_main, "generate_artifact", AsyncMock(side_effect=TimeoutError("offline"))),
         ):
             await bot_main.handle_message(update, context)
 
         update.message.reply_text.assert_awaited_once()
         message = update.message.reply_text.await_args.args[0]
-        self.assertIn("could not contact OpenRouter", message)
-        self.assertIn("Check your internet connection", message)
+        self.assertIn("could not generate a safe response", message)
+        self.assertIn("send it again to retry", message)
 
     def test_05_required_command_and_callback_routes_are_registered(self) -> None:
         source = (BACKEND_DIR / "main.py").read_text(encoding="utf-8")

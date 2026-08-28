@@ -33,7 +33,7 @@ from class_dashboard_service import (  # noqa: E402
 )
 from class_panel import class_callback  # noqa: E402
 from class_setup_service import start_setup_draft  # noqa: E402
-from day8_migration import SCHEMA_VERSION  # noqa: E402
+from day9_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 
 
@@ -180,7 +180,7 @@ class Day8ClassDashboardTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(str(row["last_active_at"]).endswith("Z"))
             self.assertEqual(
                 connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0],
-                8,
+                SCHEMA_VERSION,
             )
             self.assertEqual(connection.execute("PRAGMA foreign_key_check").fetchall(), [])
 

@@ -1,0 +1,80 @@
+{
+  "automated_test_count": 72,
+  "context_matrix": {
+    "adversarial": true,
+    "empty": true,
+    "mixed_language": true,
+    "normal": true,
+    "paired_user_isolation": true,
+    "unauthorized": true,
+    "very_long": true
+  },
+  "day": 9,
+  "engineering_status": "PASS",
+  "measurement": {
+    "p95_generation_target_ms": 25000,
+    "production_p95_ms": null,
+    "production_sample_count": 0,
+    "production_status": "NOT_RUN",
+    "reason": "No live teacher generation telemetry was fabricated.",
+    "schema_valid_display_enforced": true,
+    "schema_valid_display_target": 1.0
+  },
+  "passed": true,
+  "pipeline": {
+    "malformed_json_renderable": false,
+    "prompt_trace_renderable": false,
+    "provider_retry_limit": 1,
+    "repair_limit": 1,
+    "total_timeout_seconds": 24.0,
+    "valid_json_renderable": true
+  },
+  "privacy": {
+    "audit_columns": [
+      "attempt_count",
+      "class_id",
+      "completed_at",
+      "context_hash_sha256",
+      "cost_microusd",
+      "created_at",
+      "error_code",
+      "feature",
+      "id",
+      "input_tokens",
+      "latency_ms",
+      "model",
+      "output_tokens",
+      "prompt_contract",
+      "prompt_hash_sha256",
+      "prompt_version",
+      "provider",
+      "repair_attempted",
+      "request_id",
+      "source_record_ids_json",
+      "status",
+      "user_id"
+    ],
+    "forbidden_content_columns_present": [],
+    "stored_provenance": [
+      "prompt/version hashes",
+      "source record IDs",
+      "provider/model",
+      "tokens/cost/latency"
+    ]
+  },
+  "routing": {
+    "activity_generator.py": true,
+    "lesson_planner.py": true,
+    "main.py": true,
+    "quiz_generator.py": true,
+    "worksheet_generator.py": true
+  },
+  "schema_version": 9,
+  "visible_retry_paths": {
+    "activity_generator.py": true,
+    "lesson_planner.py": true,
+    "main.py": true,
+    "quiz_generator.py": true,
+    "worksheet_generator.py": true
+  }
+}

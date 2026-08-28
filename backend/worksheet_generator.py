@@ -6,6 +6,7 @@ from telegram import Update
 from telegram.error import NetworkError, TimedOut
 from telegram.ext import ContextTypes
 
+from ai_gateway import generate_artifact, generation_provenance
 from database import save_generated_material
 from home_ui import teacheros_home_text
 
@@ -19,8 +20,6 @@ from keyboards import (
     worksheet_confirm_keyboard,
     worksheet_type_keyboard,
 )
-from openrouter_client import generate_text
-from prompt_loader import load_feature_prompt
 from subscription_service import (
     generation_access_for_user,
     generation_block_message,
@@ -70,14 +69,12 @@ async def _show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     )
 
 
-def _build_prompt(worksheet: dict) -> str:
-    prompt = load_feature_prompt("worksheet_generator", "worksheet_template")
-
+def _prompt_replacements(worksheet: dict) -> dict[str, str]:
     worksheet_type = str(worksheet["type"])
     level = str(worksheet["level"])
     topic = str(worksheet["topic"])
 
-    replacements = {
+    return {
         "{WORKSHEET_TYPE}": worksheet_type,
         "{LEVEL}": level,
         "{TOPIC}": topic,
@@ -88,12 +85,6 @@ def _build_prompt(worksheet: dict) -> str:
         "{CLASS_SIZE}": "Flexible for individual, pair, or group use",
         "{DURATION}": "Approximately 30–45 minutes",
     }
-
-    for placeholder, value in replacements.items():
-        prompt = prompt.replace(placeholder, value)
-
-    return prompt
-
 
 async def worksheet_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -302,11 +293,17 @@ async def generate_worksheet(
     )
 
     try:
-        prompt = _build_prompt(worksheet)
-        result = await generate_text(
-            [{"role": "user", "content": prompt}],
+        generation = await generate_artifact(
+            feature="worksheet",
+            telegram_user_id=user.id,
             model=selected_openrouter_model(access),
+            current_request=(
+                f"Create a {worksheet['type']} worksheet for {worksheet['level']} learners "
+                f"about {worksheet['topic']}."
+            ),
+            prompt_replacements=_prompt_replacements(worksheet),
         )
+        result = generation.content
     except Exception:
         logger.exception("Worksheet generation failed")
         worksheet["state"] = "confirm"
@@ -331,7 +328,7 @@ async def generate_worksheet(
             level=str(worksheet["level"]),
             topic=str(worksheet["topic"]),
             content=result,
-            metadata={},
+            metadata={"ai_provenance": generation_provenance(generation)},
         )
         save_message = (
             "✅ Worksheet generated and saved automatically.\n"

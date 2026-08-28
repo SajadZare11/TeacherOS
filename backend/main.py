@@ -14,6 +14,7 @@ from telegram.ext import (
 )
 
 from account_panel import account_callback
+from ai_gateway import generate_artifact
 from class_panel import class_callback, home_callback
 from class_dashboard_panel import get_class_dashboard_text
 from class_setup_panel import get_class_setup_text
@@ -53,8 +54,7 @@ from launch_info import (
     terms_command,
 )
 from library_search import get_search_query, search_callback, search_command
-from openrouter_client import generate_text
-from prompt_loader import load_system_prompt, validate_prompt_files
+from prompt_loader import validate_prompt_files
 from pdf_export import pdf_export_callback
 from payment_panel import payment_callback, payments_command, upgrade_command
 from payment_server import start_payment_callback_server
@@ -206,18 +206,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
 
     try:
-        ai_response = await generate_text(
-            [
-                {"role": "system", "content": load_system_prompt()},
-                {"role": "user", "content": user_message},
-            ],
-            model=selected_openrouter_model(access),
+        active_class = context.user_data.get("active_class")
+        class_id = (
+            int(active_class["id"])
+            if isinstance(active_class, dict)
+            and isinstance(active_class.get("id"), int)
+            and int(active_class["id"]) > 0
+            else None
         )
+        generation = await generate_artifact(
+            feature="general_chat",
+            telegram_user_id=user.id,
+            model=selected_openrouter_model(access),
+            current_request=user_message,
+            class_id=class_id,
+        )
+        ai_response = generation.content
     except Exception:
         logger.exception("General TeacherOS chat request failed")
         await update.message.reply_text(
-            "❌ I could not contact OpenRouter.\n\n"
-            "Check your internet connection, .env file, API key, and selected model."
+            "❌ I could not generate a safe response right now.\n\n"
+            "Nothing unvalidated was shown. Your message is still above—send it again to retry."
         )
         return
 

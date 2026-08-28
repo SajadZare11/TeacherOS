@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day8_migration import SCHEMA_VERSION
+from day9_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -98,6 +98,8 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_lessons_material_owner_update",
             "trg_product_events_owner_insert",
             "trg_product_events_owner_update",
+            "trg_ai_audits_class_owner_insert",
+            "trg_ai_audits_class_owner_update",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
@@ -106,6 +108,7 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "ai_generation_audits",
             "class_action_items",
             "class_setup_drafts",
             "product_events",

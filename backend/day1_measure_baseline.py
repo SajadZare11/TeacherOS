@@ -114,7 +114,7 @@ def measure() -> dict[str, object]:
         with (
             patch.object(bot_main, "generation_access_for_user", return_value=access),
             patch.object(bot_main, "selected_openrouter_model", return_value="offline-model"),
-            patch.object(bot_main, "generate_text", AsyncMock(side_effect=TimeoutError("offline"))),
+            patch.object(bot_main, "generate_artifact", AsyncMock(side_effect=TimeoutError("offline"))),
         ):
             await bot_main.handle_message(update, context)
         if not update.message.reply_text.await_args:
