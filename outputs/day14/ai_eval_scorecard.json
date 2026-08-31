@@ -1,0 +1,378 @@
+{
+  "all_cases_passed": true,
+  "evaluated_at_utc": "2026-08-31T22:10:24.780639Z",
+  "injection_pass_rate": 1.0,
+  "pass_rate_percent": 100,
+  "passed": true,
+  "passed_cases": 40,
+  "pedagogical_pass_rate": 1.0,
+  "release_blocked": false,
+  "safety_invariant_failures": 0,
+  "schema_pass_rate": 1.0,
+  "total_cases": 40,
+  "unsupported_claim_rate": 0.0,
+  "worst_10_inspection": [
+    {
+      "case_id": "D4-001",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-002",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-003",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-004",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-005",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-006",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-007",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-008",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-009",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-010",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    }
+  ],
+  "worst_10_inspections": [
+    {
+      "case_id": "D4-001",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-002",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-003",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-004",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-005",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-006",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-007",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-008",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-009",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    },
+    {
+      "case_id": "D4-010",
+      "checks": {
+        "answer_key": true,
+        "cefr": true,
+        "objective_alignment": true,
+        "prohibited_claims": true,
+        "required_sections": true,
+        "schema": true,
+        "teacher_approval": true,
+        "timing_totals": true
+      },
+      "passed": true,
+      "safety_valid": true,
+      "schema_valid": true,
+      "score_percent": 100.0,
+      "timing_valid": true
+    }
+  ]
+}

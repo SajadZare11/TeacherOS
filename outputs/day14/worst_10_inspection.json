@@ -1,0 +1,182 @@
+[
+  {
+    "case_id": "D4-001",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-002",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-003",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-004",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-005",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-006",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-007",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-008",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-009",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  },
+  {
+    "case_id": "D4-010",
+    "checks": {
+      "answer_key": true,
+      "cefr": true,
+      "objective_alignment": true,
+      "prohibited_claims": true,
+      "required_sections": true,
+      "schema": true,
+      "teacher_approval": true,
+      "timing_totals": true
+    },
+    "passed": true,
+    "safety_valid": true,
+    "schema_valid": true,
+    "score_percent": 100.0,
+    "timing_valid": true
+  }
+]

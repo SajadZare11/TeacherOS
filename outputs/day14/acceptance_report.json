@@ -1,0 +1,76 @@
+{
+  "checks": {
+    "ai_golden_set_evaluated": true,
+    "ai_worst_10_inspected": true,
+    "complete_teaching_loop_e2e": true,
+    "four_generators_supported": true,
+    "multi_tenant_isolation_verified": true,
+    "plan_timing_reconciled": true,
+    "resilience_recovery_passed": true,
+    "snapshot_sources_persisted": true,
+    "word_and_pdf_exports_functional": true,
+    "zero_p0_p1_defects": true
+  },
+  "details": {
+    "ai_evaluation": {
+      "pass_rate_percent": 100,
+      "passed_cases": 40,
+      "total_cases": 40,
+      "worst_10_count": 10
+    },
+    "exports": {
+      "passed": true,
+      "pdf_bytes": 74529,
+      "word_bytes": 38428
+    },
+    "generators": {
+      "activity": true,
+      "assessment": true,
+      "lesson": true,
+      "worksheet": true
+    },
+    "isolation": {
+      "all_isolation_passed": true,
+      "dashboard_cross_access_blocked": true,
+      "history_cross_access_blocked": true,
+      "outcome_cross_access_blocked": true,
+      "recommendation_cross_access_blocked": true
+    },
+    "loop": {
+      "class_id": 1,
+      "conversions": {
+        "generated_to_planned": 1,
+        "planned_to_taught": 1
+      },
+      "dash_outcome_rate": 100,
+      "duration_minutes": 60,
+      "first_lesson_id": 1,
+      "first_material_id": 1,
+      "followup_accepted": 1,
+      "history_count": 2,
+      "next_material_id": 2,
+      "next_plan_id": 1,
+      "outcome_id": 1,
+      "passed": true,
+      "plan_source_count": 3,
+      "recommendation_id": 1,
+      "timing_total_minutes": 60,
+      "timing_valid": true
+    },
+    "recovery": {
+      "all_recovery_passed": true,
+      "generation_interruption_recovery": true,
+      "setup_draft_resumption": true
+    }
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-08-31T22:10:25.069885+00:00",
+  "gate": "Phase 2 Exit Gate (Day 14)",
+  "passed": true,
+  "pilot_observation": {
+    "note": "Observational pilot with 3 live teachers across 4 weeks cannot be fabricated in automated testing and will be conducted with live user cohorts.",
+    "status": "BLOCKED_NOT_FABRICATED",
+    "target_teachers_observed": 3
+  },
+  "schema_version": 13
+}
