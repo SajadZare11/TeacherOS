@@ -1,0 +1,38 @@
+{
+  "checks": {
+    "corrupt_files_handled_safely": true,
+    "deferred_formats_safely_explained": true,
+    "docx_file_ingestion_verified": true,
+    "multi_tenant_isolation_verified": true,
+    "pasted_text_multi_student_parsed": true,
+    "schema_v15_deployed": true,
+    "teacher_label_and_deletion_controls": true,
+    "telegram_keyboards_bounded_64_bytes": true,
+    "txt_file_ingestion_verified": true,
+    "zero_raw_evidence_in_telemetry": true
+  },
+  "details": {
+    "batch_docx_id": 3,
+    "batch_pasted_id": 1,
+    "batch_txt_id": 2,
+    "evidence_types_supported": [
+      "writing",
+      "speaking_notes",
+      "quiz_exit_ticket",
+      "homework_task",
+      "general_work"
+    ],
+    "retention_policies_supported": [
+      "7_days",
+      "30_days",
+      "until_deleted",
+      "manual_only"
+    ],
+    "total_events_checked": 4
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-08-31T22:20:12.555297+00:00",
+  "gate": "Day 15 \u2014 Privacy-First Evidence Inbox",
+  "passed": true,
+  "schema_version": 15
+}

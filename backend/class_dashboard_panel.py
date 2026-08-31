@@ -1307,6 +1307,20 @@ async def handle_dashboard_callback(
                 class_library_keyboard(records, class_id, revision),
             )
             return
+        if action in {"analyze", "evid"} and feature_enabled("evidence"):
+            from evidence_keyboards import evidence_inbox_keyboard
+            from evidence_service import list_evidence_batches
+            batches = list_evidence_batches(telegram_user_id=user.id, class_id=class_id)
+            text = (
+                f"📥 Evidence Inbox · {class_record['display_name']}\n\n"
+                "Submit and manage anonymized student work (writing, speaking notes, quizzes).\n\n"
+                "🔒 Privacy Safeguards:\n"
+                "• Anonymous labels only (Student A, Student 1)\n"
+                "• Deletable at any time by teacher\n"
+                "• Automated privacy retention (30 days default)"
+            )
+            await _safe_edit(query, text, evidence_inbox_keyboard(class_id, revision, batches))
+            return
         if action == "plan" and feature_enabled("continuity"):
             touch_class_activity(telegram_user_id=user.id, class_id=class_id)
             rec = get_or_create_recommendation(telegram_user_id=user.id, class_id=class_id)

@@ -20,7 +20,7 @@ from class_dashboard_keyboards import (
     next_lesson_why_keyboard,
 )
 from class_dashboard_service import class_dashboard_snapshot
-from day13_migration import SCHEMA_VERSION
+from day15_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 from lesson_history_service import mark_lesson_taught, schedule_material_lesson
 from next_lesson_service import (

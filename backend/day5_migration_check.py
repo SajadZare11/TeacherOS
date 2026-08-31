@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day13_migration import SCHEMA_VERSION
+from day15_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -45,6 +45,8 @@ NEW_TABLES = (
     "next_lesson_recommendation_sources",
     "next_lesson_plans",
     "next_lesson_plan_sources",
+    "evidence_batches",
+    "evidence_items",
 )
 
 _POST_LEGACY_MATERIAL_COLUMNS = {
@@ -154,14 +156,27 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_next_lesson_immutable_saved_update_v13",
             "trg_next_lesson_plan_immutable_update_v13",
             "trg_next_lesson_plan_source_immutable_update_v13",
+            "trg_evidence_batch_owner_insert_v15",
+            "trg_evidence_batch_owner_update_v15",
+            "trg_evidence_item_owner_insert_v15",
+            "trg_evidence_item_owner_update_v15",
+            "trg_evidence_item_count_insert_v15",
+            "trg_evidence_item_count_update_v15",
+            "trg_evidence_item_count_delete_v15",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
             "idx_materials_id_user",
             "idx_materials_user_class_created",
+            "idx_evidence_batches_owner",
+            "idx_evidence_batches_uuid",
+            "idx_evidence_items_batch",
+            "idx_evidence_items_class",
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "evidence_items",
+            "evidence_batches",
             "next_lesson_plan_sources",
             "next_lesson_plans",
             "next_lesson_recommendation_sources",
