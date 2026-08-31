@@ -17,7 +17,8 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day17-key")
 
 import database
 from class_service import create_class
-from day17_migration import SCHEMA_VERSION, apply_schema_v17
+from day17_migration import apply_schema_v17
+from day18_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 from writing_feedback_keyboards import (
     writing_feedback_export_keyboard,
@@ -84,7 +85,6 @@ class Day17WritingFeedbackTests(unittest.TestCase):
             apply_schema_v17(conn)
             max_v = conn.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
             self.assertEqual(max_v, SCHEMA_VERSION)
-            self.assertEqual(max_v, 17)
 
             tables = {
                 r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")

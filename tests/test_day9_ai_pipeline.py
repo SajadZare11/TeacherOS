@@ -26,7 +26,7 @@ from class_context import (  # noqa: E402
     ClassContextUnavailable,
     build_class_context,
 )
-from day17_migration import SCHEMA_VERSION  # noqa: E402
+from day18_migration import SCHEMA_VERSION  # noqa: E402
 from openrouter_client import ModelResponse  # noqa: E402
 from prompt_contracts import render_feature_prompt  # noqa: E402
 

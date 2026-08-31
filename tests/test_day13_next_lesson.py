@@ -33,7 +33,7 @@ from class_dashboard_panel import (  # noqa: E402
     handle_dashboard_callback,
 )
 from class_dashboard_service import class_dashboard_snapshot  # noqa: E402
-from day17_migration import SCHEMA_VERSION  # noqa: E402
+from day18_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 from lesson_history_service import mark_lesson_taught, schedule_material_lesson  # noqa: E402
 from next_lesson_service import (  # noqa: E402

@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "all_six_action_types_supported": true,
+    "conversion_pipeline_approved_to_accepted": true,
+    "direct_class_library_saving_and_linkage": true,
+    "multi_tenant_isolation_verified": true,
+    "raw_evidence_purge_preserves_followup": true,
+    "schema_v18_deployed": true,
+    "telegram_keyboards_bounded_64_bytes": true,
+    "unapproved_analysis_generation_blocked": true,
+    "what_this_addresses_provenance_preserved": true,
+    "zero_raw_student_text_in_telemetry": true
+  },
+  "details": {
+    "analysis_id": 1,
+    "followup_id": 1,
+    "material_id": 1
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-08-31T22:42:50.074683+00:00",
+  "gate": "Day 18 \u2014 Connect Approved Analysis Directly to Teaching Action",
+  "passed": true,
+  "schema_version": 18
+}

@@ -11,7 +11,7 @@ from typing import Any
 
 import database
 from class_dashboard_service import class_dashboard_snapshot
-from day17_migration import SCHEMA_VERSION
+from day18_migration import SCHEMA_VERSION
 from keyboards import lesson_replace_keyboard, lesson_schedule_keyboard
 from lesson_history_service import (
     cancel_planned_lesson,

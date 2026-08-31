@@ -241,7 +241,7 @@ def evaluate_day15() -> dict[str, Any]:
                 return {
                     "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
                     "gate": "Day 15 — Privacy-First Evidence Inbox",
-                    "schema_version": 17,
+                    "schema_version": 18,
                     "checks": checks,
                     "passed": passed,
                     "engineering_status": "PASS" if passed else "FAIL",

@@ -28,6 +28,9 @@ def evidence_analysis_keyboard(
         ])
     else:
         rows.append([
+            InlineKeyboardButton("⚡ Create Teaching Action", callback_data=f"v1|fa|t|{aid}|{bid}|{rev}"),
+        ])
+        rows.append([
             InlineKeyboardButton("✏ Edit Approved Summary", callback_data=f"v1|ea|edt|{aid}|{bid}|{rev}"),
         ])
 
