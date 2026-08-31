@@ -33,7 +33,7 @@ from class_dashboard_service import (  # noqa: E402
 )
 from class_panel import class_callback  # noqa: E402
 from class_setup_service import start_setup_draft  # noqa: E402
-from day12_migration import SCHEMA_VERSION  # noqa: E402
+from day13_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 
 
@@ -164,11 +164,32 @@ class Day8ClassDashboardTests(unittest.IsolatedAsyncioTestCase):
     def test_populated_v7_upgrade_backfills_last_active_without_losing_class(self) -> None:
         class_id = int(self.class_record["id"])
         with database.database_connection(self.database_path) as connection:
-            connection.execute("DROP TRIGGER IF EXISTS trg_classes_last_active_insert")
+            for trigger in (
+                "trg_next_lesson_source_owner_insert_v13",
+                "trg_next_lesson_source_owner_update_v13",
+                "trg_next_lesson_owner_insert_v13",
+                "trg_next_lesson_owner_update_v13",
+                "trg_next_lesson_plan_source_owner_insert_v13",
+                "trg_next_lesson_plan_source_owner_update_v13",
+                "trg_next_lesson_plan_owner_insert_v13",
+                "trg_next_lesson_plan_owner_update_v13",
+                "trg_next_lesson_immutable_saved_update_v13",
+                "trg_next_lesson_plan_immutable_update_v13",
+                "trg_next_lesson_plan_source_immutable_update_v13",
+                "trg_classes_last_active_insert",
+            ):
+                connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
+            for table in (
+                "next_lesson_plan_sources",
+                "next_lesson_plans",
+                "next_lesson_recommendation_sources",
+                "next_lesson_recommendations",
+            ):
+                connection.execute(f"DROP TABLE IF EXISTS {table}")
             connection.execute("DROP INDEX IF EXISTS idx_classes_owner_last_active")
             connection.execute("DROP TABLE class_action_items")
             connection.execute("ALTER TABLE classes DROP COLUMN last_active_at")
-            connection.execute("DELETE FROM schema_versions WHERE version = 8")
+            connection.execute("DELETE FROM schema_versions WHERE version >= 8")
 
         database.initialize_database(self.database_path)
         with database.database_connection(self.database_path) as connection:

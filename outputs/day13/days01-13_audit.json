@@ -1,13 +1,13 @@
 {
-  "audited_at_utc": "2026-08-31T21:43:51.053512+00:00",
+  "audited_at_utc": "2026-08-31T21:58:32.672923+00:00",
   "automated_tests": {
-    "count": 105,
+    "count": 118,
     "status": "PASS"
   },
   "days": {
     "1": {
       "engineering": "PASS",
-      "evidence": "Critical-path suite included in 105 passing tests."
+      "evidence": "Critical-path suite included in 118 passing tests."
     },
     "10": {
       "engineering": "PASS",
@@ -26,6 +26,14 @@
       "passed": true,
       "pilot_measurement_status": "BLOCKED_NOT_FABRICATED",
       "three_fact_taps_structurally_defined": true
+    },
+    "13": {
+      "engineering": "PASS",
+      "evidence_to_action_engine_defined": true,
+      "fixture_acceptance_percent": 100,
+      "fixture_plans_saved": 1,
+      "passed": true,
+      "pilot_measurement_status": "BLOCKED_NOT_FABRICATED"
     },
     "2": {
       "blockers": [
@@ -118,9 +126,9 @@
     }
   },
   "engineering_status": "PASS",
-  "external_evidence_note": "Prior external gates remain honest, and Day 12 still requires observed teacher timing plus pilot outcome-recording evidence.",
+  "external_evidence_note": "Prior external gates remain honest, and Day 13 still requires observed teacher repeat-use data over 4 weeks.",
   "external_evidence_status": "BLOCKED_NOT_FABRICATED",
   "passed": true,
-  "schema_version": 12,
-  "scope": "TeacherOS master-plan Days 1\u201312"
+  "schema_version": 13,
+  "scope": "TeacherOS master-plan Days 1\u201313"
 }

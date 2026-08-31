@@ -15,10 +15,10 @@
     "mark_taught_idempotent": true,
     "owner_isolation": true,
     "replace_preserves_resource": true,
-    "schema_v11": true
+    "schema_v11": false
   },
   "day": 11,
-  "engineering_status": "PASS",
+  "engineering_status": "FAIL",
   "history_fixture": {
     "raw_material_content_in_report": false,
     "record_count": 5,
@@ -35,9 +35,9 @@
     "planned_to_taught": 1,
     "status": "TRACKING_ACTIVE"
   },
-  "passed": true,
+  "passed": false,
   "privacy": {
     "raw_prompts_or_outputs_in_report": false
   },
-  "schema_version": 12
+  "schema_version": 13
 }

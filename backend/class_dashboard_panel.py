@@ -21,6 +21,12 @@ from class_dashboard_keyboards import (
     edit_text_keyboard,
     lesson_cancel_confirmation_keyboard,
     lesson_history_keyboard,
+    next_lesson_followup_keyboard,
+    next_lesson_modes_keyboard,
+    next_lesson_priorities_keyboard,
+    next_lesson_recommendation_keyboard,
+    next_lesson_sources_keyboard,
+    next_lesson_why_keyboard,
     outcome_completion_keyboard,
     outcome_difficulty_keyboard,
     outcome_lesson_picker_keyboard,
@@ -52,8 +58,8 @@ from class_setup_panel import (
 )
 from keyboards import class_recovery_keyboard
 from feature_flags import feature_enabled
-from database import list_class_materials
-from keyboards import class_library_keyboard
+from database import list_class_materials, save_generated_material
+from keyboards import class_library_keyboard, generated_material_export_keyboard, subscription_limit_keyboard
 from lesson_history_service import (
     cancel_planned_lesson,
     get_owned_class_lesson,
@@ -69,6 +75,29 @@ from outcome_checkin_service import (
     save_outcome_facts,
     update_outcome_note,
 )
+from next_lesson_service import (
+    MODE_LABELS,
+    claim_recommendation_generation,
+    complete_next_lesson_plan,
+    get_or_create_recommendation,
+    get_recommendation,
+    ignore_recommendation,
+    next_lesson_metrics,
+    plan_timing_total,
+    record_next_lesson_edit,
+    record_next_lesson_followup,
+    release_recommendation_generation,
+    select_recommendation_mode,
+    set_manual_next_lesson_request,
+    set_recommendation_priority,
+    toggle_recommendation_source,
+)
+from ai_gateway import generate_artifact, generation_provenance
+from subscription_service import (
+    generation_access_for_user,
+    generation_block_message,
+    selected_openrouter_model,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -78,6 +107,22 @@ DASHBOARD_ACTIONS = {
     "archask", "archyes", "restask", "restyes", "library", "hist", "taught",
     "canask", "canyes", "ostart", "ores", "odiff", "odone", "odnext",
     "ocomp", "oedit", "onote", "onclear", "oskip", "oremind", "orsave",
+    "nlrec", "nlmode", "nlmset", "nlprio", "nlpset", "nlsrc", "nltog",
+    "nlwhy", "nlgen", "nlign", "nlman", "nlfa",
+}
+NEXT_LESSON_MODE_CODES = {
+    "r": "recommendation",
+    "u": "continue_unfinished",
+    "t": "reteach",
+    "n": "new_topic",
+    "a": "assessment",
+    "m": "manual",
+}
+NEXT_LESSON_PRIO_CODES = {
+    "b": "balanced",
+    "c": "continuity",
+    "r": "reteaching",
+    "a": "assessment",
 }
 OUTCOME_RESULT_CODES = {"a": "achieved", "p": "partly_achieved", "r": "needs_reteaching"}
 OUTCOME_RESULT_LABELS = {
@@ -421,6 +466,99 @@ def _outcome_summary_text(
     return "\n".join(lines)
 
 
+def _next_lesson_rec_text(
+    class_name: str, rec: dict[str, Any], *, notice: str | None = None
+) -> str:
+    mode = rec.get("effective_mode") or rec.get("recommended_mode")
+    mode_title = MODE_LABELS.get(str(mode), str(mode).replace("_", " ").title())
+    prio = str(rec.get("priority_mode", "balanced")).title()
+    uncertainty = str(rec.get("uncertainty", "low")).upper()
+    duration = rec.get("duration_minutes", 60)
+    objectives = rec.get("objective_labels") or []
+    sources = rec.get("sources", [])
+    included_count = sum(1 for s in sources if s.get("included") == 1)
+
+    lines = [
+        f"🎯 Plan Next Lesson · {class_name}",
+        "",
+        f"Proposed mode: {mode_title}",
+        f"Priority: {prio} · Uncertainty: {uncertainty}",
+        f"Duration: {duration} mins · Active sources: {included_count}/{len(sources)}",
+        "",
+        f"Rationale: {rec['rationale']}",
+    ]
+    if rec.get("teacher_request") and mode == "manual":
+        lines.extend(["", f"Custom topic: {_short(rec['teacher_request'], 60)}"])
+    if objectives:
+        lines.extend(["", "Target objective(s):"] + [f"• {_short(obj, 60)}" for obj in objectives[:3]])
+    if notice:
+        lines.extend(["", notice])
+    lines.extend([
+        "",
+        "Review the proposed direction above. You can change mode, priority, or active sources before generating.",
+    ])
+    return "\n".join(lines)
+
+
+def _next_lesson_why_text(class_name: str, rec: dict[str, Any]) -> str:
+    sources = rec.get("sources", [])
+    included = [s for s in sources if s.get("included") == 1]
+    lines = [
+        f"💡 Why this next? · {class_name}",
+        "",
+        f"Rationale: {rec['rationale']}",
+        f"Uncertainty: {str(rec.get('uncertainty', 'low')).upper()} ({rec.get('uncertainty_reason', '')})",
+        "",
+        "Records used:",
+    ]
+    if not included:
+        lines.append("• No specific historical records included; relying on general class profile.")
+    else:
+        for s in included:
+            lines.append(f"• [{s['source_type'].replace('_', ' ')}] {s['source_label']}\n  {_short(s['fact_summary'], 90)}")
+    return "\n".join(lines)
+
+
+def _next_lesson_modes_text(class_name: str, rec: dict[str, Any]) -> str:
+    current = rec.get("selected_mode") or "recommendation (auto)"
+    return "\n".join([
+        f"🎯 Choose Next Lesson Mode · {class_name}",
+        "",
+        f"Current: {str(current).replace('_', ' ').title()}",
+        "",
+        "• Use recommendation: Auto-select based on history and outcomes",
+        "• Continue unfinished: Consolidate previously incomplete work",
+        "• Reteach: Fresh angle with scaffolding for difficult concepts",
+        "• Start a new topic: Move forward to the next curricular theme",
+        "• Prepare for assessment: Observable check against current objectives",
+        "• Choose manually: Type your own custom topic",
+    ])
+
+
+def _next_lesson_priorities_text(class_name: str, rec: dict[str, Any]) -> str:
+    return "\n".join([
+        f"⚖ Choose Recommendation Priority · {class_name}",
+        "",
+        f"Current: {str(rec.get('priority_mode', 'balanced')).title()}",
+        "",
+        "• Balanced: Propose based on the latest recorded outcome result",
+        "• Continuity first: Prioritize finishing incomplete lessons",
+        "• Reteaching first: Prioritize resolving recorded difficulties",
+        "• Assessment first: Prioritize evaluation against objectives",
+    ])
+
+
+def _next_lesson_sources_text(class_name: str, rec: dict[str, Any]) -> str:
+    sources = rec.get("sources", [])
+    included_count = sum(1 for s in sources if s.get("included") == 1)
+    return "\n".join([
+        f"📋 Active History Sources · {class_name}",
+        "",
+        f"Active records: {included_count} of {len(sources)}",
+        "Tap any record to include (✅) or exclude (▫️) it from the next lesson proposal.",
+    ])
+
+
 def _active_state(context: ContextTypes.DEFAULT_TYPE) -> dict[str, Any] | None:
     state = context.user_data.get("active_class")
     return state if isinstance(state, dict) else None
@@ -593,6 +731,66 @@ async def handle_dashboard_callback(
                 await _recover(query, context)
                 return
             class_id = int(lesson_record["class_id"])
+        elif action in {"nlrec", "nlmode", "nlprio", "nlsrc", "nlwhy", "nlgen", "nlign", "nlman"}:
+            rec_id = _decode_positive_base36(object_id)
+            rec_record = get_recommendation(
+                telegram_user_id=user.id, recommendation_id=rec_id
+            )
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(rec_record["class_id"])
+        elif action == "nlmset":
+            selected_mode_code = object_id[0]
+            rec_id = _decode_positive_base36(object_id[1:])
+            rec_record = get_recommendation(
+                telegram_user_id=user.id, recommendation_id=rec_id
+            )
+            if rec_record is None or selected_mode_code not in NEXT_LESSON_MODE_CODES:
+                await _recover(query, context)
+                return
+            class_id = int(rec_record["class_id"])
+        elif action == "nlpset":
+            selected_prio_code = object_id[0]
+            rec_id = _decode_positive_base36(object_id[1:])
+            rec_record = get_recommendation(
+                telegram_user_id=user.id, recommendation_id=rec_id
+            )
+            if rec_record is None or selected_prio_code not in NEXT_LESSON_PRIO_CODES:
+                await _recover(query, context)
+                return
+            class_id = int(rec_record["class_id"])
+        elif action == "nltog":
+            source_link_id = _decode_positive_base36(object_id)
+            rec_record = toggle_recommendation_source(
+                telegram_user_id=user.id, source_link_id=source_link_id
+            )
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(rec_record["class_id"])
+        elif action == "nlfa":
+            followup_accepted = object_id[0] == "1"
+            plan_id = _decode_positive_base36(object_id[1:])
+            plan_row = record_next_lesson_followup(
+                telegram_user_id=user.id, plan_id=plan_id, accepted=followup_accepted
+            )
+            if not plan_row:
+                await _recover(query, context)
+                return
+            revision = int(revision_text, 36)
+            class_id = int(state["id"]) if state else 0
+            if class_id == 0:
+                snapshot = class_dashboard_snapshot(telegram_user_id=user.id, class_id=int(object_id[1:], 36) if len(object_id) > 1 else 0)
+                if snapshot:
+                    class_id = int(snapshot["class"]["id"])
+            await _safe_edit(
+                query,
+                "✅ Thank you! Your feedback on this lesson recommendation was saved.\n\n"
+                "TeacherOS uses this to improve future suggestions.",
+                InlineKeyboardMarkup([[InlineKeyboardButton("Done · Class Home", callback_data=_cb("open", class_id or 1, revision))]]),
+            )
+            return
         elif action in {"edset", "edmulti", "edsave"}:
             edit_state = context.user_data.get("class_edit")
             if not isinstance(edit_state, dict):
@@ -1109,6 +1307,299 @@ async def handle_dashboard_callback(
                 class_library_keyboard(records, class_id, revision),
             )
             return
+        if action == "plan" and feature_enabled("continuity"):
+            touch_class_activity(telegram_user_id=user.id, class_id=class_id)
+            rec = get_or_create_recommendation(telegram_user_id=user.id, class_id=class_id)
+            if rec is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_rec_text(str(class_record["display_name"]), rec),
+                next_lesson_recommendation_keyboard(rec, class_id, revision),
+            )
+            return
+        if action == "nlrec":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_rec_text(str(class_record["display_name"]), rec_record),
+                next_lesson_recommendation_keyboard(rec_record, class_id, revision),
+            )
+            return
+        if action == "nlwhy":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_why_text(str(class_record["display_name"]), rec_record),
+                next_lesson_why_keyboard(int(rec_record["id"]), revision),
+            )
+            return
+        if action == "nlmode":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_modes_text(str(class_record["display_name"]), rec_record),
+                next_lesson_modes_keyboard(
+                    int(rec_record["id"]), rec_record.get("selected_mode"), revision
+                ),
+            )
+            return
+        if action == "nlmset":
+            mode_str = NEXT_LESSON_MODE_CODES[str(selected_mode_code)]
+            updated_rec = select_recommendation_mode(
+                telegram_user_id=user.id,
+                recommendation_id=int(rec_record["id"]),
+                mode=mode_str,
+            )
+            if updated_rec is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_rec_text(
+                    str(class_record["display_name"]),
+                    updated_rec,
+                    notice=f"✅ Mode set to {MODE_LABELS.get(mode_str, mode_str)}.",
+                ),
+                next_lesson_recommendation_keyboard(updated_rec, class_id, revision),
+            )
+            return
+        if action == "nlprio":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_priorities_text(str(class_record["display_name"]), rec_record),
+                next_lesson_priorities_keyboard(
+                    int(rec_record["id"]),
+                    str(rec_record.get("priority_mode", "balanced")),
+                    revision,
+                ),
+            )
+            return
+        if action == "nlpset":
+            prio_str = NEXT_LESSON_PRIO_CODES[str(selected_prio_code)]
+            updated_rec = set_recommendation_priority(
+                telegram_user_id=user.id,
+                recommendation_id=int(rec_record["id"]),
+                priority=prio_str,
+            )
+            if updated_rec is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_rec_text(
+                    str(class_record["display_name"]),
+                    updated_rec,
+                    notice=f"✅ Priority set to {prio_str.title()}.",
+                ),
+                next_lesson_recommendation_keyboard(updated_rec, class_id, revision),
+            )
+            return
+        if action == "nlsrc":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_sources_text(str(class_record["display_name"]), rec_record),
+                next_lesson_sources_keyboard(
+                    int(rec_record["id"]), rec_record.get("sources", []), revision
+                ),
+            )
+            return
+        if action == "nltog":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                _next_lesson_sources_text(str(class_record["display_name"]), rec_record),
+                next_lesson_sources_keyboard(
+                    int(rec_record["id"]), rec_record.get("sources", []), revision
+                ),
+            )
+            return
+        if action == "nlign":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            ignore_recommendation(telegram_user_id=user.id, recommendation_id=int(rec_record["id"]))
+            await _render_dashboard(
+                query, context, telegram_user_id=user.id, class_id=class_id, expected_revision=revision
+            )
+            return
+        if action == "nlman":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            context.user_data["next_lesson_topic"] = {
+                "rec_id": int(rec_record["id"]),
+                "class_id": class_id,
+                "revision": revision,
+                "state": "text",
+            }
+            await _safe_edit(
+                query,
+                f"✏ Choose Manually · {class_record['display_name']}\n\n"
+                "Type your custom lesson topic (2 to 300 characters).\n\n"
+                "Do not include student names, email addresses, phone numbers, or sensitive data.",
+                next_lesson_why_keyboard(int(rec_record["id"]), revision),
+            )
+            return
+        if action == "nlgen":
+            if rec_record is None:
+                await _recover(query, context)
+                return
+            if (
+                rec_record.get("selected_mode") == "manual"
+                and not str(rec_record.get("teacher_request") or "").strip()
+            ):
+                context.user_data["next_lesson_topic"] = {
+                    "rec_id": int(rec_record["id"]),
+                    "class_id": class_id,
+                    "revision": revision,
+                    "state": "text",
+                }
+                await _safe_edit(
+                    query,
+                    f"✏ Choose Manually · {class_record['display_name']}\n\n"
+                    "Type your custom lesson topic before generating.",
+                    next_lesson_why_keyboard(int(rec_record["id"]), revision),
+                )
+                return
+
+            access = generation_access_for_user(user.id)
+            if not bool(access.get("allowed")):
+                await _safe_edit(
+                    query,
+                    generation_block_message(access),
+                    subscription_limit_keyboard(),
+                )
+                return
+
+            rec_id = int(rec_record["id"])
+            claimed = claim_recommendation_generation(
+                telegram_user_id=user.id, recommendation_id=rec_id
+            )
+            if claimed is None:
+                await _recover(query, context)
+                return
+
+            await _safe_edit(
+                query,
+                "🧠 Generating your next lesson plan...\n\n"
+                "TeacherOS is synthesizing approved class history into a classroom-ready lesson.",
+                None,
+            )
+
+            effective_mode = str(claimed.get("effective_mode") or claimed.get("recommended_mode") or "new_topic")
+            level = str(class_record.get("level") or "B1")
+            duration = int(claimed.get("duration_minutes") or class_record.get("lesson_duration_minutes") or 60)
+            topic = str(claimed.get("teacher_request") or f"Next lesson based on {effective_mode.replace('_', ' ')}")
+            objectives_text = ", ".join(claimed.get("objective_labels", [])) or "Demonstrate lesson can-do objective."
+            replacements = {
+                "{LEVEL}": level,
+                "{TOPIC}": topic,
+                "{GRAMMAR}": "Target structure aligned to lesson objectives",
+                "{VOCABULARY}": "Not specified",
+                "{DURATION}": str(duration),
+                "{GOALS}": f"Next lesson ({effective_mode}). Rationale: {claimed['rationale']}. Objectives: {objectives_text}",
+            }
+
+            try:
+                generation = await generate_artifact(
+                    feature="lesson",
+                    telegram_user_id=user.id,
+                    model=selected_openrouter_model(access),
+                    current_request=(
+                        f"Create a {duration}-minute {level} next lesson in {effective_mode} mode. "
+                        f"Topic: {topic}. Objectives: {objectives_text}. "
+                        f"Context: {claimed['rationale']}."
+                    ),
+                    prompt_replacements=replacements,
+                    class_id=class_id,
+                    quality_requirements={
+                        "level": level,
+                        "duration_minutes": str(duration),
+                    },
+                )
+                result_text = generation.content
+            except Exception:
+                logger.exception("Next lesson generation failed")
+                release_recommendation_generation(
+                    telegram_user_id=user.id,
+                    recommendation_id=rec_id,
+                    error_code="generation_exception",
+                )
+                refreshed = get_recommendation(telegram_user_id=user.id, recommendation_id=rec_id)
+                await _safe_edit(
+                    query,
+                    "❌ I could not generate the next lesson right now.\n\n"
+                    "Your choices are saved. Check your connection, then tap Generate to retry.",
+                    next_lesson_recommendation_keyboard(refreshed or rec_record, class_id, revision),
+                )
+                return
+
+            material_id = None
+            try:
+                material_id = save_generated_material(
+                    telegram_user=user,
+                    material_type="lesson",
+                    subtype=f"Next Lesson ({MODE_LABELS.get(effective_mode, effective_mode)})",
+                    title=f"{topic} Lesson Plan ({level})",
+                    level=level,
+                    topic=topic,
+                    content=result_text,
+                    metadata={
+                        "next_lesson_recommendation_id": rec_id,
+                        "duration_minutes": duration,
+                        "mode": effective_mode,
+                        "ai_provenance": generation_provenance(generation),
+                    },
+                    class_id=class_id,
+                    objective_ids=generation.source_record_ids.get("class_objectives", []),
+                    ai_provenance=generation_provenance(generation),
+                    quality_scores=generation.quality_scores,
+                )
+                plan = complete_next_lesson_plan(
+                    telegram_user_id=user.id,
+                    recommendation_id=rec_id,
+                    material_id=material_id,
+                    validation=generation.quality_scores,
+                )
+                plan_id = int(plan["id"]) if plan else 0
+            except Exception:
+                logger.exception("Next lesson material/plan could not be completed")
+                plan_id = 0
+
+            summary_lines = [
+                f"✅ Next lesson plan generated & saved · {class_record['display_name']}",
+                f"Mode: {MODE_LABELS.get(effective_mode, effective_mode)} · Level: {level} · {duration} mins",
+                "",
+                "Did this lesson address the intended target?",
+            ]
+            await _safe_edit(
+                query,
+                "\n".join(summary_lines),
+                next_lesson_followup_keyboard(plan_id, class_id, revision)
+                if plan_id
+                else class_details_keyboard(class_id, revision, archived=False),
+            )
+            if query.message is not None:
+                for start in range(0, len(result_text), 4000):
+                    await query.message.reply_text(result_text[start : start + 4000])
+            return
+
         if action in {"plan", "analyze", "create", "outcome", "progress"}:
             touch_class_activity(telegram_user_id=user.id, class_id=class_id)
             headings = {
@@ -1151,6 +1642,53 @@ async def handle_dashboard_callback(
 async def get_class_dashboard_text(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
+    topic_state = context.user_data.get("next_lesson_topic")
+    if (
+        isinstance(topic_state, dict)
+        and topic_state.get("state") == "text"
+        and update.message is not None
+        and update.effective_user is not None
+    ):
+        rec_id = int(topic_state["rec_id"])
+        class_id = int(topic_state["class_id"])
+        revision = int(topic_state["revision"])
+        try:
+            snapshot = class_dashboard_snapshot(
+                telegram_user_id=update.effective_user.id, class_id=class_id
+            )
+            if snapshot is None or int(snapshot["class"]["revision"]) != revision:
+                context.user_data.pop("next_lesson_topic", None)
+                await update.message.reply_text(
+                    "⚠️ This class changed. Topic was not saved. Refresh the class.",
+                    reply_markup=class_recovery_keyboard(),
+                )
+                return
+            rec = set_manual_next_lesson_request(
+                telegram_user_id=update.effective_user.id,
+                recommendation_id=rec_id,
+                request=update.message.text or "",
+            )
+            if rec is None:
+                context.user_data.pop("next_lesson_topic", None)
+                await update.message.reply_text(
+                    "⚠️ The recommendation draft is no longer available.",
+                    reply_markup=class_recovery_keyboard(),
+                )
+                return
+            context.user_data.pop("next_lesson_topic", None)
+            await update.message.reply_text(
+                _next_lesson_rec_text(
+                    str(snapshot["class"]["display_name"]), rec,
+                    notice="✅ Custom manual topic saved.",
+                ),
+                reply_markup=next_lesson_recommendation_keyboard(rec, class_id, revision),
+            )
+        except ValueError as exc:
+            await update.message.reply_text(
+                f"⚠️ {exc}\n\nType a short, non-sensitive topic (2 to 300 characters), or return to the plan.",
+                reply_markup=next_lesson_why_keyboard(rec_id, revision),
+            )
+        return
     note_state = context.user_data.get("outcome_note")
     if (
         isinstance(note_state, dict)

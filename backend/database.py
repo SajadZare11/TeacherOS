@@ -16,6 +16,7 @@ from day9_migration import apply_schema_v9
 from day10_migration import apply_schema_v10
 from day11_migration import apply_schema_v11
 from day12_migration import apply_schema_v12
+from day13_migration import apply_schema_v13
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -282,6 +283,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v10(connection)
         apply_schema_v11(connection)
         apply_schema_v12(connection)
+        apply_schema_v13(connection)
 
     return target_path
 

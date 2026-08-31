@@ -385,3 +385,205 @@ def outcome_reminder_keyboard(lesson_id: int, revision: int) -> InlineKeyboardMa
             [InlineKeyboardButton("Skip for now", callback_data=_cb("oskip", lesson_id, revision))],
         ]
     )
+
+
+_NEXT_LESSON_MODE_CODES = {
+    "recommendation": "r",
+    "continue_unfinished": "u",
+    "reteach": "t",
+    "new_topic": "n",
+    "assessment": "a",
+    "manual": "m",
+}
+_NEXT_LESSON_PRIO_CODES = {
+    "balanced": "b",
+    "continuity": "c",
+    "reteaching": "r",
+    "assessment": "a",
+}
+
+
+def next_lesson_recommendation_keyboard(
+    rec: dict[str, Any], class_id: int, revision: int
+) -> InlineKeyboardMarkup:
+    rec_id = int(rec["id"])
+    rec_code = _base36(rec_id)
+    sources = rec.get("sources", [])
+    included_count = sum(1 for s in sources if s.get("included") == 1)
+    total_count = len(sources)
+
+    rows: list[list[InlineKeyboardButton]] = [
+        [
+            InlineKeyboardButton(
+                "✨ Generate Lesson Plan",
+                callback_data=_cb("nlgen", rec_id, revision),
+            )
+        ],
+        [
+            InlineKeyboardButton("💡 Why this next?", callback_data=_cb("nlwhy", rec_id, revision)),
+            InlineKeyboardButton("🎯 Change Mode", callback_data=_cb("nlmode", rec_id, revision)),
+        ],
+        [
+            InlineKeyboardButton(
+                f"⚖ Priority ({str(rec.get('priority_mode', 'balanced')).title()})",
+                callback_data=_cb("nlprio", rec_id, revision),
+            ),
+            InlineKeyboardButton(
+                f"📋 Sources ({included_count}/{total_count})",
+                callback_data=_cb("nlsrc", rec_id, revision),
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                "Ignore suggestion",
+                callback_data=_cb("nlign", rec_id, revision),
+            )
+        ],
+        [
+            InlineKeyboardButton("⬅ Class Home", callback_data=_cb("open", class_id, revision)),
+            InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0"),
+        ],
+    ]
+    return InlineKeyboardMarkup(rows)
+
+
+def next_lesson_modes_keyboard(
+    rec_id: int, current_mode: str | None, revision: int
+) -> InlineKeyboardMarkup:
+    rec_code = _base36(rec_id)
+    modes = (
+        ("recommendation", "🎯 Use recommendation"),
+        ("continue_unfinished", "🔄 Continue unfinished work"),
+        ("reteach", "🔁 Reteach with support"),
+        ("new_topic", "🆕 Start a new topic"),
+        ("assessment", "📝 Prepare for assessment"),
+    )
+    rows: list[list[InlineKeyboardButton]] = []
+    for mode_key, label in modes:
+        code = _NEXT_LESSON_MODE_CODES[mode_key]
+        prefix = "✅ " if current_mode == mode_key else ""
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    f"{prefix}{label}",
+                    callback_data=_cb("nlmset", f"{code}{rec_code}", revision),
+                )
+            ]
+        )
+    prefix_m = "✅ " if current_mode == "manual" else ""
+    rows.append(
+        [
+            InlineKeyboardButton(
+                f"{prefix_m}✏ Choose manually (custom topic)",
+                callback_data=_cb("nlman", rec_id, revision),
+            )
+        ]
+    )
+    rows.append(
+        [
+            InlineKeyboardButton(
+                "⬅ Back to Plan",
+                callback_data=_cb("nlrec", rec_id, revision),
+            )
+        ]
+    )
+    return InlineKeyboardMarkup(rows)
+
+
+def next_lesson_priorities_keyboard(
+    rec_id: int, current_priority: str, revision: int
+) -> InlineKeyboardMarkup:
+    rec_code = _base36(rec_id)
+    priorities = (
+        ("balanced", "⚖ Balanced (Auto)"),
+        ("continuity", "🔄 Continuity first"),
+        ("reteaching", "🔁 Reteaching first"),
+        ("assessment", "📝 Assessment first"),
+    )
+    rows: list[list[InlineKeyboardButton]] = []
+    for prio_key, label in priorities:
+        code = _NEXT_LESSON_PRIO_CODES[prio_key]
+        prefix = "✅ " if current_priority == prio_key else ""
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    f"{prefix}{label}",
+                    callback_data=_cb("nlpset", f"{code}{rec_code}", revision),
+                )
+            ]
+        )
+    rows.append(
+        [
+            InlineKeyboardButton(
+                "⬅ Back to Plan",
+                callback_data=_cb("nlrec", rec_id, revision),
+            )
+        ]
+    )
+    return InlineKeyboardMarkup(rows)
+
+
+def next_lesson_sources_keyboard(
+    rec_id: int, sources: list[dict[str, Any]], revision: int
+) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = []
+    for source in sources:
+        source_id = int(source["id"])
+        included = int(source.get("included", 1)) == 1
+        label = ("✅ " if included else "▫️ ") + str(source.get("source_label", "Source"))[:36]
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    label,
+                    callback_data=_cb("nltog", source_id, revision),
+                )
+            ]
+        )
+    rows.append(
+        [
+            InlineKeyboardButton(
+                "⬅ Back to Plan",
+                callback_data=_cb("nlrec", rec_id, revision),
+            )
+        ]
+    )
+    return InlineKeyboardMarkup(rows)
+
+
+def next_lesson_why_keyboard(rec_id: int, revision: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "⬅ Back to Plan",
+                    callback_data=_cb("nlrec", rec_id, revision),
+                )
+            ]
+        ]
+    )
+
+
+def next_lesson_followup_keyboard(
+    plan_id: int, class_id: int, revision: int
+) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "👍 Yes, addresses target",
+                    callback_data=_cb("nlfa", f"1{_base36(plan_id)}", revision),
+                ),
+                InlineKeyboardButton(
+                    "👎 Not quite",
+                    callback_data=_cb("nlfa", f"0{_base36(plan_id)}", revision),
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    "Done · Class Home",
+                    callback_data=_cb("open", class_id, revision),
+                )
+            ],
+        ]
+    )
+

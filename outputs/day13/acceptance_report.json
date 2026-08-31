@@ -1,0 +1,90 @@
+{
+  "day": 13,
+  "title": "Plan Next Lesson Evidence-to-Action Engine",
+  "schema_version": 13,
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-08-31T21:58:26.631612+00:00",
+  "passed": true,
+  "scenario_count": 9,
+  "checks": {
+    "evidence_to_action_engine_defined": true,
+    "six_modes_supported": true,
+    "four_priorities_supported": true,
+    "why_panel_lists_exact_records": true,
+    "uncertainty_dynamically_computed": true,
+    "timing_sums_to_duration": true,
+    "owner_isolation_enforced": true
+  },
+  "scenarios": [
+    {
+      "scenario": "new_class_fallback",
+      "recommended_mode": "new_topic",
+      "uncertainty": "high",
+      "has_objectives": true,
+      "passed": true
+    },
+    {
+      "scenario": "single_achieved_outcome",
+      "recommended_mode": "new_topic",
+      "uncertainty": "medium",
+      "passed": true
+    },
+    {
+      "scenario": "needs_reteaching_outcome",
+      "recommended_mode": "reteach",
+      "passed": true
+    },
+    {
+      "scenario": "source_toggle",
+      "initial_uncertainty": "low",
+      "toggled1_uncertainty": "medium",
+      "toggled2_uncertainty": "high",
+      "restored_uncertainty": "low",
+      "passed": true
+    },
+    {
+      "scenario": "priority_switching",
+      "recommended_mode": "continue_unfinished",
+      "passed": true
+    },
+    {
+      "scenario": "manual_topic_and_pii_guards",
+      "selected_mode": "manual",
+      "pii_blocked": true,
+      "passed": true
+    },
+    {
+      "scenario": "plan_generation_and_timing",
+      "plan_timing_total": 60,
+      "duration_minutes": 60,
+      "source_count": 6,
+      "passed": true
+    },
+    {
+      "scenario": "followup_metrics",
+      "plans_saved": 1,
+      "teacher_edits": 1,
+      "followup_accepted": 1,
+      "passed": true
+    },
+    {
+      "scenario": "multi_tenant_isolation",
+      "cross_access_blocked": true,
+      "passed": true
+    }
+  ],
+  "measurement": {
+    "fixture_plans_saved": 1,
+    "fixture_teacher_edits": 1,
+    "fixture_followup_accepted": 1,
+    "fixture_acceptance_percent": 100,
+    "pilot_target_repeat_percent": 50,
+    "pilot_observed_rate_percent": null,
+    "pilot_measurement_status": "BLOCKED_NOT_FABRICATED"
+  },
+  "external_evidence": {
+    "pilot_repeat_planning_observed": "BLOCKED_NOT_FABRICATED",
+    "reason": "Requires real pilot teacher repeat-use data over 4 weeks; automated tests cannot substitute."
+  },
+  "privacy": "Report contains aggregate fixture counts and booleans only; no teacher prompt or user identifier."
+}

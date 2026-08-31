@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day12_migration import SCHEMA_VERSION
+from day13_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -41,6 +41,10 @@ NEW_TABLES = (
     "lesson_outcome_fact_revisions",
     "lesson_outcome_reminders",
     "lesson_outcome_ai_suggestions",
+    "next_lesson_recommendations",
+    "next_lesson_recommendation_sources",
+    "next_lesson_plans",
+    "next_lesson_plan_sources",
 )
 
 _POST_LEGACY_MATERIAL_COLUMNS = {
@@ -139,6 +143,17 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_outcome_suggestion_owner_v12",
             "trg_outcome_completes_reminder_insert_v12",
             "trg_outcome_completes_reminder_update_v12",
+            "trg_next_lesson_owner_insert_v13",
+            "trg_next_lesson_owner_update_v13",
+            "trg_next_lesson_source_owner_insert_v13",
+            "trg_next_lesson_source_owner_update_v13",
+            "trg_next_lesson_plan_owner_insert_v13",
+            "trg_next_lesson_plan_owner_update_v13",
+            "trg_next_lesson_plan_source_owner_insert_v13",
+            "trg_next_lesson_plan_source_owner_update_v13",
+            "trg_next_lesson_immutable_saved_update_v13",
+            "trg_next_lesson_plan_immutable_update_v13",
+            "trg_next_lesson_plan_source_immutable_update_v13",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
@@ -147,6 +162,10 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "next_lesson_plan_sources",
+            "next_lesson_plans",
+            "next_lesson_recommendation_sources",
+            "next_lesson_recommendations",
             "lesson_outcome_ai_suggestions",
             "lesson_outcome_reminders",
             "lesson_outcome_fact_revisions",
