@@ -21,6 +21,7 @@ from day15_migration import apply_schema_v15
 from day16_migration import apply_schema_v16
 from day17_migration import apply_schema_v17
 from day18_migration import apply_schema_v18
+from day19_migration import apply_schema_v19
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -292,6 +293,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v16(connection)
         apply_schema_v17(connection)
         apply_schema_v18(connection)
+        apply_schema_v19(connection)
 
     return target_path
 

@@ -143,7 +143,7 @@ def evaluate_day14() -> dict[str, Any]:
                 return {
                     "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
                     "gate": "Phase 2 Exit Gate (Day 14)",
-                    "schema_version": 18,
+                    "schema_version": 19,
                     "checks": checks,
                     "passed": passed,
                     "engineering_status": "PASS" if passed else "FAIL",

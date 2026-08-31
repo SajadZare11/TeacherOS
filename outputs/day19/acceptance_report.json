@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "all_nine_one_tap_adaptations_supported": true,
+    "challenge_route_cognitive_depth_not_busywork": true,
+    "delivery_guidance_and_reconnection_present": true,
+    "golden_case_large_class_runnable": true,
+    "golden_case_low_resource_runnable": true,
+    "multi_tenant_isolation_verified": true,
+    "schema_v19_deployed": true,
+    "shared_can_do_objective_invariant": true,
+    "source_material_never_overwritten": true,
+    "support_route_scaffolding_preserved": true,
+    "telegram_keyboards_bounded_64_bytes": true,
+    "zero_raw_student_text_in_telemetry": true
+  },
+  "details": {
+    "adaptations_count": 9,
+    "differentiation_id": 1,
+    "source_material_id": 1
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-08-31T22:49:01.597676+00:00",
+  "gate": "Day 19 \u2014 Ship Meaningful Differentiation and One-Tap Classroom Adaptations",
+  "passed": true,
+  "schema_version": 19
+}

@@ -29,6 +29,10 @@ from writing_feedback_panel import (
     handle_writing_feedback_message,
 )
 from analysis_followup_panel import handle_analysis_followup_callback
+from differentiation_panel import (
+    handle_adaptation_callback,
+    handle_differentiation_callback,
+)
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -425,6 +429,12 @@ def main() -> None:
     )
     app.add_handler(
         CallbackQueryHandler(handle_analysis_followup_callback, pattern=r"^v1\|fa\|")
+    )
+    app.add_handler(
+        CallbackQueryHandler(handle_differentiation_callback, pattern=r"^v1\|df\|")
+    )
+    app.add_handler(
+        CallbackQueryHandler(handle_adaptation_callback, pattern=r"^v1\|ad\|")
     )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 

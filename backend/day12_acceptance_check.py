@@ -18,7 +18,7 @@ from class_dashboard_keyboards import (
     outcome_result_keyboard,
 )
 from class_dashboard_service import class_dashboard_snapshot
-from day18_migration import SCHEMA_VERSION
+from day19_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 from lesson_history_service import mark_lesson_taught, schedule_material_lesson
 from outcome_checkin_service import (

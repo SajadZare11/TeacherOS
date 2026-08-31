@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import database
-from day18_migration import SCHEMA_VERSION
+from day19_migration import SCHEMA_VERSION
 from keyboards import generated_material_export_keyboard
 from pdf_document import create_pdf_export
 from prompt_contracts import get_prompt_contract

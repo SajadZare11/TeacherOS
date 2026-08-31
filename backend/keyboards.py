@@ -662,9 +662,10 @@ def generated_material_export_keyboard(
     material_id: int, *, material_type: str | None = None, class_id: int | None = None
 ) -> InlineKeyboardMarkup:
     """Day 10 post-generation toolbar; export callbacks remain backward compatible."""
+    mat_b36 = _base36(material_id)
     actions = [
         InlineKeyboardButton("💾 Save", callback_data=f"ma|sv|{material_id}"),
-        InlineKeyboardButton("✏ Adapt", callback_data=f"ma|ad|{material_id}"),
+        InlineKeyboardButton("🎯 Differentiate", callback_data=f"v1|df|gen|{mat_b36}|sup"),
     ]
     extra = []
     if material_type == "lesson" and class_id is not None:
@@ -672,6 +673,10 @@ def generated_material_export_keyboard(
     return InlineKeyboardMarkup(
         [
             actions,
+            [
+                InlineKeyboardButton("⚡ Adapt Material", callback_data=f"v1|ad|menu|{mat_b36}"),
+                InlineKeyboardButton("✏ Custom Edit", callback_data=f"ma|ad|{material_id}"),
+            ],
             [
                 InlineKeyboardButton(
                     "📄 Download Word",

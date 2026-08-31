@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day18_migration import SCHEMA_VERSION
+from day19_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -51,6 +51,8 @@ NEW_TABLES = (
     "writing_feedback_records",
     "analysis_followup_actions",
     "material_evidence_links",
+    "material_differentiations",
+    "material_adaptations",
 )
 
 _POST_LEGACY_MATERIAL_COLUMNS = {
@@ -174,6 +176,8 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_writing_feedback_evidence_owner_v17",
             "trg_analysis_followup_owner_v18",
             "trg_analysis_followup_approved_check_v18",
+            "trg_material_diff_owner_v19",
+            "trg_material_adap_owner_v19",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
@@ -195,9 +199,15 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "idx_analysis_followup_uuid",
             "idx_material_evidence_analysis",
             "idx_material_evidence_material",
+            "idx_material_diff_source",
+            "idx_material_diff_user",
+            "idx_material_adap_source",
+            "idx_material_adap_user",
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "material_adaptations",
+            "material_differentiations",
             "material_evidence_links",
             "analysis_followup_actions",
             "writing_feedback_records",

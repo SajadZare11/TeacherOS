@@ -239,7 +239,7 @@ def evaluate_day16() -> dict[str, Any]:
                 return {
                     "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
                     "gate": "Day 16 — Evidence Analysis & Transparent Findings",
-                    "schema_version": 18,
+                    "schema_version": 19,
                     "checks": checks,
                     "passed": passed,
                     "engineering_status": "PASS" if passed else "FAIL",

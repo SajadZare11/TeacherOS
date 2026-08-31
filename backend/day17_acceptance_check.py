@@ -234,7 +234,7 @@ def evaluate_day17() -> dict[str, Any]:
                 return {
                     "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
                     "gate": "Day 17 — Writing Feedback Copilot around Revision",
-                    "schema_version": 18,
+                    "schema_version": 19,
                     "checks": checks,
                     "passed": passed,
                     "engineering_status": "PASS" if passed else "FAIL",
