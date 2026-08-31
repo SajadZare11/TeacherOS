@@ -382,6 +382,9 @@ def link_material_to_class(
                     AND c.user_id = materials.user_id
                     AND c.status = 'active'
               )
+              AND NOT EXISTS (
+                  SELECT 1 FROM class_lessons AS l WHERE l.material_id = materials.id
+              )
             """,
             (
                 _positive_int(class_id, "Class ID"),
@@ -409,6 +412,9 @@ def unlink_material_from_class(
               AND class_id IS NOT NULL
               AND user_id = (
                   SELECT id FROM users WHERE telegram_user_id = ?
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM class_lessons AS l WHERE l.material_id = materials.id
               )
             """,
             (
@@ -475,17 +481,32 @@ def create_class_lesson(
             return None
         if material_id is not None:
             material = connection.execute(
-                "SELECT 1 FROM materials WHERE id = ? AND user_id = ?",
-                (_positive_int(material_id, "Material ID"), owner_id),
+                "SELECT id FROM materials WHERE id = ? AND user_id = ? "
+                "AND class_id = ? AND material_type = 'lesson'",
+                (
+                    _positive_int(material_id, "Material ID"), owner_id,
+                    _positive_int(class_id, "Class ID"),
+                ),
             ).fetchone()
             if material is None:
                 return None
+            existing = connection.execute(
+                "SELECT * FROM class_lessons WHERE origin_key = ?",
+                (f"material:{material_id}",),
+            ).fetchone()
+            if existing is not None:
+                return _row_dict(existing)
+        lifecycle_state = {
+            "draft": "generated", "planned": "planned", "taught": "taught",
+            "cancelled": "cancelled", "archived": "cancelled",
+        }[str(normalized_status)]
         cursor = connection.execute(
             """
             INSERT INTO class_lessons (
-                class_id, user_id, material_id, title, status, scheduled_for
+                class_id, user_id, material_id, title, status, scheduled_for,
+                lifecycle_state, origin_key
             )
-            SELECT id, user_id, ?, ?, ?, ? FROM classes
+            SELECT id, user_id, ?, ?, ?, ?, ?, ? FROM classes
             WHERE id = ? AND user_id = ? AND status = 'active'
             """,
             (
@@ -493,12 +514,26 @@ def create_class_lesson(
                 _required_text(title, "Lesson title", 200),
                 normalized_status,
                 _optional_text(scheduled_for, "Scheduled time", 50),
+                lifecycle_state,
+                f"material:{material_id}" if material_id is not None else None,
                 _positive_int(class_id, "Class ID"),
                 owner_id,
             ),
         )
         if cursor.rowcount != 1:
             return None
+        connection.execute(
+            """
+            INSERT INTO class_lesson_transitions (
+                event_uuid, class_lesson_id, class_id, user_id,
+                from_state, to_state, reason, scheduled_for_snapshot
+            ) VALUES (?, ?, ?, ?, NULL, ?, 'class_service_create', ?)
+            """,
+            (
+                f"class-lesson-create:{uuid.uuid4()}", cursor.lastrowid, class_id,
+                owner_id, lifecycle_state, _optional_text(scheduled_for, "Scheduled time", 50),
+            ),
+        )
         return _row_dict(
             connection.execute(
                 "SELECT * FROM class_lessons WHERE id = ? AND user_id = ?",
@@ -533,6 +568,7 @@ def record_lesson_outcome(
             SELECT id, class_id, user_id, ?, ?, ?, ?, ?
             FROM class_lessons
             WHERE id = ? AND class_id = ? AND user_id = ?
+              AND lifecycle_state = 'taught'
             """,
             (
                 _enum(result, "outcome result", _OUTCOME_RESULTS),

@@ -19,6 +19,8 @@ from class_dashboard_keyboards import (
     edit_choice_keyboard,
     edit_multi_keyboard,
     edit_text_keyboard,
+    lesson_cancel_confirmation_keyboard,
+    lesson_history_keyboard,
     today_queue_keyboard,
 )
 from class_dashboard_service import (
@@ -44,13 +46,21 @@ from keyboards import class_recovery_keyboard
 from feature_flags import feature_enabled
 from database import list_class_materials
 from keyboards import class_library_keyboard
+from lesson_history_service import (
+    cancel_planned_lesson,
+    get_owned_class_lesson,
+    lesson_conversion_metrics,
+    list_lesson_history,
+    mark_lesson_taught,
+)
 
 
 logger = logging.getLogger(__name__)
 DASHBOARD_ACTIONS = {
     "open", "today", "details", "plan", "analyze", "create", "outcome",
     "progress", "profile", "pfedit", "edset", "edmulti", "edsave", "edclear",
-    "archask", "archyes", "restask", "restyes", "library",
+    "archask", "archyes", "restask", "restyes", "library", "hist", "taught",
+    "canask", "canyes",
 }
 FIELD_CODES = {
     "nm": "display_name",
@@ -199,11 +209,58 @@ def _details_text(snapshot: dict[str, Any]) -> str:
             f"Lessons: {counts.get('lessons', 0)}",
             f"Outcomes: {counts.get('outcomes', 0)}",
             f"Materials: {counts.get('materials', 0)}",
+            (
+                "Lifecycle: "
+                f"{counts.get('generated', 0)} generated · "
+                f"{counts.get('planned', 0)} planned · "
+                f"{counts.get('taught', 0)} taught · "
+                f"{counts.get('cancelled', 0)} cancelled"
+            ),
             f"Pending analysis approval: {snapshot['pending_analysis_count']}",
             f"Reviews due: {snapshot['due_review_count']}",
             f"Last active: {_when(class_record.get('last_active_at'))}",
         ]
     )
+
+
+def _history_text(
+    class_name: str,
+    lessons: list[dict[str, Any]],
+    metrics: dict[str, int],
+    *,
+    notice: str | None = None,
+) -> str:
+    lines = [f"📚 Lesson History · {class_name}", "", "Oldest → newest · recorded facts only"]
+    if notice:
+        lines.extend(["", notice])
+    if not lessons:
+        lines.extend(
+            [
+                "",
+                "No lesson records yet.",
+                "Generating a class lesson creates a Generated record; it is not taught history.",
+            ]
+        )
+    else:
+        lines.append("")
+        for lesson in lessons:
+            state = str(lesson["lifecycle_state"]).upper()
+            when = lesson.get("taught_at") or lesson.get("scheduled_for") or lesson.get("created_at")
+            material = f" · resource #{lesson['material_id']}" if lesson.get("material_id") else ""
+            lines.append(
+                f"#{lesson['id']} · {state} · {_short(lesson['title'], 34)}"
+                f" · {_short(when or 'date not set', 22)}{material}"
+            )
+    lines.extend(
+        [
+            "",
+            "Conversions: "
+            f"generated→planned {metrics.get('generated_to_planned', 0)} · "
+            f"planned→taught {metrics.get('planned_to_taught', 0)}",
+            "Generated and cancelled records never count as taught.",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _active_state(context: ContextTypes.DEFAULT_TYPE) -> dict[str, Any] | None:
@@ -295,7 +352,17 @@ async def handle_dashboard_callback(
             return
 
         state = _active_state(context)
-        if action in {"edset", "edmulti", "edsave"}:
+        lesson_record = None
+        if action in {"taught", "canask", "canyes"}:
+            lesson_id = int(object_id, 36)
+            lesson_record = get_owned_class_lesson(
+                telegram_user_id=user.id, lesson_id=lesson_id
+            )
+            if lesson_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(lesson_record["class_id"])
+        elif action in {"edset", "edmulti", "edsave"}:
             edit_state = context.user_data.get("class_edit")
             if not isinstance(edit_state, dict):
                 await _recover(query, context)
@@ -331,6 +398,72 @@ async def handle_dashboard_callback(
             await _safe_edit(
                 query, _details_text(snapshot),
                 class_details_keyboard(class_id, revision, archived=class_record["status"] == "archived"),
+            )
+            return
+        if action == "hist":
+            lessons = list_lesson_history(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            metrics = lesson_conversion_metrics(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            await _safe_edit(
+                query,
+                _history_text(str(class_record["display_name"]), lessons, metrics),
+                lesson_history_keyboard(lessons, class_id, revision),
+            )
+            return
+        if action == "canask":
+            if lesson_record is None or lesson_record.get("lifecycle_state") != "planned":
+                await _recover(query, context)
+                return
+            await _safe_edit(
+                query,
+                f"Cancel planned lesson #{lesson_record['id']}?\n\n"
+                f"{lesson_record['title']}\n\n"
+                "The plan becomes Cancelled and remains auditable. Its generated resource stays in the library.",
+                lesson_cancel_confirmation_keyboard(
+                    int(lesson_record["id"]), class_id, revision
+                ),
+            )
+            return
+        if action in {"taught", "canyes"}:
+            if lesson_record is None:
+                await _recover(query, context)
+                return
+            if action == "taught":
+                updated_lesson, changed = mark_lesson_taught(
+                    telegram_user_id=user.id, lesson_id=int(lesson_record["id"])
+                )
+                notice = (
+                    "✅ Marked as taught. Outcome and review workflows may now use this fact."
+                    if changed else
+                    "ℹ No duplicate was created. This lesson was already taught or was not planned."
+                )
+            else:
+                updated_lesson, changed = cancel_planned_lesson(
+                    telegram_user_id=user.id, lesson_id=int(lesson_record["id"])
+                )
+                notice = (
+                    "✅ Plan cancelled. The generated resource and audit record were kept."
+                    if changed else
+                    "ℹ No duplicate change was made. This plan was already cancelled or was not active."
+                )
+            if updated_lesson is None:
+                await _recover(query, context)
+                return
+            lessons = list_lesson_history(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            metrics = lesson_conversion_metrics(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            await _safe_edit(
+                query,
+                _history_text(
+                    str(class_record["display_name"]), lessons, metrics, notice=notice
+                ),
+                lesson_history_keyboard(lessons, class_id, revision),
             )
             return
         if action == "profile":

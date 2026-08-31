@@ -33,7 +33,7 @@ from class_dashboard_service import (  # noqa: E402
 )
 from class_panel import class_callback  # noqa: E402
 from class_setup_service import start_setup_draft  # noqa: E402
-from day10_migration import SCHEMA_VERSION  # noqa: E402
+from day11_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 
 
@@ -472,7 +472,7 @@ class Day8ClassDashboardTests(unittest.IsolatedAsyncioTestCase):
                 class_id=class_id,
             )
         )
-        lesson = self._lesson("Preserved lesson", "planned")
+        lesson = self._lesson("Preserved lesson", "taught")
         class_service.record_lesson_outcome(
             telegram_user_id=self.owner.id,
             class_id=class_id,

@@ -40,6 +40,7 @@ def class_dashboard_keyboard(class_id: int, revision: int) -> InlineKeyboardMark
                 InlineKeyboardButton("👤 Profile", callback_data=_cb("profile", class_id, revision)),
             ],
             [InlineKeyboardButton("More details", callback_data=_cb("details", class_id, revision))],
+            [InlineKeyboardButton("📚 Lesson History", callback_data=_cb("hist", class_id, revision))],
             [
                 InlineKeyboardButton("⬅ My Classes", callback_data="v1|cl|list|0|0"),
                 InlineKeyboardButton("☀ Today", callback_data="v1|cl|today|0|0"),
@@ -204,3 +205,49 @@ def class_action_keyboard(
         ]
     )
     return InlineKeyboardMarkup(rows)
+
+
+def lesson_history_keyboard(
+    lessons: list[dict[str, Any]], class_id: int, revision: int
+) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = []
+    for lesson in lessons:
+        if lesson.get("lifecycle_state") != "planned":
+            continue
+        lesson_id = int(lesson["id"])
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    f"✅ Taught · #{lesson_id}",
+                    callback_data=_cb("taught", lesson_id, revision),
+                ),
+                InlineKeyboardButton(
+                    f"✖ Cancel · #{lesson_id}",
+                    callback_data=_cb("canask", lesson_id, revision),
+                ),
+            ]
+        )
+    rows.extend(
+        [
+            [InlineKeyboardButton("⬅ Class Home", callback_data=_cb("open", class_id, revision))],
+            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+        ]
+    )
+    return InlineKeyboardMarkup(rows)
+
+
+def lesson_cancel_confirmation_keyboard(
+    lesson_id: int, class_id: int, revision: int
+) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(
+                "Yes, cancel this plan",
+                callback_data=_cb("canyes", lesson_id, revision),
+            )],
+            [InlineKeyboardButton(
+                "No, keep it planned",
+                callback_data=_cb("hist", class_id, revision),
+            )],
+        ]
+    )

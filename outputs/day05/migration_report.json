@@ -53,6 +53,7 @@
       "new_table_counts": {
         "ai_generation_audits": 0,
         "class_action_items": 0,
+        "class_lesson_transitions": 0,
         "class_lessons": 0,
         "class_objectives": 0,
         "class_setup_drafts": 0,
@@ -62,8 +63,8 @@
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
-      "schema_version": 10
+      "schema_fingerprint_sha256": "03d06f677bdaef38bbbc429132e947020da01994c38a6419c07d4a18925351ba",
+      "schema_version": 11
     },
     {
       "duplicate_columns": {
@@ -109,6 +110,7 @@
       "new_table_counts": {
         "ai_generation_audits": 0,
         "class_action_items": 0,
+        "class_lesson_transitions": 0,
         "class_lessons": 0,
         "class_objectives": 0,
         "class_setup_drafts": 0,
@@ -118,8 +120,8 @@
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
-      "schema_version": 10
+      "schema_fingerprint_sha256": "03d06f677bdaef38bbbc429132e947020da01994c38a6419c07d4a18925351ba",
+      "schema_version": 11
     },
     {
       "duplicate_columns": {
@@ -165,6 +167,7 @@
       "new_table_counts": {
         "ai_generation_audits": 0,
         "class_action_items": 0,
+        "class_lesson_transitions": 0,
         "class_lessons": 0,
         "class_objectives": 0,
         "class_setup_drafts": 0,
@@ -174,8 +177,8 @@
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
-      "schema_version": 10
+      "schema_fingerprint_sha256": "03d06f677bdaef38bbbc429132e947020da01994c38a6419c07d4a18925351ba",
+      "schema_version": 11
     },
     {
       "duplicate_columns": {
@@ -221,6 +224,7 @@
       "new_table_counts": {
         "ai_generation_audits": 0,
         "class_action_items": 0,
+        "class_lesson_transitions": 0,
         "class_lessons": 0,
         "class_objectives": 0,
         "class_setup_drafts": 0,
@@ -230,9 +234,9 @@
         "product_events": 0
       },
       "passed": true,
-      "schema_fingerprint_sha256": "ceca947eab71915ebab90317590358501da83b44d41dc3c5afb4b26c341d0768",
-      "schema_version": 10
+      "schema_fingerprint_sha256": "03d06f677bdaef38bbbc429132e947020da01994c38a6419c07d4a18925351ba",
+      "schema_version": 11
     }
   ],
-  "schema_version": 10
+  "schema_version": 11
 }

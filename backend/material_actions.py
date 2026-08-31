@@ -9,11 +9,15 @@ from telegram.ext import ContextTypes
 from ai_gateway import generate_artifact, generation_provenance
 from database import (
     get_user_material,
-    plan_material_as_next_lesson,
     save_beta_feedback,
     save_generated_material,
 )
-from keyboards import generated_material_export_keyboard
+from keyboards import (
+    generated_material_export_keyboard,
+    lesson_replace_keyboard,
+    lesson_schedule_keyboard,
+)
+from lesson_history_service import schedule_material_lesson
 from subscription_service import (
     generation_access_for_user,
     generation_block_message,
@@ -22,7 +26,11 @@ from subscription_service import (
 
 
 logger = logging.getLogger(__name__)
-_CALLBACK = re.compile(r"^ma\|(?P<action>sv|ad|rg|nx|rp)\|(?P<material_id>[1-9][0-9]*)$")
+_CALLBACK = re.compile(
+    r"^ma\|(?P<action>sv|ad|rg|nx|rp|pd|pr|pk)\|"
+    r"(?P<material_id>[1-9][0-9]*)(?:\|(?P<option>td|tm|nc|lt|na))?$"
+)
+_DATE_CODES = {"td": "today", "tm": "tomorrow", "nc": "next_class", "lt": "later"}
 
 
 def _prompt_replacements(material: dict, change: str) -> dict[str, str]:
@@ -86,15 +94,56 @@ async def material_action_callback(
         await query.answer("Already saved in your library.", show_alert=True)
         return
     if action == "nx":
-        lesson, created = plan_material_as_next_lesson(
-            telegram_user_id=user.id, material_id=material_id
+        await query.answer()
+        if query.message is not None:
+            await query.message.reply_text(
+                "📅 When should this become the next lesson?\n\n"
+                "Choosing a date changes the lesson from Generated to Planned. "
+                "Keeping it generated does not add anything to taught history.",
+                reply_markup=lesson_schedule_keyboard(material_id),
+            )
+        return
+    if action == "pk":
+        await query.answer("No plan changed. The generated resource stays in your library.", show_alert=True)
+        return
+    if action in {"pd", "pr"}:
+        option = match.group("option")
+        date_choice = _DATE_CODES.get(str(option or ""))
+        if date_choice is None:
+            await query.answer("Choose a valid lesson date.", show_alert=True)
+            return
+        result = schedule_material_lesson(
+            telegram_user_id=user.id,
+            material_id=material_id,
+            date_choice=date_choice,
+            replace=action == "pr",
         )
-        await query.answer(
-            "Added as the next planned lesson." if lesson and created
-            else "This is already in the class lesson plan." if lesson
-            else "Only a class-linked lesson can be used here.",
-            show_alert=True,
-        )
+        status = str(result["status"])
+        await query.answer()
+        if query.message is None:
+            return
+        if status == "conflict":
+            conflict = result.get("conflict") or {}
+            await query.message.reply_text(
+                "⚠️ A next lesson is already planned: "
+                f"{conflict.get('title', 'Current plan')}.\n\n"
+                "Replace cancels that plan but keeps its generated resource and audit history.",
+                reply_markup=lesson_replace_keyboard(material_id, str(option)),
+            )
+        elif status in {"planned", "replaced", "already_planned"}:
+            lesson = result.get("lesson") or {}
+            when = lesson.get("scheduled_for") or "later / date not set"
+            prefix = "✅ Replaced the previous plan." if status == "replaced" else "✅ Next lesson planned."
+            if status == "already_planned":
+                prefix = "✅ This lesson is already the current plan."
+            await query.message.reply_text(
+                f"{prefix}\n\n{lesson.get('title', material.get('title'))}\nDate: {when}\n"
+                "The generated material remains unchanged in the library."
+            )
+        else:
+            await query.message.reply_text(
+                "⚠️ This lesson cannot be planned from its current state. No history changed."
+            )
         return
     context.user_data["material_action"] = {
         "state": "report" if action == "rp" else "change",

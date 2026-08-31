@@ -19,7 +19,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day5-key-not-used")
 
 import class_service  # noqa: E402
 import database  # noqa: E402
-from day10_migration import SCHEMA_VERSION  # noqa: E402
+from day11_migration import SCHEMA_VERSION  # noqa: E402
 from day5_migration_check import run_checks  # noqa: E402
 from feature_flags import (  # noqa: E402
     FEATURE_ENV_VARS,
@@ -315,7 +315,7 @@ class Day5OwnershipServiceTests(unittest.TestCase):
             class_id=class_record["id"],
             material_id=material_id,
             title="Storytelling practice",
-            status="planned",
+            status="taught",
             scheduled_for="2026-08-28T15:00:00Z",
             database_path=self.database_path,
         )

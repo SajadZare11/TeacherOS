@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day10_migration import SCHEMA_VERSION
+from day11_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -37,6 +37,7 @@ NEW_TABLES = (
     "class_action_items",
     "ai_generation_audits",
     "material_objective_links",
+    "class_lesson_transitions",
 )
 
 _POST_LEGACY_MATERIAL_COLUMNS = {
@@ -114,6 +115,16 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_ai_audits_class_owner_update",
             "trg_material_objectives_owner_insert",
             "trg_material_objectives_owner_update",
+            "trg_lesson_material_class_insert_v11",
+            "trg_lesson_legacy_status_insert_v11",
+            "trg_lesson_material_immutable_v11",
+            "trg_lesson_lifecycle_transition_v11",
+            "trg_lesson_material_delete_guard_v11",
+            "trg_material_lesson_link_immutable_v11",
+            "trg_outcome_requires_taught_insert_v11",
+            "trg_outcome_requires_taught_update_v11",
+            "trg_lesson_transition_owner_v11",
+            "trg_lesson_transition_immutable_update_v11",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
@@ -122,6 +133,7 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "class_lesson_transitions",
             "material_objective_links",
             "ai_generation_audits",
             "class_action_items",

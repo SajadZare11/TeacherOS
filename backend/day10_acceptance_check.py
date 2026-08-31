@@ -159,7 +159,7 @@ def evaluate_day10() -> dict[str, Any]:
     toolbar_prefixes = ("ma|sv|", "ma|ad|", "ma|rg|", "ma|nx|", "ma|rp|", "export_", "pdf_")
     lesson_input_reduction = (4 - 2) / 4
     checks = {
-        "schema_v10": version == SCHEMA_VERSION and required_columns <= columns,
+        "schema_v10": version >= SCHEMA_VERSION and required_columns <= columns,
         "foreign_keys_clean": foreign_key_errors == 0,
         "all_four_saved": len(stored_ids) == 4,
         "class_and_general_library": len(class_items) == len(general_items) == len(search_items) == 4,

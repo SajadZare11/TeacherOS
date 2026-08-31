@@ -14,6 +14,7 @@ from day7_migration import apply_schema_v7
 from day8_migration import apply_schema_v8
 from day9_migration import apply_schema_v9
 from day10_migration import apply_schema_v10
+from day11_migration import apply_schema_v11
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -278,6 +279,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v8(connection)
         apply_schema_v9(connection)
         apply_schema_v10(connection)
+        apply_schema_v11(connection)
 
     return target_path
 
@@ -451,6 +453,36 @@ def save_generated_material(
                 (int(material_id), objective_id, class_id, user_id),
             )
 
+        if normalized_type == "lesson" and class_id is not None:
+            lesson_cursor = connection.execute(
+                """
+                INSERT OR IGNORE INTO class_lessons (
+                    class_id, user_id, material_id, title, status,
+                    lifecycle_state, origin_key
+                ) VALUES (?, ?, ?, ?, 'draft', 'generated', ?)
+                """,
+                (class_id, user_id, int(material_id), normalized_title, f"material:{material_id}"),
+            )
+            lesson_row = connection.execute(
+                "SELECT id FROM class_lessons WHERE origin_key = ?",
+                (f"material:{material_id}",),
+            ).fetchone()
+            if lesson_row is None:
+                raise RuntimeError("TeacherOS could not create the generated lesson record.")
+            if lesson_cursor.rowcount == 1:
+                connection.execute(
+                    """
+                    INSERT INTO class_lesson_transitions (
+                        event_uuid, class_lesson_id, class_id, user_id,
+                        from_state, to_state, reason
+                    ) VALUES (?, ?, ?, ?, NULL, 'generated', 'material_generated')
+                    """,
+                    (
+                        f"lesson-generated:{material_id}", int(lesson_row["id"]),
+                        class_id, user_id,
+                    ),
+                )
+
         connection.execute(
             """
             INSERT INTO usage_events (
@@ -508,6 +540,9 @@ def database_healthcheck() -> dict[str, int | str]:
         material_objective_link_count = int(
             connection.execute("SELECT COUNT(*) FROM material_objective_links").fetchone()[0]
         )
+        class_lesson_transition_count = int(
+            connection.execute("SELECT COUNT(*) FROM class_lesson_transitions").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -530,6 +565,7 @@ def database_healthcheck() -> dict[str, int | str]:
         "class_action_items": class_action_item_count,
         "ai_generation_audits": ai_generation_audit_count,
         "material_objective_links": material_objective_link_count,
+        "class_lesson_transitions": class_lesson_transition_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:
@@ -710,54 +746,41 @@ def delete_user_material(
         return False
 
     initialize_database()
-    with _connection() as connection:
-        cursor = connection.execute(
-            """
-            DELETE FROM materials
-            WHERE id = ?
-              AND user_id = (
-                  SELECT id FROM users WHERE telegram_user_id = ?
-              )
-            """,
-            (material_id, telegram_user_id),
-        )
-        return cursor.rowcount == 1
+    try:
+        with _connection() as connection:
+            cursor = connection.execute(
+                """
+                DELETE FROM materials
+                WHERE id = ?
+                  AND user_id = (
+                      SELECT id FROM users WHERE telegram_user_id = ?
+                  )
+                """,
+                (material_id, telegram_user_id),
+            )
+            return cursor.rowcount == 1
+    except sqlite3.IntegrityError:
+        # A class lesson keeps its immutable resource for auditability.
+        return False
 
 
 def plan_material_as_next_lesson(
     *, telegram_user_id: int, material_id: int
 ) -> tuple[dict[str, Any] | None, bool]:
     """Idempotently add an owned, class-linked lesson to the class plan."""
-    initialize_database()
-    with _connection() as connection:
-        material = connection.execute(
-            """
-            SELECT m.id, m.user_id, m.class_id, m.title
-            FROM materials AS m JOIN users AS u ON u.id = m.user_id
-            JOIN classes AS c ON c.id = m.class_id AND c.user_id = m.user_id
-            WHERE u.telegram_user_id = ? AND m.id = ?
-              AND m.material_type = 'lesson' AND c.status = 'active'
-            """,
-            (telegram_user_id, material_id),
-        ).fetchone()
-        if material is None:
-            return None, False
-        existing = connection.execute(
-            "SELECT * FROM class_lessons WHERE user_id = ? AND class_id = ? "
-            "AND material_id = ? AND status IN ('draft', 'planned') ORDER BY id DESC LIMIT 1",
-            (material["user_id"], material["class_id"], material_id),
-        ).fetchone()
-        if existing is not None:
-            return dict(existing), False
-        cursor = connection.execute(
-            "INSERT INTO class_lessons (class_id, user_id, material_id, title, status) "
-            "VALUES (?, ?, ?, ?, 'planned')",
-            (material["class_id"], material["user_id"], material_id, material["title"]),
-        )
-        row = connection.execute(
-            "SELECT * FROM class_lessons WHERE id = ?", (cursor.lastrowid,)
-        ).fetchone()
-        return (dict(row) if row is not None else None), True
+    # Kept for Day 10 callers; Day 11's UI asks for an explicit date choice.
+    from lesson_history_service import schedule_material_lesson
+
+    result = schedule_material_lesson(
+        telegram_user_id=telegram_user_id,
+        material_id=material_id,
+        date_choice="next_class",
+    )
+    lesson = result.get("lesson")
+    return (
+        lesson if isinstance(lesson, dict) else None,
+        result.get("status") in {"planned", "replaced"},
+    )
 
 
 

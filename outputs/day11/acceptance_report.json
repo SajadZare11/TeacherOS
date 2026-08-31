@@ -1,0 +1,43 @@
+{
+  "checks": {
+    "all_four_states_present": true,
+    "callbacks_compact": true,
+    "cancel_idempotent_auditable": true,
+    "chronological_history": true,
+    "conversion_tracking": true,
+    "dashboard_next_plan": true,
+    "date_choices_complete": true,
+    "duplicate_plan_idempotent": true,
+    "empty_state": true,
+    "foreign_keys_clean": true,
+    "generated_not_progress": true,
+    "immutable_audit_links": true,
+    "mark_taught_idempotent": true,
+    "owner_isolation": true,
+    "replace_preserves_resource": true,
+    "schema_v11": true
+  },
+  "day": 11,
+  "engineering_status": "PASS",
+  "history_fixture": {
+    "raw_material_content_in_report": false,
+    "record_count": 5,
+    "states": [
+      "cancelled",
+      "generated",
+      "planned",
+      "taught"
+    ]
+  },
+  "measurement": {
+    "generated_to_planned": 4,
+    "interpretation": "Conversion is a workflow signal; no activity is inferred.",
+    "planned_to_taught": 1,
+    "status": "TRACKING_ACTIVE"
+  },
+  "passed": true,
+  "privacy": {
+    "raw_prompts_or_outputs_in_report": false
+  },
+  "schema_version": 11
+}

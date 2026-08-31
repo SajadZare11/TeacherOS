@@ -695,6 +695,35 @@ def generated_material_export_keyboard(
     )
 
 
+def lesson_schedule_keyboard(material_id: int) -> InlineKeyboardMarkup:
+    """Day 11 date choices shown after Use as Next Lesson."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("Today", callback_data=f"ma|pd|{material_id}|td"),
+                InlineKeyboardButton("Tomorrow", callback_data=f"ma|pd|{material_id}|tm"),
+            ],
+            [
+                InlineKeyboardButton("Next class", callback_data=f"ma|pd|{material_id}|nc"),
+                InlineKeyboardButton("Later / no date", callback_data=f"ma|pd|{material_id}|lt"),
+            ],
+            [InlineKeyboardButton("Keep generated only", callback_data=f"ma|pk|{material_id}|na")],
+        ]
+    )
+
+
+def lesson_replace_keyboard(material_id: int, date_code: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(
+                "Replace current plan",
+                callback_data=f"ma|pr|{material_id}|{date_code}",
+            )],
+            [InlineKeyboardButton("Keep current plan", callback_data=f"ma|pk|{material_id}|na")],
+        ]
+    )
+
+
 def quiz_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
     override = [[InlineKeyboardButton("✏ ONE-TIME level override", callback_data="quiz_override")]] if class_mode else []
     return InlineKeyboardMarkup(

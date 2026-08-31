@@ -404,8 +404,9 @@ def class_dashboard_snapshot(
         user_id = int(class_row["user_id"])
         planned = connection.execute(
             """
-            SELECT id, title, scheduled_for, status FROM class_lessons
-            WHERE user_id = ? AND class_id = ? AND status = 'planned'
+            SELECT id, material_id, title, scheduled_for, lifecycle_state AS status
+            FROM class_lessons
+            WHERE user_id = ? AND class_id = ? AND lifecycle_state = 'planned'
             ORDER BY scheduled_for IS NULL, scheduled_for, id
             LIMIT 1
             """,
@@ -446,9 +447,21 @@ def class_dashboard_snapshot(
             SELECT
               (SELECT COUNT(*) FROM class_lessons WHERE user_id = ? AND class_id = ?) AS lessons,
               (SELECT COUNT(*) FROM lesson_outcomes WHERE user_id = ? AND class_id = ?) AS outcomes,
-              (SELECT COUNT(*) FROM materials WHERE user_id = ? AND class_id = ?) AS materials
+              (SELECT COUNT(*) FROM materials WHERE user_id = ? AND class_id = ?) AS materials,
+              (SELECT COUNT(*) FROM class_lessons WHERE user_id = ? AND class_id = ?
+                 AND lifecycle_state = 'generated') AS generated,
+              (SELECT COUNT(*) FROM class_lessons WHERE user_id = ? AND class_id = ?
+                 AND lifecycle_state = 'planned') AS planned,
+              (SELECT COUNT(*) FROM class_lessons WHERE user_id = ? AND class_id = ?
+                 AND lifecycle_state = 'taught') AS taught,
+              (SELECT COUNT(*) FROM class_lessons WHERE user_id = ? AND class_id = ?
+                 AND lifecycle_state = 'cancelled') AS cancelled
             """,
-            (user_id, class_id, user_id, class_id, user_id, class_id),
+            (
+                user_id, class_id, user_id, class_id, user_id, class_id,
+                user_id, class_id, user_id, class_id, user_id, class_id,
+                user_id, class_id,
+            ),
         ).fetchone()
         return {
             "class": dict(class_row),
@@ -499,7 +512,7 @@ def today_queue(
             SELECT l.id, l.class_id, l.title, c.display_name, c.revision
             FROM class_lessons AS l
             JOIN classes AS c ON c.id = l.class_id AND c.user_id = l.user_id
-            WHERE l.user_id = ? AND c.status = 'active' AND l.status = 'taught'
+            WHERE l.user_id = ? AND c.status = 'active' AND l.lifecycle_state = 'taught'
               AND NOT EXISTS (
                 SELECT 1 FROM lesson_outcomes AS o
                 WHERE o.class_lesson_id = l.id AND o.user_id = l.user_id
@@ -553,7 +566,7 @@ def today_queue(
                    c.display_name, c.revision
             FROM class_lessons AS l
             JOIN classes AS c ON c.id = l.class_id AND c.user_id = l.user_id
-            WHERE l.user_id = ? AND c.status = 'active' AND l.status = 'planned'
+            WHERE l.user_id = ? AND c.status = 'active' AND l.lifecycle_state = 'planned'
             ORDER BY l.scheduled_for IS NULL, l.scheduled_for, l.id
             """,
             (user_id,),
