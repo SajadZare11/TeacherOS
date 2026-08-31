@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day16_migration import SCHEMA_VERSION
+from day17_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -48,6 +48,7 @@ NEW_TABLES = (
     "evidence_batches",
     "evidence_items",
     "evidence_analysis_results",
+    "writing_feedback_records",
 )
 
 _POST_LEGACY_MATERIAL_COLUMNS = {
@@ -167,6 +168,8 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_evidence_analysis_owner_insert_v16",
             "trg_evidence_analysis_owner_update_v16",
             "trg_evidence_analysis_approved_immutable_v16",
+            "trg_writing_feedback_class_owner_v17",
+            "trg_writing_feedback_evidence_owner_v17",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
@@ -179,9 +182,14 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "idx_evidence_analysis_batch",
             "idx_evidence_analysis_class",
             "idx_evidence_analysis_uuid",
+            "idx_writing_feedback_user_created",
+            "idx_writing_feedback_class",
+            "idx_writing_feedback_uuid",
+            "idx_writing_feedback_evidence",
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "writing_feedback_records",
             "evidence_analysis_results",
             "evidence_items",
             "evidence_batches",

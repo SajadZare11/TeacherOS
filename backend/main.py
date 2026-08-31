@@ -24,6 +24,10 @@ from class_setup_panel import get_class_setup_text
 from class_generation import class_generation_callback_handler
 from evidence_panel import handle_evidence_callback, handle_evidence_message
 from evidence_analysis_panel import handle_evidence_analysis_callback
+from writing_feedback_panel import (
+    handle_writing_feedback_callback,
+    handle_writing_feedback_message,
+)
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -415,6 +419,9 @@ def main() -> None:
     app.add_handler(
         CallbackQueryHandler(handle_evidence_analysis_callback, pattern=r"^v1\|ea\|")
     )
+    app.add_handler(
+        CallbackQueryHandler(handle_writing_feedback_callback, pattern=r"^v1\|wf\|")
+    )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 
     app.add_handler(
@@ -460,6 +467,10 @@ def main() -> None:
     app.add_handler(
         MessageHandler((filters.TEXT & ~filters.COMMAND) | filters.Document.ALL, handle_evidence_message),
         group=10,
+    )
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_writing_feedback_message),
+        group=11,
     )
 
     app.add_error_handler(error_handler)

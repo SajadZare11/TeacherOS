@@ -36,7 +36,7 @@ def evaluate_days_1_to_16(*, automated_test_count: int) -> dict[str, Any]:
     return {
         "audited_at_utc": datetime.now(timezone.utc).isoformat(),
         "scope": "TeacherOS master-plan Days 1–16 (Phase 1 + Phase 2 + Phase 3 Days 15–16)",
-        "schema_version": 16,
+        "schema_version": 17,
         "phase1_status": "PASS",
         "phase2_status": "PASS",
         "phase3_status": "IN_PROGRESS (Days 15–16 Complete)",

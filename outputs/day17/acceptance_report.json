@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "a1_paragraph_light_mode_supported": true,
+    "b1_email_balanced_mode_supported": true,
+    "b2_essay_detailed_mode_supported": true,
+    "dual_exports_word_and_pdf_generated": true,
+    "multi_tenant_isolation_verified": true,
+    "no_full_rewrite_preserves_student_agency": true,
+    "rubric_scoring_separates_grades_draft": true,
+    "schema_v17_deployed": true,
+    "teacher_approval_and_summary_lifecycle": true,
+    "teacher_comment_editing_supported": true,
+    "telegram_keyboards_bounded_64_bytes": true,
+    "zero_raw_student_text_in_telemetry": true
+  },
+  "details": {
+    "estimated_minutes_saved": 12,
+    "feedback_id": 2,
+    "student_label": "Ali"
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-08-31T22:36:12.753630+00:00",
+  "gate": "Day 17 \u2014 Writing Feedback Copilot around Revision",
+  "passed": true,
+  "schema_version": 17
+}

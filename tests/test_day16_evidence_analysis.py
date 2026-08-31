@@ -18,7 +18,8 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day16-key")
 
 import database
 from class_service import create_class
-from day16_migration import SCHEMA_VERSION, apply_schema_v16
+from day16_migration import apply_schema_v16
+from day17_migration import SCHEMA_VERSION
 from evidence_analysis_keyboards import (
     evidence_analysis_confirm_reject_keyboard,
     evidence_analysis_keyboard,
@@ -92,7 +93,6 @@ class Day16EvidenceAnalysisTests(unittest.TestCase):
             apply_schema_v16(conn)
             max_v = conn.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
             self.assertEqual(max_v, SCHEMA_VERSION)
-            self.assertEqual(max_v, 16)
 
             # Verify tables & foreign keys
             tables = {
