@@ -202,7 +202,8 @@ def build_class_context(
         ).fetchall()
         outcome_rows = connection.execute(
             """
-            SELECT id, class_lesson_id, result, confidence, support_needed
+            SELECT id, class_lesson_id, result, confidence, support_needed,
+                   difficulty_categories_json, completion_status
             FROM lesson_outcomes
             WHERE user_id = ? AND class_id = ? AND status = 'approved'
             ORDER BY updated_at DESC, id DESC
@@ -274,6 +275,8 @@ def build_class_context(
                 "result": str(row["result"]),
                 "confidence": _profile_value(row["confidence"]),
                 "support_needed": _profile_value(row["support_needed"]),
+                "difficulty_categories": _json_list(row["difficulty_categories_json"]),
+                "completion_status": _profile_value(row["completion_status"]),
             }
         )
 

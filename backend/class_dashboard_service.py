@@ -415,7 +415,8 @@ def class_dashboard_snapshot(
         last_outcome = connection.execute(
             """
             SELECT o.id, o.result, o.confidence, o.support_needed, o.status,
-                   o.updated_at, l.title AS lesson_title
+                   o.difficulty_categories_json, o.completion_status,
+                   o.facts_version, o.updated_at, l.title AS lesson_title
             FROM lesson_outcomes AS o
             JOIN class_lessons AS l ON l.id = o.class_lesson_id
             WHERE o.user_id = ? AND o.class_id = ? AND o.status IN ('saved', 'approved')
@@ -423,12 +424,24 @@ def class_dashboard_snapshot(
             """,
             (user_id, class_id),
         ).fetchone()
+        last_outcome_value = dict(last_outcome) if last_outcome is not None else None
         difficulty = None
-        if last_outcome is not None and (
-            last_outcome["result"] in {"not_met", "partly_met"}
-            or last_outcome["support_needed"] in {"some", "substantial"}
-        ):
-            difficulty = last_outcome
+        if last_outcome_value is not None:
+            try:
+                categories = json.loads(
+                    str(last_outcome_value.get("difficulty_categories_json") or "[]")
+                )
+            except json.JSONDecodeError:
+                categories = []
+            last_outcome_value["difficulty_categories"] = (
+                categories if isinstance(categories, list) else []
+            )
+            if (
+                last_outcome_value["result"] in {"not_met", "partly_met"}
+                or last_outcome_value["support_needed"] in {"some", "substantial"}
+                or any(item != "none" for item in last_outcome_value["difficulty_categories"])
+            ):
+                difficulty = last_outcome_value
         action_counts = {
             str(row["item_type"]): int(row["item_count"])
             for row in connection.execute(
@@ -446,7 +459,8 @@ def class_dashboard_snapshot(
             """
             SELECT
               (SELECT COUNT(*) FROM class_lessons WHERE user_id = ? AND class_id = ?) AS lessons,
-              (SELECT COUNT(*) FROM lesson_outcomes WHERE user_id = ? AND class_id = ?) AS outcomes,
+              (SELECT COUNT(DISTINCT class_lesson_id) FROM lesson_outcomes
+                 WHERE user_id = ? AND class_id = ? AND status != 'archived') AS outcomes,
               (SELECT COUNT(*) FROM materials WHERE user_id = ? AND class_id = ?) AS materials,
               (SELECT COUNT(*) FROM class_lessons WHERE user_id = ? AND class_id = ?
                  AND lifecycle_state = 'generated') AS generated,
@@ -466,11 +480,15 @@ def class_dashboard_snapshot(
         return {
             "class": dict(class_row),
             "next_planned_lesson": dict(planned) if planned is not None else None,
-            "last_outcome": dict(last_outcome) if last_outcome is not None else None,
-            "unresolved_difficulty": dict(difficulty) if difficulty is not None else None,
+            "last_outcome": last_outcome_value,
+            "unresolved_difficulty": difficulty,
             "due_review_count": action_counts.get("review_due", 0),
             "pending_analysis_count": action_counts.get("analysis_approval", 0),
             "history_counts": dict(history) if history is not None else {},
+            "outcome_recording_rate_percent": (
+                int(round((int(history["outcomes"]) / int(history["taught"])) * 100))
+                if history is not None and int(history["taught"]) else 0
+            ),
             "no_history": not history or not any(int(history[key]) for key in history.keys()),
         }
 
@@ -517,6 +535,12 @@ def today_queue(
                 SELECT 1 FROM lesson_outcomes AS o
                 WHERE o.class_lesson_id = l.id AND o.user_id = l.user_id
                   AND o.status != 'archived'
+              )
+              AND NOT EXISTS (
+                SELECT 1 FROM lesson_outcome_reminders AS r
+                WHERE r.class_lesson_id = l.id AND r.user_id = l.user_id
+                  AND r.status = 'pending'
+                  AND r.next_prompt_at_utc > strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
               )
             ORDER BY COALESCE(l.taught_at, l.updated_at) DESC, l.id DESC
             """,

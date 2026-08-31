@@ -251,3 +251,137 @@ def lesson_cancel_confirmation_keyboard(
             )],
         ]
     )
+
+
+def outcome_lesson_picker_keyboard(
+    lessons: list[dict[str, Any]], class_id: int, revision: int
+) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = []
+    for lesson in lessons:
+        lesson_id = int(lesson["id"])
+        if lesson.get("outcome_id") is None:
+            label = f"Record · #{lesson_id} · {str(lesson['title'])[:24]}"
+            action = "ostart"
+        else:
+            label = f"Correct · #{lesson_id} · {str(lesson['title'])[:23]}"
+            action = "oedit"
+        rows.append([InlineKeyboardButton(label, callback_data=_cb(action, lesson_id, revision))])
+    rows.extend(
+        [
+            [InlineKeyboardButton("⬅ Class Home", callback_data=_cb("open", class_id, revision))],
+            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+        ]
+    )
+    return InlineKeyboardMarkup(rows)
+
+
+def outcome_result_keyboard(lesson_id: int, revision: int) -> InlineKeyboardMarkup:
+    lesson = _base36(lesson_id)
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("✅ Achieved", callback_data=_cb("ores", "a" + lesson, revision))],
+            [InlineKeyboardButton("◐ Partly achieved", callback_data=_cb("ores", "p" + lesson, revision))],
+            [InlineKeyboardButton("↻ Needs reteaching", callback_data=_cb("ores", "r" + lesson, revision))],
+            [InlineKeyboardButton("⏰ Remind me later", callback_data=_cb("oremind", lesson_id, revision))],
+            [InlineKeyboardButton("Skip for now", callback_data=_cb("oskip", lesson_id, revision))],
+        ]
+    )
+
+
+_DIFFICULTY_BUTTONS = (
+    ("l", "Language / concept"),
+    ("i", "Instructions"),
+    ("p", "Pace / time"),
+    ("t", "Participation"),
+    ("m", "Materials"),
+    ("a", "Assessment check"),
+)
+
+
+def outcome_difficulty_keyboard(
+    lesson_id: int, result_code: str, mask: int, revision: int
+) -> InlineKeyboardMarkup:
+    lesson = _base36(lesson_id)
+    mask_code = _base36(mask).rjust(2, "0")
+    rows: list[list[InlineKeyboardButton]] = []
+    for index, (code, label) in enumerate(_DIFFICULTY_BUTTONS):
+        selected = bool(mask & (1 << index))
+        rows.append(
+            [InlineKeyboardButton(
+                ("✅ " if selected else "▫️ ") + label,
+                callback_data=_cb("odiff", code + result_code + mask_code + lesson, revision),
+            )]
+        )
+    rows.append([InlineKeyboardButton(
+        "No major difficulty", callback_data=_cb("odone", result_code + "00" + lesson, revision)
+    )])
+    rows.append([InlineKeyboardButton(
+        "Continue with selected", callback_data=_cb("odnext", result_code + mask_code + lesson, revision)
+    )])
+    rows.append([InlineKeyboardButton("⬅ Result", callback_data=_cb("ostart", lesson_id, revision))])
+    return InlineKeyboardMarkup(rows)
+
+
+def outcome_completion_keyboard(
+    lesson_id: int, result_code: str, mask: int, revision: int
+) -> InlineKeyboardMarkup:
+    stem = result_code + _base36(mask).rjust(2, "0") + _base36(lesson_id)
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("✅ Completed", callback_data=_cb("ocomp", "c" + stem, revision))],
+            [InlineKeyboardButton("◐ Partly completed", callback_data=_cb("ocomp", "p" + stem, revision))],
+            [InlineKeyboardButton("○ Not completed", callback_data=_cb("ocomp", "n" + stem, revision))],
+            [InlineKeyboardButton(
+                "⬅ Difficulties",
+                callback_data=_cb("odone", result_code + _base36(mask).rjust(2, "0") + _base36(lesson_id), revision),
+            )],
+        ]
+    )
+
+
+def outcome_summary_keyboard(
+    lesson_id: int, class_id: int, revision: int, *, has_note: bool
+) -> InlineKeyboardMarkup:
+    rows = [
+        [
+            InlineKeyboardButton("✏ Correct answers", callback_data=_cb("oedit", lesson_id, revision)),
+            InlineKeyboardButton("📝 Edit note" if has_note else "📝 Add note", callback_data=_cb("onote", lesson_id, revision)),
+        ]
+    ]
+    if has_note:
+        rows.append([InlineKeyboardButton("Clear note", callback_data=_cb("onclear", lesson_id, revision))])
+    rows.extend(
+        [
+            [InlineKeyboardButton("Done · Class Home", callback_data=_cb("open", class_id, revision))],
+            [InlineKeyboardButton("📚 Lesson History", callback_data=_cb("hist", class_id, revision))],
+        ]
+    )
+    return InlineKeyboardMarkup(rows)
+
+
+def outcome_note_keyboard(
+    lesson_id: int, class_id: int, revision: int, *, has_note: bool
+) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton("Skip note / Done", callback_data=_cb("oskip", lesson_id, revision))]
+    ]
+    if has_note:
+        rows.append([InlineKeyboardButton("Clear note", callback_data=_cb("onclear", lesson_id, revision))])
+    rows.append([InlineKeyboardButton("⬅ Class Home", callback_data=_cb("open", class_id, revision))])
+    return InlineKeyboardMarkup(rows)
+
+
+def outcome_reminder_keyboard(lesson_id: int, revision: int) -> InlineKeyboardMarkup:
+    lesson = _base36(lesson_id)
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("In 1 hour", callback_data=_cb("orsave", "h" + lesson, revision))],
+            [
+                InlineKeyboardButton("18:00 local", callback_data=_cb("orsave", "e" + lesson, revision)),
+                InlineKeyboardButton("20:00 local", callback_data=_cb("orsave", "w" + lesson, revision)),
+            ],
+            [InlineKeyboardButton("Tomorrow 09:00 local", callback_data=_cb("orsave", "t" + lesson, revision))],
+            [InlineKeyboardButton("Record now", callback_data=_cb("ostart", lesson_id, revision))],
+            [InlineKeyboardButton("Skip for now", callback_data=_cb("oskip", lesson_id, revision))],
+        ]
+    )

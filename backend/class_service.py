@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import uuid
 from collections.abc import Mapping
@@ -107,6 +108,30 @@ def _row_dict(row: Any, fields: tuple[str, ...] | None = None) -> dict[str, Any]
     if fields is None:
         return {key: row[key] for key in row.keys()}
     return {field: row[field] for field in fields}
+
+
+def _record_legacy_outcome_revision(
+    connection: Any, outcome: Any, *, reason: str
+) -> None:
+    note = str(outcome["notes"] or "")
+    connection.execute(
+        """
+        INSERT INTO lesson_outcome_fact_revisions (
+            event_uuid, lesson_outcome_id, class_lesson_id, class_id, user_id,
+            facts_version, result, difficulty_categories_json,
+            completion_status, note_present, note_sha256, reason
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            f"legacy-outcome:{uuid.uuid4()}", outcome["id"],
+            outcome["class_lesson_id"], outcome["class_id"], outcome["user_id"],
+            outcome["facts_version"], outcome["result"],
+            outcome["difficulty_categories_json"], outcome["completion_status"],
+            1 if note else 0,
+            hashlib.sha256(note.encode("utf-8")).hexdigest() if note else None,
+            reason,
+        ),
+    )
 
 
 def _owned_user_id(connection: Any, telegram_user_id: int) -> int | None:
@@ -559,6 +584,62 @@ def record_lesson_outcome(
         owner_id = _owned_user_id(connection, telegram_user_id)
         if owner_id is None:
             return None
+        lesson_key = _positive_int(class_lesson_id, "Class lesson ID")
+        class_key = _positive_int(class_id, "Class ID")
+        normalized_result = _enum(result, "outcome result", _OUTCOME_RESULTS)
+        normalized_confidence = _enum(
+            confidence, "confidence", _OUTCOME_CONFIDENCE, optional=True
+        )
+        normalized_support = _enum(
+            support_needed, "support needed", _SUPPORT_LEVELS, optional=True
+        )
+        normalized_notes = _optional_text(notes, "Outcome notes", 4000)
+        normalized_status = _enum(status, "outcome status", _OUTCOME_STATUSES)
+        existing = connection.execute(
+            "SELECT * FROM lesson_outcomes WHERE class_lesson_id = ? "
+            "AND class_id = ? AND user_id = ? AND status != 'archived' "
+            "ORDER BY updated_at DESC, id DESC LIMIT 1",
+            (
+                lesson_key, class_key, owner_id,
+            ),
+        ).fetchone()
+        if existing is not None:
+            unchanged = (
+                existing["result"] == normalized_result
+                and existing["confidence"] == normalized_confidence
+                and existing["support_needed"] == normalized_support
+                and existing["notes"] == normalized_notes
+                and existing["status"] == normalized_status
+            )
+            if unchanged:
+                return _row_dict(existing)
+            connection.execute(
+                """
+                UPDATE lesson_outcomes
+                SET result = ?, confidence = ?, support_needed = ?, notes = ?, status = ?,
+                    facts_version = facts_version + 1,
+                    saved_at = CASE WHEN ? IN ('saved', 'approved')
+                        THEN COALESCE(saved_at, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+                        ELSE saved_at END,
+                    note_updated_at = CASE WHEN notes IS NOT ?
+                        THEN strftime('%Y-%m-%dT%H:%M:%fZ', 'now') ELSE note_updated_at END,
+                    updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                WHERE id = ? AND user_id = ?
+                """,
+                (
+                    normalized_result, normalized_confidence, normalized_support,
+                    normalized_notes, normalized_status, normalized_status,
+                    normalized_notes, existing["id"], owner_id,
+                ),
+            )
+            corrected = connection.execute(
+                "SELECT * FROM lesson_outcomes WHERE id = ? AND user_id = ?",
+                (existing["id"], owner_id),
+            ).fetchone()
+            _record_legacy_outcome_revision(
+                connection, corrected, reason="legacy_service_corrected"
+            )
+            return _row_dict(corrected)
         cursor = connection.execute(
             """
             INSERT INTO lesson_outcomes (
@@ -571,29 +652,22 @@ def record_lesson_outcome(
               AND lifecycle_state = 'taught'
             """,
             (
-                _enum(result, "outcome result", _OUTCOME_RESULTS),
-                _enum(confidence, "confidence", _OUTCOME_CONFIDENCE, optional=True),
-                _enum(
-                    support_needed,
-                    "support needed",
-                    _SUPPORT_LEVELS,
-                    optional=True,
-                ),
-                _optional_text(notes, "Outcome notes", 4000),
-                _enum(status, "outcome status", _OUTCOME_STATUSES),
-                _positive_int(class_lesson_id, "Class lesson ID"),
-                _positive_int(class_id, "Class ID"),
+                normalized_result, normalized_confidence, normalized_support,
+                normalized_notes, normalized_status,
+                lesson_key, class_key,
                 owner_id,
             ),
         )
         if cursor.rowcount != 1:
             return None
-        return _row_dict(
-            connection.execute(
-                "SELECT * FROM lesson_outcomes WHERE id = ? AND user_id = ?",
-                (cursor.lastrowid, owner_id),
-            ).fetchone()
+        created = connection.execute(
+            "SELECT * FROM lesson_outcomes WHERE id = ? AND user_id = ?",
+            (cursor.lastrowid, owner_id),
+        ).fetchone()
+        _record_legacy_outcome_revision(
+            connection, created, reason="legacy_service_created"
         )
+        return _row_dict(created)
 
 
 def record_product_event(

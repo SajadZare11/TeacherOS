@@ -1,0 +1,32 @@
+{
+  "day": 12,
+  "engineering_status": "PASS",
+  "passed": true,
+  "checks": {
+    "schema_v12_and_foreign_keys": true,
+    "normal_path_saves_without_note": true,
+    "duplicate_prevention": true,
+    "correction_keeps_one_outcome_and_revision_history": true,
+    "optional_note_add_and_clear": true,
+    "cross_owner_fails_closed": true,
+    "one_shot_local_reminder": true,
+    "dashboard_and_correction_picker_update": true,
+    "facts_separate_from_ai_suggestions": true,
+    "operational_measurement_is_content_free": true,
+    "callbacks_compact": true,
+    "three_fact_taps_structurally_defined": true
+  },
+  "measurement": {
+    "fixture_taught_lessons": 5,
+    "fixture_outcomes_recorded": 3,
+    "fixture_recording_rate_percent": 60,
+    "pilot_target_percent": 60,
+    "pilot_observed_rate_percent": null,
+    "pilot_measurement_status": "BLOCKED_NOT_FABRICATED"
+  },
+  "external_evidence": {
+    "three_tap_under_30_seconds_observed_test": "BLOCKED_NOT_FABRICATED",
+    "reason": "Requires observed testing with target teachers; engineering tests cannot substitute."
+  },
+  "privacy": "Report contains aggregate fixture counts and booleans only; no teacher note or user identifier."
+}

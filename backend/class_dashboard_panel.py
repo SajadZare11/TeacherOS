@@ -21,6 +21,13 @@ from class_dashboard_keyboards import (
     edit_text_keyboard,
     lesson_cancel_confirmation_keyboard,
     lesson_history_keyboard,
+    outcome_completion_keyboard,
+    outcome_difficulty_keyboard,
+    outcome_lesson_picker_keyboard,
+    outcome_note_keyboard,
+    outcome_reminder_keyboard,
+    outcome_result_keyboard,
+    outcome_summary_keyboard,
     today_queue_keyboard,
 )
 from class_dashboard_service import (
@@ -30,6 +37,7 @@ from class_dashboard_service import (
     touch_class_activity,
     update_profile_field,
 )
+from config import USAGE_TIMEZONE, get_usage_timezone
 from class_setup_panel import (
     AGES,
     CHOICE_LABELS,
@@ -53,6 +61,14 @@ from lesson_history_service import (
     list_lesson_history,
     mark_lesson_taught,
 )
+from outcome_checkin_service import (
+    get_lesson_outcome,
+    list_outcome_lessons,
+    outcome_recording_metrics,
+    schedule_outcome_reminder,
+    save_outcome_facts,
+    update_outcome_note,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -60,7 +76,29 @@ DASHBOARD_ACTIONS = {
     "open", "today", "details", "plan", "analyze", "create", "outcome",
     "progress", "profile", "pfedit", "edset", "edmulti", "edsave", "edclear",
     "archask", "archyes", "restask", "restyes", "library", "hist", "taught",
-    "canask", "canyes",
+    "canask", "canyes", "ostart", "ores", "odiff", "odone", "odnext",
+    "ocomp", "oedit", "onote", "onclear", "oskip", "oremind", "orsave",
+}
+OUTCOME_RESULT_CODES = {"a": "achieved", "p": "partly_achieved", "r": "needs_reteaching"}
+OUTCOME_RESULT_LABELS = {
+    "met": "Achieved", "partly_met": "Partly achieved", "not_met": "Needs reteaching"
+}
+OUTCOME_DIFFICULTY_BITS = {
+    0: "language", 1: "instructions", 2: "pace", 3: "participation",
+    4: "materials", 5: "assessment",
+}
+OUTCOME_DIFFICULTY_OPTION_BITS = {"l": 0, "i": 1, "p": 2, "t": 3, "m": 4, "a": 5}
+OUTCOME_DIFFICULTY_LABELS = {
+    "none": "No major difficulty", "language": "Language / concept",
+    "instructions": "Instructions", "pace": "Pace / time",
+    "participation": "Participation", "materials": "Materials",
+    "assessment": "Assessment check",
+}
+OUTCOME_COMPLETION_CODES = {
+    "c": "completed", "p": "partly_completed", "n": "not_completed"
+}
+OUTCOME_REMINDER_CODES = {
+    "h": "one_hour", "e": "local_18", "w": "local_20", "t": "tomorrow_09"
 }
 FIELD_CODES = {
     "nm": "display_name",
@@ -168,6 +206,14 @@ def _dashboard_text(snapshot: dict[str, Any]) -> str:
     planned = snapshot["next_planned_lesson"]
     outcome = snapshot["last_outcome"]
     difficulty = snapshot["unresolved_difficulty"]
+    difficulty_values = (
+        [
+            OUTCOME_DIFFICULTY_LABELS.get(str(item), _human(item))
+            for item in difficulty.get("difficulty_categories", [])
+            if item != "none"
+        ]
+        if difficulty else []
+    )
     context_label = "Archived class" if class_record["status"] == "archived" else "Active class"
     lines = [
         f"🏫 {context_label}: {class_record['display_name']}",
@@ -183,11 +229,16 @@ def _dashboard_text(snapshot: dict[str, Any]) -> str:
             f"{_short(planned['title'])} · {_short(planned.get('scheduled_for') or 'date not set', 22)}"
             if planned else "None planned"
         ),
-        "Last outcome: " + (_human(outcome["result"]) if outcome else "None recorded"),
+        "Last outcome: " + (
+            OUTCOME_RESULT_LABELS.get(str(outcome["result"]), _human(outcome["result"]))
+            if outcome else "None recorded"
+        ),
         "Difficulty: " + (
-            f"{_human(difficulty['result'])}; support {_human(difficulty.get('support_needed'))}"
+            ", ".join(difficulty_values)
+            if difficulty_values else f"{_human(difficulty['result'])}; support {_human(difficulty.get('support_needed'))}"
             if difficulty else "None unresolved"
         ),
+        f"Outcome capture: {snapshot.get('outcome_recording_rate_percent', 0)}% of taught lessons",
         f"Reviews due: {snapshot['due_review_count']}",
     ]
     if snapshot["pending_analysis_count"]:
@@ -260,6 +311,113 @@ def _history_text(
             "Generated and cancelled records never count as taught.",
         ]
     )
+    return "\n".join(lines)
+
+
+def _decode_positive_base36(value: str) -> int:
+    decoded = int(value, 36)
+    if decoded < 1:
+        raise ValueError("Expected a positive callback identifier.")
+    return decoded
+
+
+def _difficulty_values(mask: int) -> list[str]:
+    if mask == 0:
+        return ["none"]
+    if mask < 0 or mask > 63:
+        raise ValueError("Invalid difficulty selection.")
+    return [value for bit, value in OUTCOME_DIFFICULTY_BITS.items() if mask & (1 << bit)]
+
+
+def _outcome_picker_text(
+    class_name: str, lessons: list[dict[str, Any]], metrics: dict[str, int]
+) -> str:
+    lines = [
+        f"✅ Record Outcome · {class_name}", "",
+        "Choose an explicitly taught lesson. Recorded facts can be corrected later.",
+    ]
+    if not lessons:
+        lines.extend(["", "No taught lessons are waiting. Mark a planned lesson as taught first."])
+    else:
+        missing = sum(1 for lesson in lessons if lesson.get("outcome_id") is None)
+        lines.extend(["", f"Waiting: {missing} · Recorded: {len(lessons) - missing}"])
+    lines.extend(
+        [
+            "",
+            f"Outcome capture: {metrics['outcomes_recorded']}/{metrics['taught']} taught lessons "
+            f"({metrics['recording_rate_percent']}%)",
+            "The pilot target is 60%; friction is diagnosed before incentives are added.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _outcome_result_text(lesson: dict[str, Any], *, notice: str | None = None) -> str:
+    lines = [
+        f"✅ Post-lesson check-in · {lesson['display_name']}",
+        f"Lesson #{lesson['id']}: {_short(lesson['title'], 52)}", "",
+    ]
+    if notice:
+        lines.extend([notice, ""])
+    lines.extend(
+        [
+            "Tap 1 of 3 · Overall result",
+            "What was the overall result?",
+            "No note is required. You can save the three facts first.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _outcome_difficulty_text(lesson: dict[str, Any], mask: int, *, notice: str | None = None) -> str:
+    selected = _difficulty_values(mask) if mask else []
+    lines = [
+        f"✅ Post-lesson check-in · {lesson['display_name']}",
+        f"Lesson #{lesson['id']}: {_short(lesson['title'], 52)}", "",
+        "Tap 2 of 3 · Difficulties",
+        "Choose No major difficulty for the normal three-tap path, or select every category that applied.",
+    ]
+    if selected:
+        lines.extend(["", "Selected: " + ", ".join(OUTCOME_DIFFICULTY_LABELS[item] for item in selected)])
+    if notice:
+        lines.extend(["", notice])
+    return "\n".join(lines)
+
+
+def _outcome_completion_text(lesson: dict[str, Any], difficulties: list[str]) -> str:
+    return "\n".join(
+        [
+            f"✅ Post-lesson check-in · {lesson['display_name']}",
+            f"Lesson #{lesson['id']}: {_short(lesson['title'], 52)}", "",
+            "Tap 3 of 3 · Completion",
+            "How much of the planned lesson was completed?",
+            "Difficulty: " + ", ".join(OUTCOME_DIFFICULTY_LABELS[item] for item in difficulties),
+            "Your tap saves the facts immediately. An optional note comes afterward.",
+        ]
+    )
+
+
+def _outcome_summary_text(
+    outcome: dict[str, Any], metrics: dict[str, int], *, notice: str | None = None
+) -> str:
+    difficulties = outcome.get("difficulty_categories") or []
+    lines = [
+        f"✅ Outcome saved · {outcome['display_name']}",
+        f"Lesson #{outcome['class_lesson_id']}: {_short(outcome['lesson_title'], 52)}", "",
+        f"Result: {OUTCOME_RESULT_LABELS.get(str(outcome['result']), _human(outcome['result']))}",
+        "Difficulty: " + (", ".join(
+            OUTCOME_DIFFICULTY_LABELS.get(str(item), _human(item)) for item in difficulties
+        ) or "Not recorded"),
+        f"Completion: {_human(outcome.get('completion_status'))}",
+        "Teacher note: " + (_short(outcome.get("notes"), 120) if outcome.get("notes") else "Skipped (optional)"),
+        f"Facts version: {outcome.get('facts_version', 1)}",
+        "",
+        f"Dashboard updated · outcome capture {metrics['outcomes_recorded']}/{metrics['taught']} "
+        f"({metrics['recording_rate_percent']}%)",
+        "Recorded facts are stored separately from any later AI suggestion.",
+    ]
+    if notice:
+        lines.extend(["", notice])
     return "\n".join(lines)
 
 
@@ -353,8 +511,81 @@ async def handle_dashboard_callback(
 
         state = _active_state(context)
         lesson_record = None
-        if action in {"taught", "canask", "canyes"}:
-            lesson_id = int(object_id, 36)
+        outcome_result_code = None
+        outcome_mask = 0
+        outcome_option_code = None
+        outcome_completion_code = None
+        reminder_choice = None
+        if action in {
+            "taught", "canask", "canyes", "ostart", "oedit", "onote",
+            "onclear", "oskip", "oremind",
+        }:
+            lesson_id = _decode_positive_base36(object_id)
+            lesson_record = get_owned_class_lesson(
+                telegram_user_id=user.id, lesson_id=lesson_id
+            )
+            if lesson_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(lesson_record["class_id"])
+        elif action == "ores":
+            outcome_result_code = object_id[0]
+            if outcome_result_code not in OUTCOME_RESULT_CODES:
+                raise ValueError("Invalid outcome result.")
+            lesson_id = _decode_positive_base36(object_id[1:])
+            lesson_record = get_owned_class_lesson(
+                telegram_user_id=user.id, lesson_id=lesson_id
+            )
+            if lesson_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(lesson_record["class_id"])
+        elif action == "odiff":
+            outcome_option_code = object_id[0]
+            outcome_result_code = object_id[1]
+            outcome_mask = int(object_id[2:4], 36)
+            if outcome_option_code not in {"l", "i", "p", "t", "m", "a"} or outcome_result_code not in OUTCOME_RESULT_CODES:
+                raise ValueError("Invalid difficulty selection.")
+            lesson_id = _decode_positive_base36(object_id[4:])
+            lesson_record = get_owned_class_lesson(
+                telegram_user_id=user.id, lesson_id=lesson_id
+            )
+            if lesson_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(lesson_record["class_id"])
+        elif action in {"odone", "odnext"}:
+            outcome_result_code = object_id[0]
+            outcome_mask = int(object_id[1:3], 36)
+            if outcome_result_code not in OUTCOME_RESULT_CODES:
+                raise ValueError("Invalid outcome result.")
+            lesson_id = _decode_positive_base36(object_id[3:])
+            lesson_record = get_owned_class_lesson(
+                telegram_user_id=user.id, lesson_id=lesson_id
+            )
+            if lesson_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(lesson_record["class_id"])
+        elif action == "ocomp":
+            outcome_completion_code = object_id[0]
+            outcome_result_code = object_id[1]
+            outcome_mask = int(object_id[2:4], 36)
+            if outcome_completion_code not in OUTCOME_COMPLETION_CODES or outcome_result_code not in OUTCOME_RESULT_CODES:
+                raise ValueError("Invalid outcome completion.")
+            lesson_id = _decode_positive_base36(object_id[4:])
+            lesson_record = get_owned_class_lesson(
+                telegram_user_id=user.id, lesson_id=lesson_id
+            )
+            if lesson_record is None:
+                await _recover(query, context)
+                return
+            class_id = int(lesson_record["class_id"])
+        elif action == "orsave":
+            reminder_choice = OUTCOME_REMINDER_CODES.get(object_id[0])
+            if reminder_choice is None:
+                raise ValueError("Invalid reminder choice.")
+            lesson_id = _decode_positive_base36(object_id[1:])
             lesson_record = get_owned_class_lesson(
                 telegram_user_id=user.id, lesson_id=lesson_id
             )
@@ -413,6 +644,246 @@ async def handle_dashboard_callback(
                 lesson_history_keyboard(lessons, class_id, revision),
             )
             return
+        if action == "outcome":
+            if class_record["status"] != "active":
+                await _recover(query, context)
+                return
+            outcome_lessons = list_outcome_lessons(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            outcome_metrics = outcome_recording_metrics(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            await _safe_edit(
+                query,
+                _outcome_picker_text(
+                    str(class_record["display_name"]), outcome_lessons, outcome_metrics
+                ),
+                outcome_lesson_picker_keyboard(outcome_lessons, class_id, revision),
+            )
+            return
+        if action in {
+            "ostart", "ores", "odiff", "odone", "odnext", "ocomp", "oedit",
+            "onote", "onclear", "oskip", "oremind", "orsave",
+        }:
+            if (
+                lesson_record is None
+                or lesson_record.get("lifecycle_state") != "taught"
+                or class_record["status"] != "active"
+            ):
+                await _recover(query, context)
+                return
+        if action in {"ostart", "oedit"}:
+            existing_outcome = get_lesson_outcome(
+                telegram_user_id=user.id, lesson_id=int(lesson_record["id"])
+            )
+            notice = (
+                "Correction mode: the next save updates the same outcome and keeps a fact revision."
+                if existing_outcome is not None else None
+            )
+            await _safe_edit(
+                query,
+                _outcome_result_text(lesson_record, notice=notice),
+                outcome_result_keyboard(int(lesson_record["id"]), revision),
+            )
+            return
+        if action == "ores":
+            await _safe_edit(
+                query,
+                _outcome_difficulty_text(lesson_record, 0),
+                outcome_difficulty_keyboard(
+                    int(lesson_record["id"]), str(outcome_result_code), 0, revision
+                ),
+            )
+            return
+        if action == "odiff":
+            bit = OUTCOME_DIFFICULTY_OPTION_BITS[str(outcome_option_code)]
+            outcome_mask ^= 1 << bit
+            await _safe_edit(
+                query,
+                _outcome_difficulty_text(lesson_record, outcome_mask),
+                outcome_difficulty_keyboard(
+                    int(lesson_record["id"]), str(outcome_result_code), outcome_mask, revision
+                ),
+            )
+            return
+        if action in {"odone", "odnext"}:
+            if action == "odnext" and outcome_mask == 0:
+                await _safe_edit(
+                    query,
+                    _outcome_difficulty_text(
+                        lesson_record, 0,
+                        notice="Choose at least one category, or tap No major difficulty.",
+                    ),
+                    outcome_difficulty_keyboard(
+                        int(lesson_record["id"]), str(outcome_result_code), 0, revision
+                    ),
+                )
+                return
+            difficulties = _difficulty_values(outcome_mask)
+            await _safe_edit(
+                query,
+                _outcome_completion_text(lesson_record, difficulties),
+                outcome_completion_keyboard(
+                    int(lesson_record["id"]), str(outcome_result_code), outcome_mask, revision
+                ),
+            )
+            return
+        if action == "ocomp":
+            outcome, changed = save_outcome_facts(
+                telegram_user_id=user.id,
+                lesson_id=int(lesson_record["id"]),
+                result=OUTCOME_RESULT_CODES[str(outcome_result_code)],
+                difficulty_categories=_difficulty_values(outcome_mask),
+                completion_status=OUTCOME_COMPLETION_CODES[str(outcome_completion_code)],
+            )
+            if outcome is None:
+                await _recover(query, context)
+                return
+            metrics = outcome_recording_metrics(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            notice = (
+                "Saved before asking for prose. Add a note only if it helps."
+                if changed else "No duplicate was created; these facts were already saved."
+            )
+            await _safe_edit(
+                query,
+                _outcome_summary_text(outcome, metrics, notice=notice),
+                outcome_summary_keyboard(
+                    int(lesson_record["id"]), class_id, revision,
+                    has_note=bool(outcome.get("notes")),
+                ),
+            )
+            return
+        if action == "onote":
+            outcome = get_lesson_outcome(
+                telegram_user_id=user.id, lesson_id=int(lesson_record["id"])
+            )
+            if outcome is None:
+                await _recover(query, context)
+                return
+            context.user_data["outcome_note"] = {
+                "state": "text", "lesson_id": int(lesson_record["id"]),
+                "class_id": class_id, "revision": revision,
+            }
+            await _safe_edit(
+                query,
+                "📝 Optional teacher note\n\nType up to 1,000 characters, or skip. "
+                "Do not include student names, email addresses, phone numbers, health, or disability information.",
+                outcome_note_keyboard(
+                    int(lesson_record["id"]), class_id, revision,
+                    has_note=bool(outcome.get("notes")),
+                ),
+            )
+            return
+        if action == "onclear":
+            outcome, changed = update_outcome_note(
+                telegram_user_id=user.id, lesson_id=int(lesson_record["id"]), note=None
+            )
+            if outcome is None:
+                await _recover(query, context)
+                return
+            context.user_data.pop("outcome_note", None)
+            metrics = outcome_recording_metrics(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            await _safe_edit(
+                query,
+                _outcome_summary_text(
+                    outcome, metrics,
+                    notice="Optional note cleared." if changed else "The optional note was already empty.",
+                ),
+                outcome_summary_keyboard(
+                    int(lesson_record["id"]), class_id, revision, has_note=False
+                ),
+            )
+            return
+        if action == "oskip":
+            context.user_data.pop("outcome_note", None)
+            outcome = get_lesson_outcome(
+                telegram_user_id=user.id, lesson_id=int(lesson_record["id"])
+            )
+            if outcome is None:
+                await _render_dashboard(
+                    query, context, telegram_user_id=user.id, class_id=class_id,
+                    expected_revision=revision,
+                )
+                return
+            metrics = outcome_recording_metrics(
+                telegram_user_id=user.id, class_id=class_id
+            )
+            await _safe_edit(
+                query,
+                _outcome_summary_text(outcome, metrics, notice="Optional note skipped."),
+                outcome_summary_keyboard(
+                    int(lesson_record["id"]), class_id, revision,
+                    has_note=bool(outcome.get("notes")),
+                ),
+            )
+            return
+        if action == "oremind":
+            existing_outcome = get_lesson_outcome(
+                telegram_user_id=user.id, lesson_id=int(lesson_record["id"])
+            )
+            if existing_outcome is not None:
+                metrics = outcome_recording_metrics(
+                    telegram_user_id=user.id, class_id=class_id
+                )
+                await _safe_edit(
+                    query,
+                    _outcome_summary_text(
+                        existing_outcome, metrics,
+                        notice="This outcome is already recorded; no reminder is needed.",
+                    ),
+                    outcome_summary_keyboard(
+                        int(lesson_record["id"]), class_id, revision,
+                        has_note=bool(existing_outcome.get("notes")),
+                    ),
+                )
+                return
+            await _safe_edit(
+                query,
+                f"⏰ One-shot outcome reminder\n\nLesson #{lesson_record['id']}: "
+                f"{_short(lesson_record['title'], 52)}\n\nChoose a local time. "
+                "TeacherOS sends only this explicit reminder; it does not repeat automatically.",
+                outcome_reminder_keyboard(int(lesson_record["id"]), revision),
+            )
+            return
+        if action == "orsave":
+            reminder_result = schedule_outcome_reminder(
+                telegram_user_id=user.id, lesson_id=int(lesson_record["id"]),
+                choice=str(reminder_choice),
+            )
+            reminder = reminder_result.get("reminder") or {}
+            if reminder_result["status"] in {"scheduled", "already_scheduled"}:
+                due_text = str(reminder.get("next_prompt_at_utc") or "")
+                try:
+                    due_local = datetime.fromisoformat(due_text.replace("Z", "+00:00")).astimezone(get_usage_timezone())
+                    due_text = due_local.strftime("%Y-%m-%d %H:%M") + f" ({USAGE_TIMEZONE})"
+                except ValueError:
+                    due_text = _short(due_text, 32)
+                notice = (
+                    "Reminder already scheduled; duplicate callback ignored."
+                    if reminder_result["status"] == "already_scheduled"
+                    else "One reminder scheduled. It will not repeat unless you explicitly snooze it."
+                )
+                await _safe_edit(
+                    query,
+                    f"✅ {notice}\n\nDue: {due_text}\nLesson: {_short(lesson_record['title'], 52)}",
+                    outcome_reminder_keyboard(int(lesson_record["id"]), revision),
+                )
+                return
+            message = (
+                "This lesson already has an outcome; no reminder was created."
+                if reminder_result["status"] == "completed"
+                else "Reminder limit reached. Open the class when you are ready; no more prompts will be sent."
+            )
+            await _safe_edit(
+                query, f"ℹ {message}",
+                outcome_result_keyboard(int(lesson_record["id"]), revision),
+            )
+            return
         if action == "canask":
             if lesson_record is None or lesson_record.get("lifecycle_state") != "planned":
                 await _recover(query, context)
@@ -451,6 +922,13 @@ async def handle_dashboard_callback(
                 )
             if updated_lesson is None:
                 await _recover(query, context)
+                return
+            if action == "taught" and updated_lesson.get("lifecycle_state") == "taught":
+                await _safe_edit(
+                    query,
+                    _outcome_result_text(updated_lesson, notice=notice),
+                    outcome_result_keyboard(int(updated_lesson["id"]), revision),
+                )
                 return
             lessons = list_lesson_history(
                 telegram_user_id=user.id, class_id=class_id
@@ -673,6 +1151,62 @@ async def handle_dashboard_callback(
 async def get_class_dashboard_text(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
+    note_state = context.user_data.get("outcome_note")
+    if (
+        isinstance(note_state, dict)
+        and note_state.get("state") == "text"
+        and update.message is not None
+        and update.effective_user is not None
+    ):
+        lesson_id = int(note_state["lesson_id"])
+        class_id = int(note_state["class_id"])
+        revision = int(note_state["revision"])
+        try:
+            snapshot = class_dashboard_snapshot(
+                telegram_user_id=update.effective_user.id, class_id=class_id
+            )
+            if snapshot is None or int(snapshot["class"]["revision"]) != revision:
+                context.user_data.pop("outcome_note", None)
+                await update.message.reply_text(
+                    "⚠️ This class changed. The note was not saved. Refresh the class.",
+                    reply_markup=class_recovery_keyboard(),
+                )
+                return
+            outcome, _ = update_outcome_note(
+                telegram_user_id=update.effective_user.id,
+                lesson_id=lesson_id,
+                note=update.message.text or "",
+            )
+            if outcome is None:
+                context.user_data.pop("outcome_note", None)
+                await update.message.reply_text(
+                    "⚠️ The taught lesson or saved outcome is no longer available. No note was saved.",
+                    reply_markup=class_recovery_keyboard(),
+                )
+                return
+            context.user_data.pop("outcome_note", None)
+            metrics = outcome_recording_metrics(
+                telegram_user_id=update.effective_user.id, class_id=class_id
+            )
+            await update.message.reply_text(
+                _outcome_summary_text(outcome, metrics, notice="Optional note saved."),
+                reply_markup=outcome_summary_keyboard(
+                    lesson_id, class_id, revision, has_note=bool(outcome.get("notes"))
+                ),
+            )
+        except ValueError as exc:
+            outcome = get_lesson_outcome(
+                telegram_user_id=update.effective_user.id, lesson_id=lesson_id
+            )
+            await update.message.reply_text(
+                f"⚠️ {exc}\n\nUse a short, non-sensitive teaching note, or skip it.",
+                reply_markup=outcome_note_keyboard(
+                    lesson_id, class_id, revision,
+                    has_note=bool(outcome and outcome.get("notes")),
+                ),
+            )
+        return
+
     edit_state = context.user_data.get("class_edit")
     if (
         not isinstance(edit_state, dict)

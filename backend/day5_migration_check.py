@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day11_migration import SCHEMA_VERSION
+from day12_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -38,6 +38,9 @@ NEW_TABLES = (
     "ai_generation_audits",
     "material_objective_links",
     "class_lesson_transitions",
+    "lesson_outcome_fact_revisions",
+    "lesson_outcome_reminders",
+    "lesson_outcome_ai_suggestions",
 )
 
 _POST_LEGACY_MATERIAL_COLUMNS = {
@@ -125,6 +128,17 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
             "trg_outcome_requires_taught_update_v11",
             "trg_lesson_transition_owner_v11",
             "trg_lesson_transition_immutable_update_v11",
+            "trg_outcome_active_unique_insert_v12",
+            "trg_outcome_active_unique_update_v12",
+            "trg_outcome_three_tap_complete_insert_v12",
+            "trg_outcome_three_tap_complete_update_v12",
+            "trg_outcome_revision_owner_v12",
+            "trg_outcome_revision_immutable_update_v12",
+            "trg_outcome_reminder_owner_insert_v12",
+            "trg_outcome_reminder_owner_update_v12",
+            "trg_outcome_suggestion_owner_v12",
+            "trg_outcome_completes_reminder_insert_v12",
+            "trg_outcome_completes_reminder_update_v12",
         ):
             connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
         for index in (
@@ -133,6 +147,9 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "lesson_outcome_ai_suggestions",
+            "lesson_outcome_reminders",
+            "lesson_outcome_fact_revisions",
             "class_lesson_transitions",
             "material_objective_links",
             "ai_generation_audits",

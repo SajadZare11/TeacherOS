@@ -15,6 +15,7 @@ from day8_migration import apply_schema_v8
 from day9_migration import apply_schema_v9
 from day10_migration import apply_schema_v10
 from day11_migration import apply_schema_v11
+from day12_migration import apply_schema_v12
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -280,6 +281,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v9(connection)
         apply_schema_v10(connection)
         apply_schema_v11(connection)
+        apply_schema_v12(connection)
 
     return target_path
 
@@ -543,6 +545,15 @@ def database_healthcheck() -> dict[str, int | str]:
         class_lesson_transition_count = int(
             connection.execute("SELECT COUNT(*) FROM class_lesson_transitions").fetchone()[0]
         )
+        outcome_fact_revision_count = int(
+            connection.execute("SELECT COUNT(*) FROM lesson_outcome_fact_revisions").fetchone()[0]
+        )
+        outcome_reminder_count = int(
+            connection.execute("SELECT COUNT(*) FROM lesson_outcome_reminders").fetchone()[0]
+        )
+        outcome_ai_suggestion_count = int(
+            connection.execute("SELECT COUNT(*) FROM lesson_outcome_ai_suggestions").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -566,6 +577,9 @@ def database_healthcheck() -> dict[str, int | str]:
         "ai_generation_audits": ai_generation_audit_count,
         "material_objective_links": material_objective_link_count,
         "class_lesson_transitions": class_lesson_transition_count,
+        "lesson_outcome_fact_revisions": outcome_fact_revision_count,
+        "lesson_outcome_reminders": outcome_reminder_count,
+        "lesson_outcome_ai_suggestions": outcome_ai_suggestion_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:

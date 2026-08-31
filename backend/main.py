@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import logging
+from contextlib import suppress
 
 from telegram import BotCommand, Update
 from telegram.constants import ChatAction
@@ -17,6 +19,7 @@ from account_panel import account_callback
 from ai_gateway import generate_artifact
 from class_panel import class_callback, home_callback
 from class_dashboard_panel import get_class_dashboard_text
+from class_dashboard_keyboards import outcome_result_keyboard
 from class_setup_panel import get_class_setup_text
 from class_generation import class_generation_callback_handler
 from material_actions import material_action_callback, get_material_action_text
@@ -47,6 +50,7 @@ from database import (
     register_telegram_user,
 )
 from keyboards import start_menu_keyboard, subscription_limit_keyboard
+from feature_flags import feature_enabled
 from home_ui import teacheros_home_text
 from lesson_planner import get_lesson_topic, lesson_callback
 from launch_info import (
@@ -69,6 +73,10 @@ from subscription_service import (
     generation_access_for_user,
     generation_block_message,
     selected_openrouter_model,
+)
+from outcome_checkin_service import (
+    claim_due_outcome_reminders,
+    release_failed_reminder,
 )
 
 logging.basicConfig(
@@ -170,6 +178,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     feedback = context.user_data.get("feedback")
     class_setup = context.user_data.get("class_setup")
     class_edit = context.user_data.get("class_edit")
+    outcome_note = context.user_data.get("outcome_note")
     material_action = context.user_data.get("material_action")
 
     # A feature-specific text handler will process the message first.
@@ -188,6 +197,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if isinstance(class_setup, dict) and class_setup.get("state"):
         return
     if isinstance(class_edit, dict) and class_edit.get("state"):
+        return
+    if isinstance(outcome_note, dict) and outcome_note.get("state"):
         return
     if isinstance(material_action, dict) and material_action.get("state"):
         return
@@ -249,6 +260,43 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(ai_response[start : start + 4000])
 
 
+async def send_due_outcome_reminders_once(application: Application) -> int:
+    """Deliver each explicitly scheduled outcome reminder at most once."""
+    reminders = claim_due_outcome_reminders(limit=20)
+    delivered = 0
+    for reminder in reminders:
+        try:
+            await application.bot.send_message(
+                chat_id=int(reminder["telegram_user_id"]),
+                text=(
+                    "⏰ Your one-shot post-lesson reminder\n\n"
+                    f"🏫 {reminder['display_name']}\n"
+                    f"Lesson #{reminder['class_lesson_id']}: {reminder['lesson_title']}\n\n"
+                    "Record three facts now, snooze explicitly, or skip. "
+                    "This reminder does not repeat automatically."
+                ),
+                reply_markup=outcome_result_keyboard(
+                    int(reminder["class_lesson_id"]), int(reminder["class_revision"])
+                ),
+            )
+            delivered += 1
+        except Exception:
+            logger.exception("Could not deliver outcome reminder %s", reminder["id"])
+            release_failed_reminder(reminder_id=int(reminder["id"]))
+    return delivered
+
+
+async def _outcome_reminder_loop(application: Application) -> None:
+    while True:
+        try:
+            await send_due_outcome_reminders_once(application)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Outcome reminder dispatcher failed; retrying after backoff")
+        await asyncio.sleep(60)
+
+
 async def post_init(application: Application) -> None:
     """Publish the Telegram command menu and public bot description."""
     commands = [
@@ -275,6 +323,18 @@ async def post_init(application: Application) -> None:
         )
     except Exception:
         logger.warning("Could not update Telegram command menu or bot description")
+    if feature_enabled("classes") and "outcome_reminder_task" not in application.bot_data:
+        application.bot_data["outcome_reminder_task"] = asyncio.create_task(
+            _outcome_reminder_loop(application), name="teacheros-outcome-reminders"
+        )
+
+
+async def post_shutdown(application: Application) -> None:
+    task = application.bot_data.pop("outcome_reminder_task", None)
+    if isinstance(task, asyncio.Task):
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -300,6 +360,7 @@ def main() -> None:
         .token(TELEGRAM_BOT_TOKEN)
         .concurrent_updates(False)
         .post_init(post_init)
+        .post_shutdown(post_shutdown)
         .build()
     )
 
