@@ -23,6 +23,7 @@ from class_dashboard_keyboards import outcome_result_keyboard
 from class_setup_panel import get_class_setup_text
 from class_generation import class_generation_callback_handler
 from evidence_panel import handle_evidence_callback, handle_evidence_message
+from evidence_analysis_panel import handle_evidence_analysis_callback
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -410,6 +411,9 @@ def main() -> None:
     )
     app.add_handler(
         CallbackQueryHandler(handle_evidence_callback, pattern=r"^v1\|ev\|")
+    )
+    app.add_handler(
+        CallbackQueryHandler(handle_evidence_analysis_callback, pattern=r"^v1\|ea\|")
     )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 

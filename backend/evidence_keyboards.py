@@ -18,6 +18,10 @@ def b36(number: int) -> str:
     return "".join(reversed(digits))
 
 
+def un_b36(text: str) -> int:
+    return int(text, 36)
+
+
 EVIDENCE_TYPE_CODES = {
     "w": "writing",
     "s": "speaking_notes",
@@ -125,6 +129,7 @@ def evidence_batch_details_keyboard(
         ])
 
     rows.append([
+        InlineKeyboardButton("🔬 Analyze Work", callback_data=f"v1|ea|anlz|{bid}|{rev}"),
         InlineKeyboardButton("🗑 Delete Batch", callback_data=f"v1|ev|delask|{bid}|{rev}"),
     ])
     rows.append([

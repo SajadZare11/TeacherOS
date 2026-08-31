@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "all_findings_cite_traceable_evidence_ids": true,
+    "batch_analysis_with_cited_findings": true,
+    "calibrated_uncertainty_and_notices": true,
+    "deterministic_counts_no_fake_percentages": true,
+    "multi_tenant_isolation_verified": true,
+    "raw_evidence_purge_preserves_approved_summary": true,
+    "schema_v16_deployed": true,
+    "teacher_approval_and_minimal_summary": true,
+    "teacher_summary_editing_supported": true,
+    "telegram_keyboards_bounded_64_bytes": true,
+    "zero_raw_evidence_in_telemetry": true
+  },
+  "details": {
+    "analysis_id": 1,
+    "provenance_status_verified": true,
+    "response_count": 4,
+    "uncertainty": "medium"
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-08-31T22:26:34.284354+00:00",
+  "gate": "Day 16 \u2014 Evidence Analysis & Transparent Findings",
+  "passed": true,
+  "schema_version": 16
+}

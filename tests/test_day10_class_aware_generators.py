@@ -22,7 +22,7 @@ import ai_gateway  # noqa: E402
 from ai_gateway import generate_artifact  # noqa: E402
 from class_generation import class_generation_callback_handler  # noqa: E402
 from class_dashboard_keyboards import class_action_keyboard  # noqa: E402
-from day15_migration import SCHEMA_VERSION  # noqa: E402
+from day16_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 from keyboards import generated_material_export_keyboard  # noqa: E402
 from material_actions import _prompt_replacements  # noqa: E402

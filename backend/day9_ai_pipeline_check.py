@@ -9,7 +9,7 @@ from typing import Any
 from ai_gateway import TOTAL_TIMEOUT_SECONDS
 from class_context import ClassContextUnavailable, build_class_context
 from database import database_connection, ensure_database_user, initialize_database
-from day15_migration import SCHEMA_VERSION
+from day16_migration import SCHEMA_VERSION
 from prompt_contracts import get_prompt_contract
 from validators import validate_model_response
 
