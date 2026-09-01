@@ -77,7 +77,7 @@ class Day1CriticalPathSmokeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("ANSWER KEY", saved["content"])
 
         health = database.database_healthcheck()
-        self.assertEqual(health["schema_version"], 25)
+        self.assertEqual(health["schema_version"], 26)
         self.assertEqual(
             database.count_user_materials(telegram_user_id=self.owner.id),
             4,
