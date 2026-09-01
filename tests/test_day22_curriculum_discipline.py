@@ -42,7 +42,7 @@ from curriculum_keyboards import (
     unit_editor_cancel_keyboard,
 )
 from curriculum_panel import handle_curriculum_callback, handle_curriculum_message
-from day23_migration import SCHEMA_VERSION
+from day24_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 
 

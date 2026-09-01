@@ -46,6 +46,8 @@ from progress_report_panel import (
     handle_progress_report_callback,
     handle_progress_report_message,
 )
+from ui_panel import handle_ui_callback
+from ui_keyboards import language_switcher_keyboard, onboarding_walkthrough_keyboard
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -162,8 +164,32 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "Use /privacy and /terms to read the launch policies.\n"
         "Use /myid to view your Telegram user ID.\n"
         "Use /cancel to stop the current lesson, activity, worksheet, or assessment flow.\n"
+        "Use /lang to change your display language (English / فارسی).\n"
+        "Use /walkthrough to view the 3-step first-run guide.\n"
         "Every completed generation is saved automatically."
     )
+
+
+async def lang_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show display language picker."""
+    if update.message is not None:
+        await update.message.reply_text(
+            "🌐 Choose Display Language / انتخاب زبان:",
+            reply_markup=language_switcher_keyboard(),
+        )
+
+
+async def walkthrough_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Display the 3-step first-run walkthrough."""
+    if update.message is not None:
+        await update.message.reply_text(
+            "🎉 <b>Welcome to TeacherOS!</b>\n\n"
+            "<b>Step 1: Set Up Your Class 🏫</b>\n\n"
+            "Create a class profile with CEFR level, age group, and learning goals. "
+            "TeacherOS reuses this context automatically so you never re-enter class details.",
+            reply_markup=onboarding_walkthrough_keyboard(step=1),
+            parse_mode="HTML",
+        )
 
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -431,6 +457,8 @@ def main() -> None:
     app.add_handler(CommandHandler("admin_feedback", admin_feedback_command))
     app.add_handler(CommandHandler("admin_grant", admin_grant_command))
     app.add_handler(CommandHandler("admin_revoke", admin_revoke_command))
+    app.add_handler(CommandHandler(["lang", "language"], lang_command))
+    app.add_handler(CommandHandler(["walkthrough", "onboarding"], walkthrough_command))
 
     app.add_handler(CallbackQueryHandler(lesson_callback, pattern=r"^lesson(?:$|_)"))
     app.add_handler(CallbackQueryHandler(activity_callback, pattern=r"^activity_"))
@@ -481,6 +509,9 @@ def main() -> None:
     )
     app.add_handler(
         CallbackQueryHandler(handle_progress_report_callback, pattern=r"^v1\|rp\|")
+    )
+    app.add_handler(
+        CallbackQueryHandler(handle_ui_callback, pattern=r"^v1\|ui\|")
     )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 

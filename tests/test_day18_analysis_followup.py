@@ -29,7 +29,7 @@ from analysis_followup_service import (
 )
 from class_service import create_class
 from day18_migration import apply_schema_v18
-from day23_migration import SCHEMA_VERSION
+from day24_migration import SCHEMA_VERSION
 from evidence_analysis_service import (
     analyze_evidence_batch,
     approve_evidence_analysis,

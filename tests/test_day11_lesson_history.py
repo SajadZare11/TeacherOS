@@ -21,7 +21,7 @@ import class_service  # noqa: E402
 import database  # noqa: E402
 from class_dashboard_panel import handle_dashboard_callback  # noqa: E402
 from class_dashboard_service import class_dashboard_snapshot  # noqa: E402
-from day23_migration import SCHEMA_VERSION  # noqa: E402
+from day24_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 from keyboards import lesson_replace_keyboard, lesson_schedule_keyboard  # noqa: E402
 from lesson_history_service import (  # noqa: E402

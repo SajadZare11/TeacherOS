@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "accessibility_screen_reader_labels_present": true,
+    "class_aware_search_functional": true,
+    "language_preference_persisted": true,
+    "material_pinning_and_favorites_operational": true,
+    "multi_tenant_isolation_verified": true,
+    "schema_v24_deployed": true,
+    "string_catalog_and_localization_supported": true,
+    "telegram_keyboards_bounded_64_bytes": true,
+    "three_step_onboarding_walkthrough_functional": true
+  },
+  "details": {
+    "class_a_id": 1,
+    "strings_en_count": 49,
+    "strings_fa_count": 53
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-09-01T10:56:42.101728+00:00",
+  "gate": "Day 24 \u2014 Polish Telegram Speed, Clarity, Accessibility, and Localization",
+  "passed": true,
+  "schema_version": 24
+}
