@@ -27,6 +27,7 @@ from day21_migration import apply_schema_v21
 from day22_migration import apply_schema_v22
 from day23_migration import apply_schema_v23
 from day24_migration import apply_schema_v24
+from day25_migration import apply_schema_v25
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -304,6 +305,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v22(connection)
         apply_schema_v23(connection)
         apply_schema_v24(connection)
+        apply_schema_v25(connection)
 
     return target_path
 
@@ -609,6 +611,9 @@ def database_healthcheck() -> dict[str, int | str]:
         user_pinned_material_count = int(
             connection.execute("SELECT COUNT(*) FROM user_pinned_materials").fetchone()[0]
         )
+        entitlement_event_count = int(
+            connection.execute("SELECT COUNT(*) FROM entitlement_events").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -646,6 +651,7 @@ def database_healthcheck() -> dict[str, int | str]:
         "progress_report_revisions": progress_report_revision_count,
         "user_ui_preferences": user_ui_preference_count,
         "user_pinned_materials": user_pinned_material_count,
+        "entitlement_events": entitlement_event_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:

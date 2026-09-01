@@ -22,21 +22,17 @@ def generation_access_for_user(telegram_user_id: int) -> dict[str, Any]:
 
 def class_creation_access_for_user(telegram_user_id: int) -> dict[str, Any]:
     """Return the one central class-limit decision used by every setup surface."""
-    from class_service import count_classes
+    from entitlement_service import check_feature_access
 
-    entitlement = get_user_entitlement(telegram_user_id=telegram_user_id)
-    plan_code = str(entitlement.get("plan_code") or "free")
-    limit = CLASS_PLAN_LIMITS.get(plan_code, CLASS_PLAN_LIMITS["free"])
-    active_classes = count_classes(telegram_user_id=telegram_user_id, status="active")
-    enforced = feature_enabled("entitlements")
-    allowed = not enforced or limit is None or active_classes < limit
+    result = check_feature_access(telegram_user_id, "active_classes")
     return {
-        "allowed": allowed,
-        "enforced": enforced,
-        "plan_code": plan_code,
-        "plan_name": entitlement.get("plan_name") or plan_code.title(),
-        "active_classes": active_classes,
-        "class_limit": limit,
+        "allowed": result["allowed"],
+        "enforced": result["enforced"],
+        "plan_code": result["plan_code"],
+        "plan_name": result["plan_name"],
+        "active_classes": result["current"],
+        "class_limit": result["limit"],
+        "upgrade_prompt": result["upgrade_prompt"],
     }
 
 

@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "commercial_funnel_telemetry_instrumented": true,
+    "contextual_upgrade_prompts_outcome_oriented": true,
+    "feature_access_checks_operational": true,
+    "free_teaching_loop_guarantee_verified": true,
+    "idempotent_subscription_activation": true,
+    "multi_tenant_isolation_verified": true,
+    "pro_tier_reflected": true,
+    "schema_v25_deployed": true,
+    "tier_capabilities_centralized": true
+  },
+  "details": {
+    "payment_id": 1,
+    "pro_plan_classes_limit": 10,
+    "user_a_id": 1
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-09-01T11:16:14.874803+00:00",
+  "gate": "Day 25 \u2014 Package Paid Value Around Recurring Outcomes",
+  "passed": true,
+  "schema_version": 25
+}

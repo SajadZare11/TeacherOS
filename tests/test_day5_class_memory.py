@@ -19,7 +19,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day5-key-not-used")
 
 import class_service  # noqa: E402
 import database  # noqa: E402
-from day24_migration import SCHEMA_VERSION  # noqa: E402
+from day25_migration import SCHEMA_VERSION  # noqa: E402
 from day5_migration_check import run_checks  # noqa: E402
 from feature_flags import (  # noqa: E402
     FEATURE_ENV_VARS,

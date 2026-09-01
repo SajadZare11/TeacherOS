@@ -31,7 +31,7 @@ from class_dashboard_panel import (  # noqa: E402
     handle_dashboard_callback,
 )
 from class_dashboard_service import class_dashboard_snapshot, today_queue  # noqa: E402
-from day24_migration import SCHEMA_VERSION  # noqa: E402
+from day25_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 from lesson_history_service import mark_lesson_taught, schedule_material_lesson  # noqa: E402
 from main import post_init, post_shutdown, send_due_outcome_reminders_once  # noqa: E402
