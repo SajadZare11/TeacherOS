@@ -59,8 +59,8 @@ def progress_overview_keyboard(
         ])
 
     rows.append([
-        InlineKeyboardButton("📜 Lesson & Outcome Timeline", callback_data=_cb("time", class_id, revision)),
-        InlineKeyboardButton("🔁 Spaced Review", callback_data=f"v1|rv|home|{_base36(class_id)}|{_base36(revision)}"),
+        InlineKeyboardButton("📜 Evidence Timeline", callback_data=_cb("time", class_id, revision)),
+        InlineKeyboardButton("📋 Reports", callback_data=f"v1|rp|home|{_base36(class_id)}|{_base36(revision)}"),
     ])
 
     rows.append([

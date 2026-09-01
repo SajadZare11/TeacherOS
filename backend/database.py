@@ -25,6 +25,7 @@ from day19_migration import apply_schema_v19
 from day20_migration import apply_schema_v20
 from day21_migration import apply_schema_v21
 from day22_migration import apply_schema_v22
+from day23_migration import apply_schema_v23
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -300,6 +301,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v20(connection)
         apply_schema_v21(connection)
         apply_schema_v22(connection)
+        apply_schema_v23(connection)
 
     return target_path
 
@@ -593,6 +595,12 @@ def database_healthcheck() -> dict[str, int | str]:
         golden_curriculum_evaluation_count = int(
             connection.execute("SELECT COUNT(*) FROM golden_curriculum_evaluations").fetchone()[0]
         )
+        class_progress_report_count = int(
+            connection.execute("SELECT COUNT(*) FROM class_progress_reports").fetchone()[0]
+        )
+        progress_report_revision_count = int(
+            connection.execute("SELECT COUNT(*) FROM progress_report_revisions").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -626,6 +634,8 @@ def database_healthcheck() -> dict[str, int | str]:
         "class_curriculum_units": class_curriculum_unit_count,
         "cefr_objective_mappings": cefr_objective_mapping_count,
         "golden_curriculum_evaluations": golden_curriculum_evaluation_count,
+        "class_progress_reports": class_progress_report_count,
+        "progress_report_revisions": progress_report_revision_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:

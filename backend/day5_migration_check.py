@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day22_migration import SCHEMA_VERSION
+from day23_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -60,6 +60,8 @@ NEW_TABLES = (
     "class_curriculum_units",
     "cefr_objective_mappings",
     "golden_curriculum_evaluations",
+    "class_progress_reports",
+    "progress_report_revisions",
 )
 
 _POST_LEGACY_MATERIAL_COLUMNS = {
@@ -213,6 +215,8 @@ def _strip_v6_to_legacy_fixture(path: Path) -> None:
         ):
             connection.execute(f"DROP INDEX IF EXISTS {index}")
         for table in (
+            "progress_report_revisions",
+            "class_progress_reports",
             "golden_curriculum_evaluations",
             "cefr_objective_mappings",
             "class_curriculum_units",

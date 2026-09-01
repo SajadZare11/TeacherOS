@@ -42,6 +42,10 @@ from curriculum_panel import (
     handle_curriculum_callback,
     handle_curriculum_message,
 )
+from progress_report_panel import (
+    handle_progress_report_callback,
+    handle_progress_report_message,
+)
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -208,6 +212,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     wf_editing_feedback_id = context.user_data.get("wf_editing_feedback_id")
     review_add = context.user_data.get("review_add")
     curriculum_edit = context.user_data.get("curriculum_edit")
+    report_edit = context.user_data.get("report_edit")
 
     # A feature-specific text handler will process the message first.
     if isinstance(lesson, dict) and lesson.get("state"):
@@ -239,6 +244,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if isinstance(review_add, dict) and review_add.get("state"):
         return
     if isinstance(curriculum_edit, dict) and curriculum_edit.get("state"):
+        return
+    if isinstance(report_edit, dict) and report_edit.get("state"):
         return
 
     user_message = (update.message.text or "").strip()
@@ -472,6 +479,9 @@ def main() -> None:
     app.add_handler(
         CallbackQueryHandler(handle_curriculum_callback, pattern=r"^v1\|cu\|")
     )
+    app.add_handler(
+        CallbackQueryHandler(handle_progress_report_callback, pattern=r"^v1\|rp\|")
+    )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 
     app.add_handler(
@@ -529,6 +539,10 @@ def main() -> None:
     app.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_curriculum_message),
         group=13,
+    )
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_progress_report_message),
+        group=14,
     )
 
     app.add_error_handler(error_handler)

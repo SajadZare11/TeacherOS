@@ -1,0 +1,25 @@
+{
+  "checks": {
+    "all_three_report_types_supported": true,
+    "deleted_source_orphan_safety_verified": true,
+    "insufficient_evidence_boundary_enforced": true,
+    "mandatory_teacher_approval_gate": true,
+    "multi_tenant_isolation_verified": true,
+    "pdf_export_generated_and_validated": true,
+    "schema_v23_deployed": true,
+    "section_editing_and_audit_versioning": true,
+    "telegram_keyboards_bounded_64_bytes": true,
+    "word_export_generated_and_validated": true
+  },
+  "details": {
+    "class_a_id": 1,
+    "doc_size_bytes": 37183,
+    "pdf_size_bytes": 2679,
+    "report_count": 4
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-09-01T10:36:59.213357+00:00",
+  "gate": "Day 23 \u2014 Generate Editable, Evidence-Safe Progress Reports",
+  "passed": true,
+  "schema_version": 23
+}
