@@ -113,7 +113,7 @@ async def handle_analysis_followup_callback(
 
     except Exception as exc:
         logger.exception("Error handling analysis followup callback: %s", exc)
-        await query.edit_message_text(f"⚠️ Error: {exc}")
+        await query.edit_message_text("⚠️ This teaching action is unavailable. Please try again.")
         return True
 
     return False

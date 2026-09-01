@@ -19,7 +19,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day16-key")
 import database
 from class_service import create_class
 from day16_migration import apply_schema_v16
-from day19_migration import SCHEMA_VERSION
+from day20_migration import SCHEMA_VERSION
 from evidence_analysis_keyboards import (
     evidence_analysis_confirm_reject_keyboard,
     evidence_analysis_keyboard,

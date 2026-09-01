@@ -82,4 +82,28 @@ def apply_schema_v16(connection: sqlite3.Connection) -> None:
     for trigger in triggers:
         connection.execute(trigger)
 
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_evidence_analysis_approval_guard_v16
+        BEFORE UPDATE OF approved ON evidence_analysis_results
+        WHEN OLD.approved = 1 AND NEW.approved != 1
+        BEGIN SELECT RAISE(ABORT, 'approved analysis cannot be unapproved'); END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_evidence_analysis_active_source_v16
+        BEFORE INSERT ON evidence_analysis_results
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM evidence_batches AS b
+            JOIN classes AS c ON c.id = b.class_id AND c.user_id = b.user_id
+            WHERE b.id = NEW.batch_id AND b.class_id = NEW.class_id
+              AND b.user_id = NEW.user_id AND b.status NOT IN ('deleted', 'purged')
+              AND c.status = 'active'
+        )
+        BEGIN SELECT RAISE(ABORT, 'evidence analysis requires an active source'); END
+        """
+    )
+
     connection.execute("INSERT OR IGNORE INTO schema_versions (version) VALUES (16);")

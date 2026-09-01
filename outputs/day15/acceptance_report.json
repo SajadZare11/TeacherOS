@@ -31,8 +31,8 @@
     "total_events_checked": 4
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-08-31T22:20:12.555297+00:00",
+  "evaluated_at_utc": "2026-09-01T08:29:50.573131+00:00",
   "gate": "Day 15 \u2014 Privacy-First Evidence Inbox",
   "passed": true,
-  "schema_version": 15
+  "schema_version": 19
 }

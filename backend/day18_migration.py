@@ -90,4 +90,50 @@ def apply_schema_v18(connection: sqlite3.Connection) -> None:
     for trigger in triggers:
         connection.execute(trigger)
 
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_analysis_followup_links_update_v18
+        BEFORE UPDATE OF user_id, class_id, analysis_id, material_id ON analysis_followup_actions
+        WHEN NEW.user_id IS NOT OLD.user_id
+          OR NEW.class_id IS NOT OLD.class_id
+          OR NEW.analysis_id IS NOT OLD.analysis_id
+          OR NEW.material_id IS NOT OLD.material_id
+        BEGIN SELECT RAISE(ABORT, 'analysis follow-up links are immutable'); END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_analysis_followup_material_owner_insert_v18
+        BEFORE INSERT ON analysis_followup_actions
+        WHEN NEW.material_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM materials
+            WHERE id = NEW.material_id AND user_id = NEW.user_id
+              AND class_id = NEW.class_id
+        )
+        BEGIN SELECT RAISE(ABORT, 'analysis follow-up material ownership mismatch'); END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_material_evidence_link_owner_insert_v18
+        BEFORE INSERT ON material_evidence_links
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM materials AS m
+            JOIN evidence_analysis_results AS a ON a.id = NEW.analysis_id
+            WHERE m.id = NEW.material_id
+              AND m.user_id = a.user_id
+              AND m.class_id IS a.class_id
+        )
+        BEGIN SELECT RAISE(ABORT, 'material evidence link ownership mismatch'); END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_material_evidence_link_immutable_update_v18
+        BEFORE UPDATE ON material_evidence_links
+        BEGIN SELECT RAISE(ABORT, 'material evidence links are immutable'); END
+        """
+    )
+
     connection.execute("INSERT OR IGNORE INTO schema_versions (version) VALUES (18);")

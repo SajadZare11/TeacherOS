@@ -19,8 +19,8 @@
     "uncertainty": "medium"
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-08-31T22:26:34.284354+00:00",
+  "evaluated_at_utc": "2026-09-01T08:29:51.623924+00:00",
   "gate": "Day 16 \u2014 Evidence Analysis & Transparent Findings",
   "passed": true,
-  "schema_version": 16
+  "schema_version": 19
 }

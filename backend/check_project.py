@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import re
+import sys
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
@@ -168,6 +169,10 @@ def _validate_website_config() -> list[str]:
 
 
 def main() -> None:
+    # Windows terminals commonly default to cp1252 while diagnostics include
+    # intentional check-mark and warning symbols.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     print("TeacherOS project check\n")
     packages = {
         "python-telegram-bot": package_version("python-telegram-bot"),

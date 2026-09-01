@@ -115,6 +115,15 @@ async def handle_writing_feedback_callback(
         elif action == "exp":
             # v1|wf|exp|{fid}|{cid}|{rev}
             fid = un_b36(parts[3])
+            feedback = get_writing_feedback(telegram_user=user, feedback_id=fid)
+            if not feedback:
+                await query.edit_message_text("Feedback record not found.")
+                return True
+            if not bool(feedback.get("approved", 0)):
+                await query.edit_message_text(
+                    "⚠️ Please approve this feedback before exporting or sharing copies."
+                )
+                return True
             cid_val = un_b36(parts[4]) if len(parts) > 4 and parts[4] != "0" else None
             revision = un_b36(parts[5]) if len(parts) > 5 else 1
             kb = writing_feedback_export_keyboard(fid, cid_val, revision)
@@ -128,6 +137,9 @@ async def handle_writing_feedback_callback(
             feedback = get_writing_feedback(telegram_user=user, feedback_id=fid)
             if not feedback:
                 await query.edit_message_text("Feedback record not found.")
+                return True
+            if not bool(feedback.get("approved", 0)):
+                await query.answer("Approve feedback before exporting.", show_alert=True)
                 return True
 
             if action == "expw":
@@ -145,7 +157,9 @@ async def handle_writing_feedback_callback(
 
     except Exception as exc:
         logger.exception("Error handling writing feedback callback: %s", exc)
-        await query.edit_message_text(f"⚠️ Error: {exc}")
+        # Do not echo database/provider details (or any user-controlled text)
+        # into Telegram. Keep the callback recoverable with a safe message.
+        await query.edit_message_text("⚠️ This feedback action is unavailable. Please try again.")
         return True
 
     return False

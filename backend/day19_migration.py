@@ -74,7 +74,9 @@ def apply_schema_v19(connection: sqlite3.Connection) -> None:
         CREATE TRIGGER IF NOT EXISTS trg_material_diff_owner_v19
         BEFORE INSERT ON material_differentiations
         WHEN NOT EXISTS (
-            SELECT 1 FROM materials WHERE id = NEW.source_material_id AND user_id = NEW.user_id
+            SELECT 1 FROM materials
+            WHERE id = NEW.source_material_id AND user_id = NEW.user_id
+              AND class_id IS NEW.class_id
         )
         BEGIN SELECT RAISE(ABORT, 'differentiation source material owner mismatch'); END
         """,
@@ -82,12 +84,41 @@ def apply_schema_v19(connection: sqlite3.Connection) -> None:
         CREATE TRIGGER IF NOT EXISTS trg_material_adap_owner_v19
         BEFORE INSERT ON material_adaptations
         WHEN NOT EXISTS (
-            SELECT 1 FROM materials WHERE id = NEW.source_material_id AND user_id = NEW.user_id
+            SELECT 1 FROM materials
+            WHERE id = NEW.source_material_id AND user_id = NEW.user_id
+              AND class_id IS NEW.class_id
         )
         BEGIN SELECT RAISE(ABORT, 'adaptation source material owner mismatch'); END
         """,
     )
     for trigger in triggers:
         connection.execute(trigger)
+
+    # Differentiations and adaptations are immutable derivatives. Their
+    # source, tenant, and class links must never be reassigned after creation.
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_material_diff_owner_update_v19
+        BEFORE UPDATE OF user_id, class_id, source_material_id ON material_differentiations
+        WHEN NEW.user_id IS NOT OLD.user_id
+          OR NEW.class_id IS NOT OLD.class_id
+          OR NEW.source_material_id IS NOT OLD.source_material_id
+        BEGIN
+            SELECT RAISE(ABORT, 'differentiation source link is immutable');
+        END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_material_adap_owner_update_v19
+        BEFORE UPDATE OF user_id, class_id, source_material_id ON material_adaptations
+        WHEN NEW.user_id IS NOT OLD.user_id
+          OR NEW.class_id IS NOT OLD.class_id
+          OR NEW.source_material_id IS NOT OLD.source_material_id
+        BEGIN
+            SELECT RAISE(ABORT, 'adaptation source link is immutable');
+        END
+        """
+    )
 
     connection.execute("INSERT OR IGNORE INTO schema_versions (version) VALUES (19);")

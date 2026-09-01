@@ -22,6 +22,7 @@ from day16_migration import apply_schema_v16
 from day17_migration import apply_schema_v17
 from day18_migration import apply_schema_v18
 from day19_migration import apply_schema_v19
+from day20_migration import apply_schema_v20
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -294,6 +295,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v17(connection)
         apply_schema_v18(connection)
         apply_schema_v19(connection)
+        apply_schema_v20(connection)
 
     return target_path
 
@@ -566,6 +568,12 @@ def database_healthcheck() -> dict[str, int | str]:
         outcome_ai_suggestion_count = int(
             connection.execute("SELECT COUNT(*) FROM lesson_outcome_ai_suggestions").fetchone()[0]
         )
+        retrieval_review_item_count = int(
+            connection.execute("SELECT COUNT(*) FROM retrieval_review_items").fetchone()[0]
+        )
+        retrieval_review_log_count = int(
+            connection.execute("SELECT COUNT(*) FROM retrieval_review_logs").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -592,6 +600,8 @@ def database_healthcheck() -> dict[str, int | str]:
         "lesson_outcome_fact_revisions": outcome_fact_revision_count,
         "lesson_outcome_reminders": outcome_reminder_count,
         "lesson_outcome_ai_suggestions": outcome_ai_suggestion_count,
+        "retrieval_review_items": retrieval_review_item_count,
+        "retrieval_review_logs": retrieval_review_log_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:

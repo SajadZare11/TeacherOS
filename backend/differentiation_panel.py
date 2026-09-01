@@ -55,25 +55,30 @@ async def handle_differentiation_callback(
     if user is None:
         return
 
-    if action == "gen":
-        # raw_id is source_material_id
-        diff = generate_tiered_differentiation(
-            telegram_user=user,
-            source_material_id=raw_id,
-        )
-        diff_id = diff["id"]
-        source_id = raw_id
-    else:
-        # action == 'tab', raw_id is differentiation_id
-        diff = get_tiered_differentiation(
-            telegram_user=user,
-            differentiation_id=raw_id,
-        )
-        if not diff:
-            await query.edit_message_text("⚠️ Differentiation record not found.")
-            return
-        diff_id = raw_id
-        source_id = diff["source_material_id"]
+    try:
+        if action == "gen":
+            # raw_id is source_material_id
+            diff = generate_tiered_differentiation(
+                telegram_user=user,
+                source_material_id=raw_id,
+            )
+            diff_id = diff["id"]
+            source_id = raw_id
+        else:
+            # action == 'tab', raw_id is differentiation_id
+            diff = get_tiered_differentiation(
+                telegram_user=user,
+                differentiation_id=raw_id,
+            )
+            if not diff:
+                await query.edit_message_text("⚠️ Differentiation record not found.")
+                return
+            diff_id = raw_id
+            source_id = diff["source_material_id"]
+    except (ValueError, KeyError, TypeError, OverflowError):
+        logger.exception("Differentiation callback rejected")
+        await query.edit_message_text("⚠️ Differentiation is unavailable for this material.")
+        return
 
     # Render tab content
     obj = diff["objective"]
@@ -116,42 +121,46 @@ async def handle_adaptation_callback(
     if user is None:
         return
 
-    if action == "menu":
-        # raw_id is source_material_id
-        kb = adaptations_menu_keyboard(raw_id)
-        text = (
-            "⚡ **One-Tap Classroom Adaptations**\n\n"
-            "Select an emergency adaptation below. This will create a customized version "
-            "while keeping your original material completely intact."
-        )
-        await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
+    try:
+        if action == "menu":
+            # raw_id is source_material_id
+            kb = adaptations_menu_keyboard(raw_id)
+            text = (
+                "⚡ **One-Tap Classroom Adaptations**\n\n"
+                "Select an emergency adaptation below. This will create a customized version "
+                "while keeping your original material completely intact."
+            )
+            await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
 
-    elif action == "gen":
-        # raw_id is source_material_id, code is adaptation code
-        atype = _CODE_TO_ADAP.get(code or "sho", "shorter")
-        adap = generate_one_tap_adaptation(
-            telegram_user=user,
-            source_material_id=raw_id,
-            adaptation_type=atype,
-        )
-        text = (
-            f"⚡ **{adap['title']}**\n"
-            f"💡 **What Changed:** {adap['changes_summary']}\n\n"
-            f"{adap['adapted_content_markdown']}"
-        )
-        kb = adaptation_view_keyboard(adap["id"], raw_id)
-        await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
+        elif action == "gen":
+            # raw_id is source_material_id, code is adaptation code
+            atype = _CODE_TO_ADAP.get(code or "sho", "shorter")
+            adap = generate_one_tap_adaptation(
+                telegram_user=user,
+                source_material_id=raw_id,
+                adaptation_type=atype,
+            )
+            text = (
+                f"⚡ **{adap['title']}**\n"
+                f"💡 **What Changed:** {adap['changes_summary']}\n\n"
+                f"{adap['adapted_content_markdown']}"
+            )
+            kb = adaptation_view_keyboard(adap["id"], raw_id)
+            await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
 
-    elif action == "view":
-        # raw_id is adaptation_id
-        adap = get_material_adaptation(telegram_user=user, adaptation_id=raw_id)
-        if not adap:
-            await query.edit_message_text("⚠️ Adaptation record not found.")
-            return
-        text = (
-            f"⚡ **{adap['title']}**\n"
-            f"💡 **What Changed:** {adap['changes_summary']}\n\n"
-            f"{adap['adapted_content_markdown']}"
-        )
-        kb = adaptation_view_keyboard(adap["id"], adap["source_material_id"])
-        await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
+        elif action == "view":
+            # raw_id is adaptation_id
+            adap = get_material_adaptation(telegram_user=user, adaptation_id=raw_id)
+            if not adap:
+                await query.edit_message_text("⚠️ Adaptation record not found.")
+                return
+            text = (
+                f"⚡ **{adap['title']}**\n"
+                f"💡 **What Changed:** {adap['changes_summary']}\n\n"
+                f"{adap['adapted_content_markdown']}"
+            )
+            kb = adaptation_view_keyboard(adap["id"], adap["source_material_id"])
+            await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
+    except (ValueError, KeyError, TypeError, OverflowError):
+        logger.exception("Adaptation callback rejected")
+        await query.edit_message_text("⚠️ This adaptation is unavailable for your account.")

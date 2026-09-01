@@ -20,6 +20,14 @@ PROMPT_VERSION = "2026-08-31.1"
 _PERCENTAGE_PATTERN = re.compile(r"\b\d{1,3}(?:\.\d+)?%\b")
 
 
+def _evidence_references(items: Sequence[Mapping[str, Any]], limit: int = 2) -> list[str]:
+    """Return traceable, content-free references for persisted findings."""
+    return [
+        f"Evidence item {int(item['id'])} ({str(item['student_label'])})"
+        for item in items[:limit]
+    ]
+
+
 class EvidenceAnalysisError(Exception):
     """Raised when evidence analysis encounters a domain or safety error."""
 
@@ -170,7 +178,7 @@ def _extract_anonymized_findings(
                 "occurrence_count": len(matched),
                 "item_ids": m_ids,
                 "evidence_labels": m_labels,
-                "examples": [str(it["content"])[:80] + ("..." if len(str(it["content"])) > 80 else "") for it in matched[:2]],
+                "examples": _evidence_references(matched),
             })
             misconceptions.append({
                 "related_error": err_name,
@@ -193,7 +201,7 @@ def _extract_anonymized_findings(
                 "occurrence_count": len(short_items),
                 "item_ids": s_ids,
                 "evidence_labels": s_labels,
-                "examples": [str(it["content"]) for it in short_items[:2]],
+                "examples": _evidence_references(short_items),
             })
             misconceptions.append({
                 "related_error": "Response Brevity & Development",
@@ -210,7 +218,7 @@ def _extract_anonymized_findings(
                 "occurrence_count": max(1, total // 2),
                 "item_ids": all_item_ids[:2],
                 "evidence_labels": labels[:2],
-                "examples": [texts[0][:80] + "..."],
+                "examples": _evidence_references(items, limit=1),
             })
 
     # 3. Next Priorities (Top 1 to 3 actionable next steps)

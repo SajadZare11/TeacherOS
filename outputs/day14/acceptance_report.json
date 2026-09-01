@@ -64,7 +64,7 @@
     }
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-08-31T22:10:25.069885+00:00",
+  "evaluated_at_utc": "2026-09-01T08:29:31.130700+00:00",
   "gate": "Phase 2 Exit Gate (Day 14)",
   "passed": true,
   "pilot_observation": {
@@ -72,5 +72,5 @@
     "status": "BLOCKED_NOT_FABRICATED",
     "target_teachers_observed": 3
   },
-  "schema_version": 13
+  "schema_version": 19
 }

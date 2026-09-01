@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +25,9 @@ VALID_ACTION_TYPES = {
     "reassessment": "Quick Reassessment & Check",
     "homework": "Targeted Homework Task",
 }
+_CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+_EMAIL = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
+_PHONE = re.compile(r"(?<!\d)(?:\+?\d[\d\s().-]{7,}\d)(?!\d)")
 
 
 def _utc_now() -> str:
@@ -215,7 +219,9 @@ def create_analysis_followup_action(
         findings = json.loads(analysis["findings_json"])
 
         # Determine target finding
-        target = finding_target_title.strip() if finding_target_title else ""
+        target = " ".join(str(finding_target_title or "").split())
+        if target and (len(target) > 200 or _CONTROL.search(target) or _EMAIL.search(target) or _PHONE.search(target)):
+            raise ValueError("Finding target must be a short, non-sensitive title (1–200 characters).")
         if not target:
             priorities = findings.get("next_priorities", [])
             errors = findings.get("common_errors", [])
@@ -361,35 +367,39 @@ def accept_followup_action(
             return None
 
         record = dict(row)
-        now = _utc_now()
-        connection.execute(
-            """
-            UPDATE analysis_followup_actions
-            SET status = 'accepted', updated_at = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (now, followup_id, user_id),
-        )
+        already_accepted = str(record.get("status")) == "accepted"
+        if not already_accepted and str(record.get("status")) != "generated":
+            return None
+        if not already_accepted:
+            now = _utc_now()
+            connection.execute(
+                """
+                UPDATE analysis_followup_actions
+                SET status = 'accepted', updated_at = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (now, followup_id, user_id),
+            )
 
-        connection.execute(
-            """
-            INSERT OR IGNORE INTO product_events (
-                event_uuid, user_id, class_id, event_name, privacy_class,
-                properties_json, occurred_at
-            ) VALUES (?, ?, ?, 'followup_accepted', 'product', ?, ?)
-            """,
-            (
-                f"fa-acc:{followup_id}:{secrets.token_hex(4)}",
-                user_id,
-                record["class_id"],
-                json.dumps({
-                    "followup_id": followup_id,
-                    "analysis_id": record["analysis_id"],
-                    "action_type": record["action_type"],
-                }, sort_keys=True),
-                now,
-            ),
-        )
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO product_events (
+                    event_uuid, user_id, class_id, event_name, privacy_class,
+                    properties_json, occurred_at
+                ) VALUES (?, ?, ?, 'followup_accepted', 'product', ?, ?)
+                """,
+                (
+                    f"fa-acc:{followup_id}",
+                    user_id,
+                    record["class_id"],
+                    json.dumps({
+                        "followup_id": followup_id,
+                        "analysis_id": record["analysis_id"],
+                        "action_type": record["action_type"],
+                    }, sort_keys=True),
+                    now,
+                ),
+            )
 
     return get_analysis_followup_action(
         telegram_user_id=resolved_id,

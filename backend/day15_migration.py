@@ -154,4 +154,34 @@ def apply_schema_v15(connection: sqlite3.Connection) -> None:
     for trigger in triggers:
         connection.execute(trigger)
 
+    # Linked lesson/objective IDs must remain inside the same tenant and class.
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_evidence_batch_links_insert_v15
+        BEFORE INSERT ON evidence_batches
+        WHEN (NEW.lesson_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM class_lessons
+            WHERE id = NEW.lesson_id AND class_id = NEW.class_id AND user_id = NEW.user_id
+        )) OR (NEW.objective_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM class_objectives
+            WHERE id = NEW.objective_id AND class_id = NEW.class_id AND user_id = NEW.user_id
+        ))
+        BEGIN SELECT RAISE(ABORT, 'evidence batch linked record ownership mismatch'); END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_evidence_batch_links_update_v15
+        BEFORE UPDATE OF lesson_id, objective_id, class_id, user_id ON evidence_batches
+        WHEN (NEW.lesson_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM class_lessons
+            WHERE id = NEW.lesson_id AND class_id = NEW.class_id AND user_id = NEW.user_id
+        )) OR (NEW.objective_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM class_objectives
+            WHERE id = NEW.objective_id AND class_id = NEW.class_id AND user_id = NEW.user_id
+        ))
+        BEGIN SELECT RAISE(ABORT, 'evidence batch linked record ownership mismatch'); END
+        """
+    )
+
     connection.execute("INSERT OR IGNORE INTO schema_versions (version) VALUES (15);")

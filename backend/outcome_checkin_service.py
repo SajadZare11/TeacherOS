@@ -77,10 +77,15 @@ def _normalize_difficulties(values: Iterable[str]) -> list[str]:
 def _normalize_note(note: str | None) -> str | None:
     if note is None:
         return None
-    normalized = " ".join(str(note).split())
+    raw = str(note)
+    # Reject control characters before whitespace normalization. Normalizing
+    # first would silently turn newlines/tabs into spaces.
+    if _CONTROL_CHARACTERS.search(raw):
+        raise ValueError("Keep the optional note between 1 and 1,000 safe characters.")
+    normalized = " ".join(raw.split())
     if not normalized:
         return None
-    if len(normalized) > 1000 or _CONTROL_CHARACTERS.search(normalized):
+    if len(normalized) > 1000:
         raise ValueError("Keep the optional note between 1 and 1,000 safe characters.")
     if _EMAIL.search(normalized) or _PHONE.search(normalized):
         raise ValueError("Do not include email addresses or phone numbers in a class note.")

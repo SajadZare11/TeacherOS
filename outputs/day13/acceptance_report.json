@@ -1,9 +1,9 @@
 {
   "day": 13,
   "title": "Plan Next Lesson Evidence-to-Action Engine",
-  "schema_version": 13,
+  "schema_version": 19,
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-08-31T21:58:26.631612+00:00",
+  "evaluated_at_utc": "2026-09-01T08:13:29.523122+00:00",
   "passed": true,
   "scenario_count": 9,
   "checks": {

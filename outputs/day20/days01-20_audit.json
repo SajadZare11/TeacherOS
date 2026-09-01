@@ -1,13 +1,13 @@
 {
-  "audited_at_utc": "2026-09-01T08:25:04.963280+00:00",
+  "audited_at_utc": "2026-09-01T09:31:30.425476+00:00",
   "automated_tests": {
-    "count": 194,
+    "count": 205,
     "status": "PASS"
   },
   "days": {
     "1": {
       "engineering": "PASS",
-      "evidence": "Critical-path suite included in 194 passing tests."
+      "evidence": "Critical-path suite included in 205 passing tests."
     },
     "10": {
       "engineering": "PASS",
@@ -15,15 +15,15 @@
       "passed": true
     },
     "11": {
-      "engineering": "PASS",
+      "engineering": "FAIL",
       "generated_to_planned": 4,
-      "passed": true,
+      "passed": false,
       "planned_to_taught": 1
     },
     "12": {
-      "engineering": "PASS",
+      "engineering": "FAIL",
       "fixture_recording_rate_percent": 60,
-      "passed": true,
+      "passed": false,
       "pilot_measurement_status": "BLOCKED_NOT_FABRICATED",
       "three_fact_taps_structurally_defined": true
     },
@@ -178,6 +178,24 @@
         "repeated_problem_codes": 0
       }
     },
+    "20": {
+      "all_four_source_types_supported": true,
+      "all_six_categories_supported": true,
+      "archive_state_verified": true,
+      "capped_retrieval_load_per_lesson": true,
+      "configurable_intervals_schedule": true,
+      "deleted_source_orphan_safety_verified": true,
+      "deterministic_due_dates_and_stage_transitions": true,
+      "engineering": "PASS",
+      "manual_override_schedule_verified": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "pause_and_resume_state_verified": true,
+      "retrieval_block_proposal_generated": true,
+      "schema_v20_deployed": true,
+      "snooze_state_transition_verified": true,
+      "telegram_keyboards_bounded_64_bytes": true
+    },
     "3": {
       "blockers": [
         "G1_RESEARCH: Day 2 gate is CLOSED; target segment, jobs, and product mappings are not validated.",
@@ -209,18 +227,18 @@
       "passed": true
     },
     "9": {
-      "engineering": "PASS",
-      "passed": true,
+      "engineering": "FAIL",
+      "passed": false,
       "production_p95": "NOT_RUN"
     }
   },
-  "engineering_status": "PASS",
+  "engineering_status": "FAIL",
   "external_evidence_note": "Prior external gates remain honest, and Phase 2 exit requires observed teacher repeat-use data over 4 weeks without simulated/fabricated pilot claims.",
   "external_evidence_status": "BLOCKED_NOT_FABRICATED",
-  "passed": true,
+  "passed": false,
   "phase1_status": "PASS",
   "phase2_status": "PASS",
-  "phase3_status": "IN_PROGRESS (Days 15\u201319 Complete)",
-  "schema_version": 19,
-  "scope": "TeacherOS master-plan Days 1\u201319 (Phase 1 + Phase 2 + Phase 3 Days 15\u201319)"
+  "phase3_status": "IN_PROGRESS (Days 15\u201320 Complete)",
+  "schema_version": 20,
+  "scope": "TeacherOS master-plan Days 1\u201320 (Phase 1 + Phase 2 + Phase 3 Days 15\u201320)"
 }

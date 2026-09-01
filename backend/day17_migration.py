@@ -83,4 +83,27 @@ def apply_schema_v17(connection: sqlite3.Connection) -> None:
     for trigger in triggers:
         connection.execute(trigger)
 
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_writing_feedback_links_update_v17
+        BEFORE UPDATE OF user_id, class_id, evidence_item_id ON writing_feedback_records
+        WHEN NEW.user_id IS NOT OLD.user_id
+          OR NEW.class_id IS NOT OLD.class_id
+          OR NEW.evidence_item_id IS NOT OLD.evidence_item_id
+        BEGIN SELECT RAISE(ABORT, 'writing feedback ownership is immutable'); END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_writing_feedback_evidence_class_insert_v17
+        BEFORE INSERT ON writing_feedback_records
+        WHEN NEW.evidence_item_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM evidence_items
+            WHERE id = NEW.evidence_item_id AND user_id = NEW.user_id
+              AND class_id IS NEW.class_id
+        )
+        BEGIN SELECT RAISE(ABORT, 'writing feedback evidence class mismatch'); END
+        """
+    )
+
     connection.execute("INSERT OR IGNORE INTO schema_versions (version) VALUES (17);")

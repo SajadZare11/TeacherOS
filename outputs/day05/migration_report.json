@@ -1,13 +1,13 @@
 {
   "day": 5,
-  "passed": true,
+  "passed": false,
   "privacy": "Counts and schema hashes only; no user content or identifiers.",
   "rollback": {
     "all_surfaces_disabled": true,
     "quick_create_default": true,
     "strategy": "additive_schema_feature_flags_off"
   },
-  "scenario_count": 4,
+  "scenario_count": 3,
   "scenarios": [
     {
       "duplicate_columns": {
@@ -52,22 +52,34 @@
       },
       "new_table_counts": {
         "ai_generation_audits": 0,
+        "analysis_followup_actions": 0,
         "class_action_items": 0,
         "class_lesson_transitions": 0,
         "class_lessons": 0,
         "class_objectives": 0,
         "class_setup_drafts": 0,
         "classes": 0,
+        "evidence_analysis_results": 0,
+        "evidence_batches": 0,
+        "evidence_items": 0,
         "lesson_outcome_ai_suggestions": 0,
         "lesson_outcome_fact_revisions": 0,
         "lesson_outcome_reminders": 0,
         "lesson_outcomes": 0,
+        "material_adaptations": 0,
+        "material_differentiations": 0,
+        "material_evidence_links": 0,
         "material_objective_links": 0,
-        "product_events": 0
+        "next_lesson_plan_sources": 0,
+        "next_lesson_plans": 0,
+        "next_lesson_recommendation_sources": 0,
+        "next_lesson_recommendations": 0,
+        "product_events": 0,
+        "writing_feedback_records": 0
       },
-      "passed": true,
-      "schema_fingerprint_sha256": "4da5309e9e9f31c8d97ec0eed615c12a8059e16d9d46f1899a0e8e856780d52b",
-      "schema_version": 12
+      "passed": false,
+      "schema_fingerprint_sha256": "292a6a104cc59fceb962b6423f80a34ca4105f69637a4af5ec5d1ccde6281862",
+      "schema_version": 20
     },
     {
       "duplicate_columns": {
@@ -112,22 +124,34 @@
       },
       "new_table_counts": {
         "ai_generation_audits": 0,
+        "analysis_followup_actions": 0,
         "class_action_items": 0,
         "class_lesson_transitions": 0,
         "class_lessons": 0,
         "class_objectives": 0,
         "class_setup_drafts": 0,
         "classes": 0,
+        "evidence_analysis_results": 0,
+        "evidence_batches": 0,
+        "evidence_items": 0,
         "lesson_outcome_ai_suggestions": 0,
         "lesson_outcome_fact_revisions": 0,
         "lesson_outcome_reminders": 0,
         "lesson_outcomes": 0,
+        "material_adaptations": 0,
+        "material_differentiations": 0,
+        "material_evidence_links": 0,
         "material_objective_links": 0,
-        "product_events": 0
+        "next_lesson_plan_sources": 0,
+        "next_lesson_plans": 0,
+        "next_lesson_recommendation_sources": 0,
+        "next_lesson_recommendations": 0,
+        "product_events": 0,
+        "writing_feedback_records": 0
       },
-      "passed": true,
-      "schema_fingerprint_sha256": "4da5309e9e9f31c8d97ec0eed615c12a8059e16d9d46f1899a0e8e856780d52b",
-      "schema_version": 12
+      "passed": false,
+      "schema_fingerprint_sha256": "292a6a104cc59fceb962b6423f80a34ca4105f69637a4af5ec5d1ccde6281862",
+      "schema_version": 20
     },
     {
       "duplicate_columns": {
@@ -172,83 +196,35 @@
       },
       "new_table_counts": {
         "ai_generation_audits": 0,
+        "analysis_followup_actions": 0,
         "class_action_items": 0,
         "class_lesson_transitions": 0,
         "class_lessons": 0,
         "class_objectives": 0,
         "class_setup_drafts": 0,
         "classes": 0,
+        "evidence_analysis_results": 0,
+        "evidence_batches": 0,
+        "evidence_items": 0,
         "lesson_outcome_ai_suggestions": 0,
         "lesson_outcome_fact_revisions": 0,
         "lesson_outcome_reminders": 0,
         "lesson_outcomes": 0,
+        "material_adaptations": 0,
+        "material_differentiations": 0,
+        "material_evidence_links": 0,
         "material_objective_links": 0,
-        "product_events": 0
+        "next_lesson_plan_sources": 0,
+        "next_lesson_plans": 0,
+        "next_lesson_recommendation_sources": 0,
+        "next_lesson_recommendations": 0,
+        "product_events": 0,
+        "writing_feedback_records": 0
       },
-      "passed": true,
-      "schema_fingerprint_sha256": "4da5309e9e9f31c8d97ec0eed615c12a8059e16d9d46f1899a0e8e856780d52b",
-      "schema_version": 12
-    },
-    {
-      "duplicate_columns": {
-        "feedback": false,
-        "materials": false,
-        "payments": false,
-        "subscriptions": false,
-        "usage_events": false,
-        "users": false
-      },
-      "exports": {
-        "not_applicable": false,
-        "pdf": true,
-        "word": true
-      },
-      "foreign_key_error_count": 0,
-      "label": "real-populated-copy",
-      "legacy_counts_after": {
-        "feedback": 1,
-        "materials": 7,
-        "payments": 4,
-        "subscriptions": 1,
-        "usage_events": 10,
-        "users": 4
-      },
-      "legacy_counts_before": {
-        "feedback": 1,
-        "materials": 7,
-        "payments": 4,
-        "subscriptions": 1,
-        "usage_events": 10,
-        "users": 4
-      },
-      "legacy_data_preserved": true,
-      "missing_legacy_columns": {
-        "feedback": [],
-        "materials": [],
-        "payments": [],
-        "subscriptions": [],
-        "usage_events": [],
-        "users": []
-      },
-      "new_table_counts": {
-        "ai_generation_audits": 0,
-        "class_action_items": 0,
-        "class_lesson_transitions": 0,
-        "class_lessons": 0,
-        "class_objectives": 0,
-        "class_setup_drafts": 0,
-        "classes": 0,
-        "lesson_outcome_ai_suggestions": 0,
-        "lesson_outcome_fact_revisions": 0,
-        "lesson_outcome_reminders": 0,
-        "lesson_outcomes": 0,
-        "material_objective_links": 0,
-        "product_events": 0
-      },
-      "passed": true,
-      "schema_fingerprint_sha256": "4da5309e9e9f31c8d97ec0eed615c12a8059e16d9d46f1899a0e8e856780d52b",
-      "schema_version": 12
+      "passed": false,
+      "schema_fingerprint_sha256": "292a6a104cc59fceb962b6423f80a34ca4105f69637a4af5ec5d1ccde6281862",
+      "schema_version": 20
     }
   ],
-  "schema_version": 12
+  "schema_version": 19
 }

@@ -100,7 +100,10 @@ def parse_txt_bytes(data: bytes) -> str:
     if bytes([0]) in data:
         raise ValueError("Binary files cannot be processed as text evidence.")
 
-    for encoding in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
+    # CP1252 is the common Windows text encoding and must precede latin-1:
+    # latin-1 accepts every byte and would otherwise decode smart quotes and
+    # the euro sign incorrectly.
+    for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
         try:
             text = data.decode(encoding)
             cleaned = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -143,6 +146,10 @@ def parse_docx_bytes(data: bytes) -> str:
 
 
 def split_evidence_text(raw_text: str) -> list[dict[str, str]]:
+    if not isinstance(raw_text, str):
+        raise ValueError("Evidence content must be text.")
+    if len(raw_text.encode("utf-8")) > MAX_FILE_BYTES:
+        raise ValueError(f"Pasted evidence exceeds the 2 MB limit ({len(raw_text.encode('utf-8'))} bytes).")
     text = " ".join(raw_text.splitlines(keepends=True))
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = text.split("\n")

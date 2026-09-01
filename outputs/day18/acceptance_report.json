@@ -17,8 +17,8 @@
     "material_id": 1
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-08-31T22:42:50.074683+00:00",
+  "evaluated_at_utc": "2026-09-01T08:29:54.215441+00:00",
   "gate": "Day 18 \u2014 Connect Approved Analysis Directly to Teaching Action",
   "passed": true,
-  "schema_version": 18
+  "schema_version": 19
 }

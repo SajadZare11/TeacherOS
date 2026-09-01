@@ -33,6 +33,10 @@ from differentiation_panel import (
     handle_adaptation_callback,
     handle_differentiation_callback,
 )
+from retrieval_review_panel import (
+    handle_retrieval_review_callback,
+    handle_retrieval_review_message,
+)
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -191,6 +195,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     class_edit = context.user_data.get("class_edit")
     outcome_note = context.user_data.get("outcome_note")
     material_action = context.user_data.get("material_action")
+    # Evidence and writing-feedback flows have their own text handlers later
+    # in the dispatcher. Do not also send the message through general chat.
+    evidence_submission = context.user_data.get("evidence_submission")
+    evidence_edit_label = context.user_data.get("evidence_edit_label")
+    awaiting_student_writing = context.user_data.get("awaiting_student_writing")
+    wf_editing_feedback_id = context.user_data.get("wf_editing_feedback_id")
+    review_add = context.user_data.get("review_add")
 
     # A feature-specific text handler will process the message first.
     if isinstance(lesson, dict) and lesson.get("state"):
@@ -212,6 +223,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if isinstance(outcome_note, dict) and outcome_note.get("state"):
         return
     if isinstance(material_action, dict) and material_action.get("state"):
+        return
+    if isinstance(evidence_submission, dict):
+        return
+    if isinstance(evidence_edit_label, dict):
+        return
+    if awaiting_student_writing or wf_editing_feedback_id:
+        return
+    if isinstance(review_add, dict) and review_add.get("state"):
         return
 
     user_message = (update.message.text or "").strip()
@@ -436,6 +455,9 @@ def main() -> None:
     app.add_handler(
         CallbackQueryHandler(handle_adaptation_callback, pattern=r"^v1\|ad\|")
     )
+    app.add_handler(
+        CallbackQueryHandler(handle_retrieval_review_callback, pattern=r"^v1\|rv\|")
+    )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 
     app.add_handler(
@@ -485,6 +507,10 @@ def main() -> None:
     app.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_writing_feedback_message),
         group=11,
+    )
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_retrieval_review_message),
+        group=12,
     )
 
     app.add_error_handler(error_handler)

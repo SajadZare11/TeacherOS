@@ -508,10 +508,13 @@ def set_manual_next_lesson_request(
     *, telegram_user_id: int, recommendation_id: int, request: str,
     database_path: Path | None = None,
 ) -> dict[str, Any] | None:
-    normalized = " ".join(str(request or "").split())
+    raw_request = str(request or "")
+    if _CONTROL.search(raw_request):
+        raise ValueError("Remove contact details or control characters from the topic.")
+    normalized = " ".join(raw_request.split())
     if len(normalized) < 2 or len(normalized) > 300:
         raise ValueError("Manual topic must be between 2 and 300 characters.")
-    if _CONTROL.search(normalized) or _EMAIL.search(normalized) or _PHONE.search(normalized):
+    if _EMAIL.search(normalized) or _PHONE.search(normalized):
         raise ValueError("Remove contact details or control characters from the topic.")
     with database_connection(database_path) as connection:
         user = connection.execute("SELECT id FROM users WHERE telegram_user_id = ?", (telegram_user_id,)).fetchone()
@@ -666,6 +669,17 @@ def complete_next_lesson_plan(
             return None
         total = plan_timing_total(str(row["content"]))
         duration = int(row["duration_minutes"])
+        # Never leave a failed generation stuck in ``generating`` and never
+        # rely on a database CHECK to surface a raw IntegrityError to the UI.
+        # Timing is a release invariant for next-lesson plans.
+        if total != duration:
+            connection.execute(
+                """UPDATE next_lesson_recommendations
+                   SET status = 'ready', last_error_code = 'timing_mismatch',
+                       updated_at = ? WHERE id = ? AND status = 'generating'""",
+                (_utc_now(), recommendation_id),
+            )
+            return None
         cursor = connection.execute(
             """
             INSERT INTO next_lesson_plans (
