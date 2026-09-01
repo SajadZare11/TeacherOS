@@ -1,0 +1,25 @@
+{
+  "checks": {
+    "can_do_wording_validator_enforced": true,
+    "cefr_communicative_mode_mapping_supported": true,
+    "covered_partly_not_yet_coverage_breakdown": true,
+    "curriculum_unit_tracking_without_scraping": true,
+    "generic_topical_plan_rejected": true,
+    "golden_set_calibration_meets_85_percent": true,
+    "multi_tenant_isolation_verified": true,
+    "schema_v22_deployed": true,
+    "teacher_override_overrules_ai": true,
+    "telegram_keyboards_bounded_64_bytes": true
+  },
+  "details": {
+    "class_a_id": 1,
+    "evaluator_count": 2,
+    "golden_pass_rate": 100.0,
+    "unit_title": "Workplace Negotiations & Conflict"
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-09-01T10:10:07.013695+00:00",
+  "gate": "Day 22 \u2014 Raise English-Teaching Quality with CEFR and Curriculum Discipline",
+  "passed": true,
+  "schema_version": 22
+}

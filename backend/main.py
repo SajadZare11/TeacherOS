@@ -38,6 +38,10 @@ from retrieval_review_panel import (
     handle_retrieval_review_message,
 )
 from class_progress_panel import handle_progress_callback
+from curriculum_panel import (
+    handle_curriculum_callback,
+    handle_curriculum_message,
+)
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -203,6 +207,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     awaiting_student_writing = context.user_data.get("awaiting_student_writing")
     wf_editing_feedback_id = context.user_data.get("wf_editing_feedback_id")
     review_add = context.user_data.get("review_add")
+    curriculum_edit = context.user_data.get("curriculum_edit")
 
     # A feature-specific text handler will process the message first.
     if isinstance(lesson, dict) and lesson.get("state"):
@@ -232,6 +237,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if awaiting_student_writing or wf_editing_feedback_id:
         return
     if isinstance(review_add, dict) and review_add.get("state"):
+        return
+    if isinstance(curriculum_edit, dict) and curriculum_edit.get("state"):
         return
 
     user_message = (update.message.text or "").strip()
@@ -462,6 +469,9 @@ def main() -> None:
     app.add_handler(
         CallbackQueryHandler(handle_progress_callback, pattern=r"^v1\|pr\|")
     )
+    app.add_handler(
+        CallbackQueryHandler(handle_curriculum_callback, pattern=r"^v1\|cu\|")
+    )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 
     app.add_handler(
@@ -515,6 +525,10 @@ def main() -> None:
     app.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_retrieval_review_message),
         group=12,
+    )
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_curriculum_message),
+        group=13,
     )
 
     app.add_error_handler(error_handler)

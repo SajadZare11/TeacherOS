@@ -41,7 +41,7 @@ from class_progress_service import (
     update_objective_status,
 )
 from class_service import create_class
-from day21_migration import SCHEMA_VERSION, apply_schema_v21
+from day22_migration import SCHEMA_VERSION, apply_schema_v22
 from feature_flags import FEATURE_ENV_VARS
 
 

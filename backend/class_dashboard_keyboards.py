@@ -37,12 +37,13 @@ def class_dashboard_keyboard(class_id: int, revision: int) -> InlineKeyboardMark
             ],
             [
                 InlineKeyboardButton("📈 Progress", callback_data=f"v1|pr|home|{_base36(class_id)}|{_base36(revision)}"),
-                InlineKeyboardButton("📁 Library", callback_data=_cb("library", class_id, revision)),
+                InlineKeyboardButton("📚 Curriculum", callback_data=f"v1|cu|home|{_base36(class_id)}|{_base36(revision)}"),
             ],
             [
+                InlineKeyboardButton("📁 Library", callback_data=_cb("library", class_id, revision)),
                 InlineKeyboardButton("👤 Profile", callback_data=_cb("profile", class_id, revision)),
-                InlineKeyboardButton("More details", callback_data=_cb("details", class_id, revision)),
             ],
+            [InlineKeyboardButton("More details", callback_data=_cb("details", class_id, revision))],
             [InlineKeyboardButton("📚 Lesson History", callback_data=_cb("hist", class_id, revision))],
             [
                 InlineKeyboardButton("⬅ My Classes", callback_data="v1|cl|list|0|0"),

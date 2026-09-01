@@ -24,6 +24,7 @@ from day18_migration import apply_schema_v18
 from day19_migration import apply_schema_v19
 from day20_migration import apply_schema_v20
 from day21_migration import apply_schema_v21
+from day22_migration import apply_schema_v22
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -298,6 +299,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v19(connection)
         apply_schema_v20(connection)
         apply_schema_v21(connection)
+        apply_schema_v22(connection)
 
     return target_path
 
@@ -582,6 +584,15 @@ def database_healthcheck() -> dict[str, int | str]:
         objective_evidence_link_count = int(
             connection.execute("SELECT COUNT(*) FROM objective_evidence_links").fetchone()[0]
         )
+        class_curriculum_unit_count = int(
+            connection.execute("SELECT COUNT(*) FROM class_curriculum_units").fetchone()[0]
+        )
+        cefr_objective_mapping_count = int(
+            connection.execute("SELECT COUNT(*) FROM cefr_objective_mappings").fetchone()[0]
+        )
+        golden_curriculum_evaluation_count = int(
+            connection.execute("SELECT COUNT(*) FROM golden_curriculum_evaluations").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -612,6 +623,9 @@ def database_healthcheck() -> dict[str, int | str]:
         "retrieval_review_logs": retrieval_review_log_count,
         "proposed_class_objectives": proposed_class_objective_count,
         "objective_evidence_links": objective_evidence_link_count,
+        "class_curriculum_units": class_curriculum_unit_count,
+        "cefr_objective_mappings": cefr_objective_mapping_count,
+        "golden_curriculum_evaluations": golden_curriculum_evaluation_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:
