@@ -30,7 +30,7 @@ from class_setup_service import (  # noqa: E402
     save_setup_draft,
     start_setup_draft,
 )
-from day20_migration import SCHEMA_VERSION  # noqa: E402
+from day21_migration import SCHEMA_VERSION  # noqa: E402
 from feature_flags import FEATURE_ENV_VARS  # noqa: E402
 from keyboards import class_list_keyboard  # noqa: E402
 from subscription_service import class_creation_access_for_user  # noqa: E402

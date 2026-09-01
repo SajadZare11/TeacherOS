@@ -36,7 +36,7 @@ def class_dashboard_keyboard(class_id: int, revision: int) -> InlineKeyboardMark
                 InlineKeyboardButton("🔁 Spaced Review", callback_data=f"v1|rv|home|{_base36(class_id)}|{_base36(revision)}"),
             ],
             [
-                InlineKeyboardButton("📈 Progress", callback_data=_cb("progress", class_id, revision)),
+                InlineKeyboardButton("📈 Progress", callback_data=f"v1|pr|home|{_base36(class_id)}|{_base36(revision)}"),
                 InlineKeyboardButton("📁 Library", callback_data=_cb("library", class_id, revision)),
             ],
             [

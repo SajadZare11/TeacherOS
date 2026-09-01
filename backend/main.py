@@ -37,6 +37,7 @@ from retrieval_review_panel import (
     handle_retrieval_review_callback,
     handle_retrieval_review_message,
 )
+from class_progress_panel import handle_progress_callback
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
 from activity_generator import activity_callback, get_activity_topic
@@ -457,6 +458,9 @@ def main() -> None:
     )
     app.add_handler(
         CallbackQueryHandler(handle_retrieval_review_callback, pattern=r"^v1\|rv\|")
+    )
+    app.add_handler(
+        CallbackQueryHandler(handle_progress_callback, pattern=r"^v1\|pr\|")
     )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 

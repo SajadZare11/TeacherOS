@@ -23,6 +23,7 @@ from day17_migration import apply_schema_v17
 from day18_migration import apply_schema_v18
 from day19_migration import apply_schema_v19
 from day20_migration import apply_schema_v20
+from day21_migration import apply_schema_v21
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -296,6 +297,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v18(connection)
         apply_schema_v19(connection)
         apply_schema_v20(connection)
+        apply_schema_v21(connection)
 
     return target_path
 
@@ -574,6 +576,12 @@ def database_healthcheck() -> dict[str, int | str]:
         retrieval_review_log_count = int(
             connection.execute("SELECT COUNT(*) FROM retrieval_review_logs").fetchone()[0]
         )
+        proposed_class_objective_count = int(
+            connection.execute("SELECT COUNT(*) FROM proposed_class_objectives").fetchone()[0]
+        )
+        objective_evidence_link_count = int(
+            connection.execute("SELECT COUNT(*) FROM objective_evidence_links").fetchone()[0]
+        )
         schema_version = int(
             connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()[0]
         )
@@ -602,6 +610,8 @@ def database_healthcheck() -> dict[str, int | str]:
         "lesson_outcome_ai_suggestions": outcome_ai_suggestion_count,
         "retrieval_review_items": retrieval_review_item_count,
         "retrieval_review_logs": retrieval_review_log_count,
+        "proposed_class_objectives": proposed_class_objective_count,
+        "objective_evidence_links": objective_evidence_link_count,
     }
 
 def _normalize_material_filter(material_type: str | None) -> str | None:
