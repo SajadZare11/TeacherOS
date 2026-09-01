@@ -17,7 +17,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day25-key")
 
 import database
 from class_service import create_class
-from day26_migration import SCHEMA_VERSION
+from day27_migration import SCHEMA_VERSION
 from entitlement_service import (
     TIER_LIMITS,
     can_complete_teaching_loop,

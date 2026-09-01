@@ -17,7 +17,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day26-key")
 
 import database
 from backup_service import check_disk_space, create_database_backup, restore_database_backup
-from day26_migration import SCHEMA_VERSION
+from day27_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 from observability import (
     calculate_percentiles,
