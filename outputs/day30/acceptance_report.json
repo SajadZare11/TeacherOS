@@ -1,5 +1,6 @@
 {
   "checks": {
+    "all_day30_feature_flags_enabled": true,
     "all_runtime_dependencies_are_checked": true,
     "backup_integrity_is_explicitly_checked": true,
     "daily_monitoring_and_interviews_are_documented": true,
@@ -22,7 +23,7 @@
     "launch_last_line": "Launch status: FREE/BETA \u2014 do not collect real payments while sandbox is enabled."
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T17:33:39.702503+00:00",
+  "evaluated_at_utc": "2026-09-01T17:54:07.643528+00:00",
   "gate": "Day 30 \u2014 Progressive Launch and 14-Day Learning System",
   "passed": true
 }

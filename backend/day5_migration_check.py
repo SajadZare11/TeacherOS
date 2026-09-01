@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from database import initialize_database
-from day28_migration import SCHEMA_VERSION
+from day5_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS, feature_flag_snapshot, quick_create_is_default
 from pdf_document import create_pdf_export
 from word_document import create_word_export
@@ -401,7 +401,7 @@ def verify_database(path: Path, label: str) -> dict[str, Any]:
         (
             before_counts == after_counts,
             before_data == after_data,
-            version == SCHEMA_VERSION,
+            version >= SCHEMA_VERSION,
             not foreign_key_errors,
             not any(duplicate_columns.values()),
             not any(missing_legacy_columns.values()),

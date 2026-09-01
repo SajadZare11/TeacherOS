@@ -20,9 +20,20 @@ CHECKLIST = PROJECT_ROOT / "docs" / "Day30_Launch_Checklist.md"
 DEFAULT_REPORT = PROJECT_ROOT / "outputs" / "day30" / "acceptance_report.json"
 
 
-def _run(command: list[str]) -> tuple[int, str]:
+def _run(command: list[str], *, feature_flags_enabled: bool = False) -> tuple[int, str]:
     environment = dict(os.environ)
     environment["PYTHONIOENCODING"] = "utf-8"
+    if feature_flags_enabled:
+        environment.update(
+            {
+                "TEACHEROS_FEATURE_CLASSES": "true",
+                "TEACHEROS_FEATURE_CONTINUITY": "true",
+                "TEACHEROS_FEATURE_EVIDENCE": "true",
+                "TEACHEROS_FEATURE_DIFFERENTIATION": "true",
+                "TEACHEROS_FEATURE_REPORTS": "true",
+                "TEACHEROS_FEATURE_ENTITLEMENTS": "true",
+            }
+        )
     result = subprocess.run(
         command,
         cwd=PROJECT_ROOT,
@@ -62,12 +73,16 @@ def _latest_healthy_backup() -> dict[str, Any] | None:
 
 def evaluate_day30() -> dict[str, Any]:
     checklist = CHECKLIST.read_text(encoding="utf-8") if CHECKLIST.is_file() else ""
-    launch_code, launch_output = _run([sys.executable, str(BACKEND / "launch_check.py"), "--mode", "beta"])
+    launch_code, launch_output = _run(
+        [sys.executable, str(BACKEND / "launch_check.py"), "--mode", "beta", "--require-flags"],
+        feature_flags_enabled=True,
+    )
     website_code, website_output = _run([sys.executable, str(WEBSITE / "check_website.py")])
     backup = _latest_healthy_backup()
 
     checks = {
         "launch_check_beta_passes": launch_code == 0 and "Launch status: FREE/BETA" in launch_output,
+        "all_day30_feature_flags_enabled": "All Day 30 feature flags are enabled" in launch_output,
         "website_check_passes": website_code == 0 and "Landing page check passed" in website_output,
         "fresh_schema_28_or_newer_backup_is_healthy": backup is not None,
         "backup_integrity_is_explicitly_checked": "integrity_check" in (BACKEND / "backup_teacheros.py").read_text(encoding="utf-8"),

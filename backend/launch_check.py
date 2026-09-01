@@ -28,6 +28,7 @@ from config import (
     payment_setting_problem,
 )
 from database import database_healthcheck
+from feature_flags import feature_flag_snapshot
 from prompt_loader import validate_prompt_files
 
 WEBSITE_DIR = PROJECT_ROOT / "website"
@@ -101,6 +102,11 @@ def main() -> None:
         default="beta",
         help="beta allows sandbox payments; paid requires live ZarinPal and public HTTPS",
     )
+    parser.add_argument(
+        "--require-flags",
+        action="store_true",
+        help="treat disabled Day 30 feature flags as blockers instead of warnings",
+    )
     args = parser.parse_args()
 
     blockers: list[str] = []
@@ -144,6 +150,23 @@ def main() -> None:
         blockers.append("Missing .env values: " + ", ".join(settings))
     if admin_setting_problem():
         blockers.append("Admin owner is not configured: " + str(admin_setting_problem()))
+
+    flag_snapshot = feature_flag_snapshot()
+    disabled_flags = sorted(
+        feature for feature, values in flag_snapshot.items() if not values["effective"]
+    )
+    if disabled_flags:
+        flag_message = (
+            "Required Day 30 feature flags are disabled: "
+            + ", ".join(disabled_flags)
+            + ". Set the TEACHEROS_FEATURE_* values to true before launch."
+        )
+        if args.require_flags:
+            blockers.append(flag_message)
+        else:
+            warnings.append(flag_message)
+    else:
+        print("✅ All Day 30 feature flags are enabled with dependencies satisfied")
 
     payment_problem = payment_setting_problem()
     if payment_problem:

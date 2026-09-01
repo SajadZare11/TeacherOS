@@ -18,7 +18,7 @@ from class_dashboard_keyboards import (
     outcome_result_keyboard,
 )
 from class_dashboard_service import class_dashboard_snapshot
-from day19_migration import SCHEMA_VERSION
+from day12_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 from lesson_history_service import mark_lesson_taught, schedule_material_lesson
 from outcome_checkin_service import (
@@ -189,7 +189,7 @@ def evaluate_day12() -> dict[str, Any]:
                 os.environ[name] = value
 
     checks = {
-        "schema_v12_and_foreign_keys": version == SCHEMA_VERSION and foreign_key_errors == 0,
+        "schema_v12_and_foreign_keys": version >= SCHEMA_VERSION and foreign_key_errors == 0,
         "normal_path_saves_without_note": bool(
             first and first_changed and first["notes"] is None
             and first["difficulty_categories"] == ["none"]

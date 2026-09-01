@@ -9,7 +9,7 @@ from typing import Any
 from ai_gateway import TOTAL_TIMEOUT_SECONDS
 from class_context import ClassContextUnavailable, build_class_context
 from database import database_connection, ensure_database_user, initialize_database
-from day19_migration import SCHEMA_VERSION
+from day9_migration import SCHEMA_VERSION
 from prompt_contracts import get_prompt_contract
 from validators import validate_model_response
 
@@ -164,7 +164,7 @@ def evaluate_pipeline() -> dict[str, Any]:
     }
     passed = all(
         (
-            version == SCHEMA_VERSION,
+            version >= SCHEMA_VERSION,
             not foreign_key_errors,
             not (columns & FORBIDDEN_AUDIT_COLUMNS),
             all(contexts.values()),

@@ -12,7 +12,7 @@ Run these commands from the project root:
 python backend/backup_teacheros.py --label day30-prelaunch
 python backend/check_project.py
 python website/check_website.py
-python backend/launch_check.py --mode beta
+python backend/launch_check.py --mode beta --require-flags
 ```
 
 The backup command verifies SQLite integrity before returning success. Keep the
@@ -25,7 +25,11 @@ beta cohort.
 
 ## 2. Invite progressively
 
-1. Enable the class-loop feature flags in the deployment environment.
+1. Enable all class-loop feature flags in the deployment environment:
+   `TEACHEROS_FEATURE_CLASSES`, `TEACHEROS_FEATURE_CONTINUITY`,
+   `TEACHEROS_FEATURE_EVIDENCE`, `TEACHEROS_FEATURE_DIFFERENTIATION`,
+   `TEACHEROS_FEATURE_REPORTS`, and `TEACHEROS_FEATURE_ENTITLEMENTS` must be
+   `true`; dependencies are checked by `launch_check.py`.
 2. Invite five teachers first and run the complete mission: create a class, save a
    class-aware material, plan and teach a lesson, record the outcome, capture
    limited anonymized evidence, review/approve the rationale, use a follow-up, and

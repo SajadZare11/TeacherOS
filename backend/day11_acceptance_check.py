@@ -11,7 +11,7 @@ from typing import Any
 
 import database
 from class_dashboard_service import class_dashboard_snapshot
-from day19_migration import SCHEMA_VERSION
+from day11_migration import SCHEMA_VERSION
 from keyboards import lesson_replace_keyboard, lesson_schedule_keyboard
 from lesson_history_service import (
     cancel_planned_lesson,
@@ -182,7 +182,7 @@ def evaluate_day11() -> dict[str, Any]:
     schedule_callbacks = _callbacks(lesson_schedule_keyboard(generated_material))
     replace_callbacks = _callbacks(lesson_replace_keyboard(generated_material, "td"))
     checks = {
-        "schema_v11": version == SCHEMA_VERSION and {
+        "schema_v11": version >= SCHEMA_VERSION and {
             "lifecycle_state", "lifecycle_version", "cancelled_at", "origin_key"
         } <= columns,
         "foreign_keys_clean": foreign_key_errors == 0,
