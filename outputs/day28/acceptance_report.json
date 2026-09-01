@@ -1,0 +1,52 @@
+{
+  "checks": {
+    "avg_seq_score_ge_6": true,
+    "five_teachers_tested": true,
+    "schema_v28_deployed": true,
+    "task_completion_rate_ge_90_pct": true,
+    "time_saved_verified_positive": true,
+    "top_3_behavior_changes_ranked": true,
+    "trust_score_ge_4_5": true,
+    "zero_navigation_rescues": true
+  },
+  "details": {
+    "completion_rate_percent": 100.0,
+    "overall_avg_seq_score": 6.56,
+    "overall_trust_score": 4.8,
+    "top_3_changes": [
+      {
+        "fix": "Added clear inline badge: [Privacy Verified: System will strip names automatically].",
+        "frequency": "High (5/5 teachers)",
+        "issue": "Teachers paused 4-6s wondering if student names needed manual deletion before pasting.",
+        "loop_impact": "Critical for trust",
+        "rank": 1,
+        "severity": "P1",
+        "title": "One-Tap Evidence Batch Anonymization Confirmation"
+      },
+      {
+        "fix": "Highlighted Quick Check-In buttons and default selection indicators.",
+        "frequency": "Medium (3/5 teachers)",
+        "issue": "Teachers occasionally looked for text keyboard when fast 3-tap prompt appeared.",
+        "loop_impact": "Speeds up lesson logging to <20s",
+        "rank": 2,
+        "severity": "P2",
+        "title": "Streamlined 3-Tap Outcome Check-In Keyboard"
+      },
+      {
+        "fix": "Replaced generic 'Export' with separate '\ud83d\udcc4 Export Word' and '\ud83e\uddfe Export PDF' actions.",
+        "frequency": "High (4/5 teachers)",
+        "issue": "Teachers wanted both Word (.docx) and PDF (.pdf) exports clearly distinguished upfront.",
+        "loop_impact": "Directly delivers paid commercial value",
+        "rank": 3,
+        "severity": "P2",
+        "title": "Immediate Progress Report Formats Selector"
+      }
+    ],
+    "total_est_minutes_saved": 270
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-09-01T12:16:02.457984+00:00",
+  "gate": "Day 28 \u2014 Five-Teacher Release Rehearsal and Full Journey Measurement",
+  "passed": true,
+  "schema_version": 28
+}

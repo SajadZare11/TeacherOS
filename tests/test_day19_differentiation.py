@@ -18,7 +18,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day19-key")
 import database
 from class_service import create_class
 from day19_migration import apply_schema_v19
-from day27_migration import SCHEMA_VERSION
+from day28_migration import SCHEMA_VERSION
 from differentiation_keyboards import (
     _ADAP_CODES,
     _base36,

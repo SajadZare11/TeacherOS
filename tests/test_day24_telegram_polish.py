@@ -17,7 +17,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day24-key")
 
 import database
 from class_service import create_class
-from day27_migration import SCHEMA_VERSION
+from day28_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 from string_catalog import STRINGS_EN, STRINGS_FA, tr
 from ui_keyboards import (

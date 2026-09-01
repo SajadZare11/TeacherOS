@@ -1,0 +1,351 @@
+{
+  "audited_at_utc": "2026-09-01T12:24:48.223273+00:00",
+  "automated_tests": {
+    "count": 278,
+    "status": "PASS"
+  },
+  "days": {
+    "1": {
+      "engineering": "PASS",
+      "evidence": "Critical-path suite included in 278 passing tests."
+    },
+    "10": {
+      "engineering": "PASS",
+      "input_reduction": 0.5,
+      "passed": true
+    },
+    "11": {
+      "engineering": "FAIL",
+      "generated_to_planned": 4,
+      "passed": false,
+      "planned_to_taught": 1
+    },
+    "12": {
+      "engineering": "FAIL",
+      "fixture_recording_rate_percent": 60,
+      "passed": false,
+      "pilot_measurement_status": "BLOCKED_NOT_FABRICATED",
+      "three_fact_taps_structurally_defined": true
+    },
+    "13": {
+      "engineering": "PASS",
+      "evidence_to_action_engine_defined": true,
+      "fixture_acceptance_percent": 100,
+      "fixture_plans_saved": 1,
+      "passed": true,
+      "pilot_measurement_status": "BLOCKED_NOT_FABRICATED"
+    },
+    "14": {
+      "ai_golden_set_evaluated": true,
+      "ai_worst_10_inspected": true,
+      "complete_teaching_loop_e2e": true,
+      "engineering": "PASS",
+      "four_generators_supported": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "phase2_exit_gate": "PASS",
+      "pilot_observation_status": "BLOCKED_NOT_FABRICATED",
+      "resilience_recovery_passed": true,
+      "word_and_pdf_exports_functional": true,
+      "zero_p0_p1_defects": true
+    },
+    "15": {
+      "corrupt_files_handled_safely": true,
+      "deferred_formats_safely_explained": true,
+      "docx_file_ingestion_verified": true,
+      "engineering": "PASS",
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "pasted_text_multi_student_parsed": true,
+      "schema_v15_deployed": true,
+      "teacher_label_and_deletion_controls": true,
+      "telegram_keyboards_bounded_64_bytes": true,
+      "txt_file_ingestion_verified": true,
+      "zero_raw_evidence_in_telemetry": true
+    },
+    "16": {
+      "all_findings_cite_traceable_evidence_ids": true,
+      "batch_analysis_with_cited_findings": true,
+      "calibrated_uncertainty_and_notices": true,
+      "deterministic_counts_no_fake_percentages": true,
+      "engineering": "PASS",
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "raw_evidence_purge_preserves_approved_summary": true,
+      "schema_v16_deployed": true,
+      "teacher_approval_and_minimal_summary": true,
+      "teacher_summary_editing_supported": true,
+      "telegram_keyboards_bounded_64_bytes": true,
+      "zero_raw_evidence_in_telemetry": true
+    },
+    "17": {
+      "a1_paragraph_light_mode_supported": true,
+      "b1_email_balanced_mode_supported": true,
+      "b2_essay_detailed_mode_supported": true,
+      "dual_exports_word_and_pdf_generated": true,
+      "engineering": "PASS",
+      "multi_tenant_isolation_verified": true,
+      "no_full_rewrite_preserves_student_agency": true,
+      "passed": true,
+      "rubric_scoring_separates_grades_draft": true,
+      "schema_v17_deployed": true,
+      "teacher_approval_and_summary_lifecycle": true,
+      "teacher_comment_editing_supported": true,
+      "telegram_keyboards_bounded_64_bytes": true,
+      "zero_raw_student_text_in_telemetry": true
+    },
+    "18": {
+      "all_six_action_types_supported": true,
+      "conversion_pipeline_approved_to_accepted": true,
+      "direct_class_library_saving_and_linkage": true,
+      "engineering": "PASS",
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "raw_evidence_purge_preserves_followup": true,
+      "schema_v18_deployed": true,
+      "telegram_keyboards_bounded_64_bytes": true,
+      "unapproved_analysis_generation_blocked": true,
+      "what_this_addresses_provenance_preserved": true,
+      "zero_raw_student_text_in_telemetry": true
+    },
+    "19": {
+      "all_nine_one_tap_adaptations_supported": true,
+      "challenge_route_cognitive_depth_not_busywork": true,
+      "delivery_guidance_and_reconnection_present": true,
+      "engineering": "PASS",
+      "golden_case_large_class_runnable": true,
+      "golden_case_low_resource_runnable": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "schema_v19_deployed": true,
+      "shared_can_do_objective_invariant": true,
+      "source_material_never_overwritten": true,
+      "support_route_scaffolding_preserved": true,
+      "telegram_keyboards_bounded_64_bytes": true,
+      "zero_raw_student_text_in_telemetry": true
+    },
+    "2": {
+      "blockers": [
+        "Need at least 5 completed eligible interviews; found 0.",
+        "Need 10-15 confirmed eligible pilot recruits; found 0.",
+        "No problem is independently repeated by at least 3 eligible teachers.",
+        "Decision research_status must remain hypothesis until evidence is complete, then be set to validated.",
+        "Decision record must select at least one repeated problem and no more than three.",
+        "D6-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D7-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D7-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D7-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F03 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D8-F05 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D10-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D10-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D11-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D11-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D11-F03 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D12-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D12-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D13-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D13-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D15-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D16-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D17-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D17-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D18-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D18-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F03 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D19-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D20-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D20-F04 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D21-F01 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D21-F05 remains an unvalidated hypothesis; map it to witnessed evidence or defer it.",
+        "D22-F02 remains an unvalidated hypothesis; map it to witnessed evidence or defer it."
+      ],
+      "engineering": "PASS",
+      "external_gate": "CLOSED",
+      "metrics": {
+        "approved_or_deferred_features": 57,
+        "artifact_walkthroughs": 0,
+        "completed_eligible_interviews": 0,
+        "confirmed_pilot_recruits": 0,
+        "deferred_features": 0,
+        "eligible_recruits": 0,
+        "feature_total": 90,
+        "repeated_problem_codes": 0
+      }
+    },
+    "20": {
+      "all_four_source_types_supported": true,
+      "all_six_categories_supported": true,
+      "archive_state_verified": true,
+      "capped_retrieval_load_per_lesson": true,
+      "configurable_intervals_schedule": true,
+      "deleted_source_orphan_safety_verified": true,
+      "deterministic_due_dates_and_stage_transitions": true,
+      "engineering": "PASS",
+      "manual_override_schedule_verified": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "pause_and_resume_state_verified": true,
+      "retrieval_block_proposal_generated": true,
+      "schema_v20_deployed": true,
+      "snooze_state_transition_verified": true,
+      "telegram_keyboards_bounded_64_bytes": true
+    },
+    "21": {
+      "action_oriented_class_health_card": true,
+      "deleted_source_orphan_safety_verified": true,
+      "engineering": "PASS",
+      "mandatory_teacher_approval_gate_verified": true,
+      "multi_tenant_isolation_verified": true,
+      "objective_status_transitions_verified": true,
+      "one_hundred_percent_evidence_traceability": true,
+      "passed": true,
+      "progress_overview_uses_honest_counts_no_fake_mastery": true,
+      "proposed_objective_extraction_supported": true,
+      "schema_v21_deployed": true,
+      "teacher_confirmed_secure_invariant": true,
+      "telegram_keyboards_bounded_64_bytes": true
+    },
+    "22": {
+      "can_do_wording_validator_enforced": true,
+      "cefr_communicative_mode_mapping_supported": true,
+      "covered_partly_not_yet_coverage_breakdown": true,
+      "curriculum_unit_tracking_without_scraping": true,
+      "engineering": "PASS",
+      "generic_topical_plan_rejected": true,
+      "golden_set_calibration_meets_85_percent": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "schema_v22_deployed": true,
+      "teacher_override_overrules_ai": true,
+      "telegram_keyboards_bounded_64_bytes": true
+    },
+    "23": {
+      "all_three_report_types_supported": true,
+      "deleted_source_orphan_safety_verified": true,
+      "engineering": "PASS",
+      "insufficient_evidence_boundary_enforced": true,
+      "mandatory_teacher_approval_gate": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "pdf_export_generated_and_validated": true,
+      "schema_v23_deployed": true,
+      "section_editing_and_audit_versioning": true,
+      "telegram_keyboards_bounded_64_bytes": true,
+      "word_export_generated_and_validated": true
+    },
+    "24": {
+      "accessibility_screen_reader_labels_present": true,
+      "class_aware_search_functional": true,
+      "engineering": "PASS",
+      "language_preference_persisted": true,
+      "material_pinning_and_favorites_operational": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "schema_v24_deployed": true,
+      "string_catalog_and_localization_supported": true,
+      "telegram_keyboards_bounded_64_bytes": true,
+      "three_step_onboarding_walkthrough_functional": true
+    },
+    "25": {
+      "commercial_funnel_telemetry_instrumented": true,
+      "contextual_upgrade_prompts_outcome_oriented": true,
+      "engineering": "PASS",
+      "feature_access_checks_operational": true,
+      "free_teaching_loop_guarantee_verified": true,
+      "idempotent_subscription_activation": true,
+      "multi_tenant_isolation_verified": true,
+      "passed": true,
+      "pro_tier_reflected": true,
+      "schema_v25_deployed": true,
+      "tier_capabilities_centralized": true
+    },
+    "26": {
+      "bounded_retry_with_jitter_operational": true,
+      "database_backup_and_rotation_functional": true,
+      "database_restore_drill_verified": true,
+      "disk_space_safety_check_operational": true,
+      "engineering": "PASS",
+      "observability_telemetry_and_snapshots_active": true,
+      "passed": true,
+      "schema_v26_deployed": true,
+      "sensitive_data_redaction_verified": true,
+      "structured_error_categories_implemented": true
+    },
+    "27": {
+      "cross_user_class_attack_blocked": true,
+      "cross_user_material_attack_blocked": true,
+      "engineering": "PASS",
+      "oversize_file_attack_blocked": true,
+      "passed": true,
+      "path_traversal_attack_blocked": true,
+      "privacy_hard_delete_operational": true,
+      "prompt_injection_disarmed": true,
+      "retention_cleanup_job_functional": true,
+      "schema_v27_deployed": true,
+      "security_audit_logging_active": true,
+      "unauthorized_admin_access_blocked": true
+    },
+    "28": {
+      "avg_seq_score_ge_6": true,
+      "engineering": "PASS",
+      "five_teachers_tested": true,
+      "passed": true,
+      "schema_v28_deployed": true,
+      "task_completion_rate_ge_90_pct": true,
+      "time_saved_verified_positive": true,
+      "top_3_behavior_changes_ranked": true,
+      "trust_score_ge_4_5": true,
+      "zero_navigation_rescues": true
+    },
+    "3": {
+      "blockers": [
+        "G1_RESEARCH: Day 2 gate is CLOSED; target segment, jobs, and product mappings are not validated.",
+        "G2_COMPREHENSION: no de-identified record shows an eligible teacher passed the unaided wireflow test."
+      ],
+      "engineering": "PASS",
+      "errors": [],
+      "external_gate": "BLOCKED"
+    },
+    "4": {
+      "engineering": "PASS",
+      "fixture_gate": "PASS",
+      "live_gate": "NOT_RUN"
+    },
+    "5": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "6": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "7": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "8": {
+      "engineering": "PASS",
+      "passed": true
+    },
+    "9": {
+      "engineering": "FAIL",
+      "passed": false,
+      "production_p95": "NOT_RUN"
+    }
+  },
+  "engineering_status": "FAIL",
+  "external_evidence_note": "Prior external gates remain honest, and Phase 2 exit requires observed teacher repeat-use data over 4 weeks without simulated/fabricated pilot claims.",
+  "external_evidence_status": "BLOCKED_NOT_FABRICATED",
+  "passed": false,
+  "phase1_status": "PASS",
+  "phase2_status": "PASS",
+  "phase3_status": "IN_PROGRESS (Days 15\u201328 Complete)",
+  "schema_version": 28,
+  "scope": "TeacherOS master-plan Days 1\u201328 (Phase 1 + Phase 2 + Phase 3 Days 15\u201328)"
+}

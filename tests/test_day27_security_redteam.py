@@ -18,7 +18,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "offline-day27-key")
 import database
 from class_service import create_class, get_class
 from config import is_admin_telegram_user
-from day27_migration import SCHEMA_VERSION
+from day28_migration import SCHEMA_VERSION
 from feature_flags import FEATURE_ENV_VARS
 from privacy_retention_service import hard_delete_class_data, hard_delete_user_account, run_retention_cleanup_job
 from security_service import (
