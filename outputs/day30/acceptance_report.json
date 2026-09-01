@@ -1,0 +1,28 @@
+{
+  "checks": {
+    "all_runtime_dependencies_are_checked": true,
+    "backup_integrity_is_explicitly_checked": true,
+    "daily_monitoring_and_interviews_are_documented": true,
+    "day14_thresholds_and_non_claims_are_documented": true,
+    "fresh_schema_28_or_newer_backup_is_healthy": true,
+    "launch_check_beta_passes": true,
+    "launch_checker_handles_unicode_console": true,
+    "pricing_drift_is_machine_checked": true,
+    "progressive_five_teacher_mission_is_documented": true,
+    "public_privacy_and_terms_are_linked": true,
+    "website_check_passes": true
+  },
+  "details": {
+    "backup": {
+      "foreign_key_issues": 0,
+      "integrity": "ok",
+      "path": "backups\\teacheros_20260901_210313_day30-prelaunch.db",
+      "schema_version": 28
+    },
+    "launch_last_line": "Launch status: FREE/BETA \u2014 do not collect real payments while sandbox is enabled."
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-09-01T17:33:39.702503+00:00",
+  "gate": "Day 30 \u2014 Progressive Launch and 14-Day Learning System",
+  "passed": true
+}

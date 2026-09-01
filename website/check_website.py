@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,6 +12,8 @@ REQUIRED_FILES = (
     "styles.css",
     "script.js",
     "site-config.js",
+    "privacy.html",
+    "terms.html",
 )
 TELEGRAM_URL_PATTERN = re.compile(
     r"telegramBotUrl\s*:\s*['\"](?P<url>[^'\"]+)['\"]",
@@ -73,6 +76,11 @@ def validate_telegram_url(url: str | None) -> str | None:
 
 
 def main() -> int:
+    # Keep diagnostics reliable on Windows terminals whose default code page
+    # cannot encode the intentional check-mark output.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     problems: list[str] = []
 
     for filename in REQUIRED_FILES:

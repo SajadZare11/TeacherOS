@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sqlite3
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -26,7 +27,9 @@ def create_backup(*, label: str = "manual") -> Path:
     try:
         source.execute("PRAGMA busy_timeout = 15000")
         source.backup(target)
-        target.execute("PRAGMA integrity_check")
+        integrity = target.execute("PRAGMA integrity_check").fetchone()
+        if not integrity or str(integrity[0]).lower() != "ok":
+            raise RuntimeError(f"Backup integrity check failed: {integrity}")
     finally:
         target.close()
         source.close()
@@ -37,6 +40,9 @@ def create_backup(*, label: str = "manual") -> Path:
 
 
 def main() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Create a safe TeacherOS SQLite backup.")
     parser.add_argument("--label", default="prelaunch", help="Short label added to the backup filename")
     args = parser.parse_args()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import ast
 import re
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -88,6 +89,11 @@ def _handler_checks() -> list[str]:
 
 
 def main() -> None:
+    # Windows terminals commonly default to cp1252; launch diagnostics include
+    # intentional check marks and warnings and must never crash before reporting.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Check whether TeacherOS is ready to launch.")
     parser.add_argument(
         "--mode",
@@ -102,7 +108,15 @@ def main() -> None:
 
     print(f"TeacherOS Day 30 launch check — {args.mode.upper()} mode\n")
 
-    packages = ("python-telegram-bot", "openai", "python-dotenv", "python-docx", "reportlab", "tzdata")
+    packages = (
+        "python-telegram-bot",
+        "openai",
+        "python-dotenv",
+        "python-docx",
+        "reportlab",
+        "tzdata",
+        "openpyxl",
+    )
     missing_packages = [name for name in packages if package_version(name) == "NOT INSTALLED"]
     if missing_packages:
         blockers.append("Missing Python packages: " + ", ".join(missing_packages))
