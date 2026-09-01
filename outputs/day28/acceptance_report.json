@@ -45,7 +45,7 @@
     "total_est_minutes_saved": 270
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T12:16:02.457984+00:00",
+  "evaluated_at_utc": "2026-09-01T12:53:54.085856+00:00",
   "gate": "Day 28 \u2014 Five-Teacher Release Rehearsal and Full Journey Measurement",
   "passed": true,
   "schema_version": 28

@@ -1,0 +1,40 @@
+{
+  "checks": {
+    "all_generators_have_reachable_cancel": true,
+    "all_generators_normalize_topics": true,
+    "all_generators_preserve_retry_state": true,
+    "beta_guide_matches_one_tap_feedback": true,
+    "command_cancel_returns_main_menu": true,
+    "configured_timezone_used_for_admin_metrics": true,
+    "global_error_returns_main_menu": true,
+    "owner_feedback_return_keeps_admin": true,
+    "payment_server_reuses_port_and_explains_conflict": true,
+    "project_checker_covers_day29_and_passes": true,
+    "requirements_are_utf8_and_complete": true
+  },
+  "details": {
+    "cancel_paths": {
+      "activity": true,
+      "assessment": true,
+      "lesson": true,
+      "worksheet": true
+    },
+    "project_check_output": "\u2705 Day 29 stability check passed",
+    "retry_paths": {
+      "activity": true,
+      "assessment": true,
+      "lesson": true,
+      "worksheet": true
+    },
+    "topic_normalization": {
+      "activity": true,
+      "assessment": true,
+      "lesson": true,
+      "worksheet": true
+    }
+  },
+  "engineering_status": "PASS",
+  "evaluated_at_utc": "2026-09-01T13:03:30.719739+00:00",
+  "gate": "Day 29 \u2014 Stability and UX Fixes",
+  "passed": true
+}

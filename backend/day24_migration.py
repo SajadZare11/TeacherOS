@@ -75,6 +75,26 @@ def apply_schema_v24(connection: sqlite3.Connection) -> None:
             SELECT RAISE(ABORT, 'Pinned material user_id must own both class_id and material_id');
         END;
         """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_ui_pref_active_class_owner_v24
+        BEFORE INSERT ON user_ui_preferences
+        WHEN NEW.last_active_class_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM classes WHERE id = NEW.last_active_class_id AND user_id = NEW.user_id
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'UI preference active class ownership mismatch');
+        END;
+        """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_ui_pref_active_class_owner_update_v24
+        BEFORE UPDATE OF user_id, last_active_class_id ON user_ui_preferences
+        WHEN NEW.last_active_class_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM classes WHERE id = NEW.last_active_class_id AND user_id = NEW.user_id
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'UI preference active class ownership mismatch');
+        END;
+        """,
     )
     for trigger in triggers:
         connection.execute(trigger)

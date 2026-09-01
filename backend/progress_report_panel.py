@@ -18,6 +18,7 @@ from telegram.ext import ContextTypes
 from class_service import get_class
 from curriculum_discipline_service import get_current_curriculum_unit
 from database import database_connection, register_telegram_user
+from entitlement_service import check_feature_access
 from progress_report_keyboards import (
     _base36,
     report_dashboard_keyboard,
@@ -393,9 +394,21 @@ async def handle_progress_report_callback(
         if not report:
             await _answer_query(query, "Report not found.")
             return
+        if report.get("status") != "approved":
+            await _answer_query(query, "Approve the report before exporting it.")
+            return
+        access = check_feature_access(tg_user.id, "progress_reports_export")
+        if not access["allowed"]:
+            await _answer_query(query, access.get("upgrade_prompt") or "Report export is unavailable on your plan.")
+            return
 
         await _answer_query(query, "Generating Word document...")
-        filename, data = export_progress_report_word(user_id=user_id, report_id=report_id)
+        try:
+            filename, data = export_progress_report_word(user_id=user_id, report_id=report_id)
+        except Exception:
+            logger.exception("Word progress report export failed")
+            await _answer_query(query, "Word export failed safely. The report remains unchanged; try again later.")
+            return
 
         chat_id = update.effective_chat.id if update.effective_chat else tg_user_id
         await context.bot.send_document(
@@ -411,9 +424,21 @@ async def handle_progress_report_callback(
         if not report:
             await _answer_query(query, "Report not found.")
             return
+        if report.get("status") != "approved":
+            await _answer_query(query, "Approve the report before exporting it.")
+            return
+        access = check_feature_access(tg_user.id, "progress_reports_export")
+        if not access["allowed"]:
+            await _answer_query(query, access.get("upgrade_prompt") or "Report export is unavailable on your plan.")
+            return
 
         await _answer_query(query, "Generating PDF document...")
-        filename, data = export_progress_report_pdf(user_id=user_id, report_id=report_id)
+        try:
+            filename, data = export_progress_report_pdf(user_id=user_id, report_id=report_id)
+        except Exception:
+            logger.exception("PDF progress report export failed")
+            await _answer_query(query, "PDF export failed safely. The report remains unchanged; try again later.")
+            return
 
         chat_id = update.effective_chat.id if update.effective_chat else tg_user_id
         await context.bot.send_document(

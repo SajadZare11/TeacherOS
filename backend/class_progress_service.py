@@ -168,6 +168,15 @@ def approve_proposed_objective(
         ).fetchone()
         if not proposal:
             return None
+        # Callback retries must not create duplicate objectives/evidence links.
+        if proposal["status"] == "approved":
+            existing = conn.execute(
+                "SELECT * FROM class_objectives WHERE class_id = ? AND user_id = ? AND objective = ? ORDER BY id DESC LIMIT 1",
+                (proposal["class_id"], user_id, proposal["objective_text"]),
+            ).fetchone()
+            return _normalize_obj_dict(existing)
+        if proposal["status"] != "pending":
+            return None
 
         status = target_status or proposal["proposed_status"]
         if status not in VALID_OBJECTIVE_STATUSES:
@@ -333,6 +342,14 @@ def link_objective_evidence(
     if source_type not in VALID_SOURCE_TYPES:
         source_type = "manual_judgment"
 
+    evidence_excerpt = " ".join(str(evidence_excerpt).split())
+    if not evidence_excerpt:
+        raise ValueError("Evidence excerpt cannot be empty.")
+    if len(evidence_excerpt) > 1000:
+        evidence_excerpt = evidence_excerpt[:1000]
+    if any(ord(ch) < 32 and ch not in "\n\t" for ch in evidence_excerpt):
+        raise ValueError("Evidence excerpt contains unsupported control characters.")
+
     link_uuid = str(uuid.uuid4())
     now_str = _utc_now()
 
@@ -453,10 +470,11 @@ def get_class_health_card(
         due_reviews = conn.execute(
             """
             SELECT COUNT(*) FROM retrieval_review_items
-            WHERE user_id = ? AND class_id = ? AND status IN ('active', 'due')
-              AND next_review_date <= ?
+            WHERE user_id = ? AND class_id = ?
+              AND ((status IN ('active', 'due') AND next_review_date <= ?)
+                   OR (status = 'snoozed' AND snoozed_until <= ?))
             """,
-            (user_id, class_id, today_str),
+            (user_id, class_id, today_str, today_str),
         ).fetchone()[0]
 
         # 2. Check unrecorded outcome for taught lesson
@@ -603,10 +621,11 @@ def get_class_progress_overview(
         due_review_count = conn.execute(
             """
             SELECT COUNT(*) FROM retrieval_review_items
-            WHERE user_id = ? AND class_id = ? AND status IN ('active', 'due')
-              AND next_review_date <= ?
+            WHERE user_id = ? AND class_id = ?
+              AND ((status IN ('active', 'due') AND next_review_date <= ?)
+                   OR (status = 'snoozed' AND snoozed_until <= ?))
             """,
-            (user_id, class_id, today_str),
+            (user_id, class_id, today_str, today_str),
         ).fetchone()[0]
 
         # Pending proposed objectives

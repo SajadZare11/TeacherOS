@@ -16,7 +16,7 @@
     "strings_fa_count": 53
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T10:56:42.101728+00:00",
+  "evaluated_at_utc": "2026-09-01T12:53:46.207575+00:00",
   "gate": "Day 24 \u2014 Polish Telegram Speed, Clarity, Accessibility, and Localization",
   "passed": true,
   "schema_version": 24

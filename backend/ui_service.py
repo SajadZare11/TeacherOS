@@ -87,10 +87,16 @@ def set_active_class(
     user_id: int,
     class_id: int,
     database_path: Path | None = None,
-) -> None:
+) -> bool:
     """Store the last actively opened class for rapid return."""
     now_str = _utc_now()
     with database_connection(database_path) as conn:
+        owned = conn.execute(
+            "SELECT 1 FROM classes WHERE id = ? AND user_id = ? AND status = 'active'",
+            (class_id, user_id),
+        ).fetchone()
+        if owned is None:
+            return False
         conn.execute(
             """
             INSERT INTO user_ui_preferences (user_id, last_active_class_id, updated_at)
@@ -101,6 +107,7 @@ def set_active_class(
             """,
             (user_id, class_id, now_str),
         )
+        return True
 
 
 def complete_onboarding(
@@ -141,7 +148,8 @@ def pin_material_to_class(
             "SELECT id FROM classes WHERE id = ? AND user_id = ?", (class_id, user_id)
         ).fetchone()
         mat_row = conn.execute(
-            "SELECT id FROM materials WHERE id = ? AND user_id = ?", (material_id, user_id)
+            "SELECT id FROM materials WHERE id = ? AND user_id = ? AND (class_id IS NULL OR class_id = ?)",
+            (material_id, user_id, class_id),
         ).fetchone()
         if not cls_row or not mat_row:
             return False

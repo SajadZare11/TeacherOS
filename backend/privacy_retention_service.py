@@ -97,6 +97,8 @@ def run_retention_cleanup_job(
     database_path: Path | None = None,
 ) -> dict[str, int]:
     """Purge unverified draft evidence batches older than retention threshold."""
+    if isinstance(retention_days, bool) or not isinstance(retention_days, int) or retention_days < 1:
+        raise ValueError("retention_days must be a positive integer.")
     cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
     cutoff_str = cutoff.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     purged: dict[str, int] = {}

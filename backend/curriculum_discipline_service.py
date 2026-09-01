@@ -76,6 +76,11 @@ def save_curriculum_unit(
         unit_title = unit_title[:200]
 
     unit_number = str(unit_number).strip() or "1"
+    if len(unit_number) > 30:
+        unit_number = unit_number[:30]
+    coursebook_name = " ".join(str(coursebook_name).split())[:150] if coursebook_name else None
+    exam_syllabus_target = " ".join(str(exam_syllabus_target).split())[:150] if exam_syllabus_target else None
+    curriculum_notes = str(curriculum_notes).strip()[:5000] if curriculum_notes else None
     if status not in VALID_UNIT_STATUSES:
         status = "current"
 
@@ -201,6 +206,11 @@ def map_objective_to_cefr(
     if coverage_status not in VALID_COVERAGE_STATUSES:
         coverage_status = "not_covered"
 
+    can_do_statement = " ".join(str(can_do_statement).split())
+    if len(can_do_statement) < 5:
+        raise ValueError("Can-do statement must contain at least 5 characters.")
+    if len(can_do_statement) > 1000:
+        can_do_statement = can_do_statement[:1000]
     now_str = _utc_now()
     with database_connection(database_path) as conn:
         # Validate ownership
@@ -256,6 +266,15 @@ def override_cefr_mapping(
         comp = competence_category or mapping["competence_category"]
         can_do = can_do_statement or mapping["can_do_statement"]
         cov = coverage_status or mapping["coverage_status"]
+        if mode not in VALID_COMMUNICATIVE_MODES:
+            raise ValueError("Unsupported communicative mode.")
+        if comp not in VALID_COMPETENCE_CATEGORIES:
+            raise ValueError("Unsupported competence category.")
+        if cov not in VALID_COVERAGE_STATUSES:
+            raise ValueError("Unsupported coverage status.")
+        can_do = " ".join(str(can_do).split())
+        if not 5 <= len(can_do) <= 1000:
+            raise ValueError("Can-do statement must be between 5 and 1000 characters.")
         note = teacher_note or mapping["uncertainty_note"]
 
         conn.execute(

@@ -128,10 +128,30 @@ def apply_schema_v21(connection: sqlite3.Connection) -> None:
             SELECT RAISE(ABORT, 'Objective evidence link user_id does not own class_id');
         END;
         """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_obj_ev_link_objective_owner_v21
+        BEFORE INSERT ON objective_evidence_links
+        WHEN NOT EXISTS (
+            SELECT 1 FROM class_objectives
+            WHERE id = NEW.objective_id AND user_id = NEW.user_id AND class_id = NEW.class_id
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'Objective evidence link objective ownership mismatch');
+        END;
+        """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_obj_ev_link_immutable_update_v21
+        BEFORE UPDATE OF objective_id, user_id, class_id ON objective_evidence_links
+        WHEN NEW.objective_id IS NOT OLD.objective_id
+          OR NEW.user_id IS NOT OLD.user_id
+          OR NEW.class_id IS NOT OLD.class_id
+        BEGIN
+            SELECT RAISE(ABORT, 'Objective evidence link ownership is immutable');
+        END;
+        """,
     )
     for trigger in triggers:
         connection.execute(trigger)
 
     # 6. Record schema version
     connection.execute("INSERT OR IGNORE INTO schema_versions (version) VALUES (21);")
-

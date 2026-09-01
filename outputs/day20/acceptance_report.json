@@ -23,7 +23,7 @@
     "total_due_count": 12
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T09:12:29.214733+00:00",
+  "evaluated_at_utc": "2026-09-01T12:53:41.051688+00:00",
   "gate": "Day 20 \u2014 Add a Transparent Retrieval and Spaced-Review Queue",
   "passed": true,
   "schema_version": 20

@@ -90,7 +90,7 @@ def check_feature_access(
     database_path: Path | None = None,
 ) -> dict[str, Any]:
     """Central decision point evaluating if a teacher can perform a feature action."""
-    entitlement = get_user_entitlement(telegram_user_id=telegram_user_id)
+    entitlement = get_user_entitlement(telegram_user_id=telegram_user_id, database_path=database_path)
     plan_code = str(entitlement.get("plan_code") or "free")
     plan_name = str(entitlement.get("plan_name") or "Free")
     tier_config = TIER_LIMITS.get(plan_code, TIER_LIMITS["free"])
@@ -125,6 +125,27 @@ def check_feature_access(
                     if limit_val is not None:
                         allowed = not enforced or current_val < limit_val
 
+    elif feature_key == "evidence_items_per_batch":
+        # The caller must provide a batch/class context to evaluate this
+        # resource limit. Without context, fail closed rather than silently
+        # granting access.
+        if class_id is None:
+            allowed = False
+        else:
+            current_val = 0
+            # The batch item count is known to the ingestion caller, which
+            # applies this returned limit. This decision only resolves the
+            # plan-level capability and therefore remains allowed here.
+            allowed = not enforced or limit_val is not None
+
+    elif feature_key in {"review_items_per_lesson", "differentiation_level"}:
+        current_val = limit_val
+        allowed = not enforced or limit_val is not None
+
+    elif feature_key == "retention_days":
+        current_val = limit_val
+        allowed = not enforced or limit_val is not None
+
     elif feature_key == "progress_reports_export":
         current_val = bool(limit_val)
         allowed = not enforced or bool(limit_val)
@@ -132,6 +153,10 @@ def check_feature_access(
     elif feature_key == "priority_model":
         current_val = bool(limit_val)
         allowed = not enforced or bool(limit_val)
+
+    else:
+        # Unknown feature keys should never default to an allow decision.
+        allowed = False
 
     upgrade_prompt = None
     if not allowed:

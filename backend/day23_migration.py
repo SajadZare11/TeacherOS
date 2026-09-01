@@ -105,6 +105,17 @@ def apply_schema_v23(connection: sqlite3.Connection) -> None:
             SELECT RAISE(ABORT, 'Report revision user_id does not own report_id');
         END;
         """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_progress_report_unit_owner_v23
+        BEFORE INSERT ON class_progress_reports
+        WHEN NEW.unit_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM class_curriculum_units
+            WHERE id = NEW.unit_id AND class_id = NEW.class_id AND user_id = NEW.user_id
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'Progress report unit ownership mismatch');
+        END;
+        """,
     )
     for trigger in triggers:
         connection.execute(trigger)

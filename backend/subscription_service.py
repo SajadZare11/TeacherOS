@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from config import OPENROUTER_MODEL, PREMIUM_OPENROUTER_MODEL, USAGE_TIMEZONE, get_usage_timezone
@@ -20,11 +21,14 @@ def generation_access_for_user(telegram_user_id: int) -> dict[str, Any]:
     return get_user_entitlement(telegram_user_id=telegram_user_id)
 
 
-def class_creation_access_for_user(telegram_user_id: int) -> dict[str, Any]:
+def class_creation_access_for_user(
+    telegram_user_id: int,
+    database_path: "Path | None" = None,
+) -> dict[str, Any]:
     """Return the one central class-limit decision used by every setup surface."""
     from entitlement_service import check_feature_access
 
-    result = check_feature_access(telegram_user_id, "active_classes")
+    result = check_feature_access(telegram_user_id, "active_classes", database_path=database_path)
     return {
         "allowed": result["allowed"],
         "enforced": result["enforced"],

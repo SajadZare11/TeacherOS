@@ -24,7 +24,12 @@ from evidence_service import submit_evidence_batch
 from lesson_history_service import mark_lesson_taught, schedule_material_lesson
 from next_lesson_service import get_or_create_recommendation, select_recommendation_mode
 from outcome_checkin_service import save_outcome_facts
-from progress_report_service import generate_progress_report
+from progress_report_service import (
+    approve_progress_report,
+    export_progress_report_pdf,
+    export_progress_report_word,
+    generate_progress_report,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -315,13 +320,33 @@ def execute_teacher_rehearsal_mission(
         reporting_period_end="2026-09-30",
         database_path=database_path,
     )
+    if report is None:
+        raise RuntimeError("Rehearsal could not generate a progress report.")
+    approved_report = approve_progress_report(
+        user_id=internal_user_id,
+        report_id=int(report["id"]),
+        database_path=database_path,
+    )
+    if approved_report is None:
+        raise RuntimeError("Rehearsal could not approve the progress report.")
+    # Exercise both production export paths, not merely report draft creation.
+    export_progress_report_word(
+        user_id=internal_user_id,
+        report_id=int(report["id"]),
+        database_path=database_path,
+    )
+    export_progress_report_pdf(
+        user_id=internal_user_id,
+        report_id=int(report["id"]),
+        database_path=database_path,
+    )
     task_results.append({
         "task_key": "t9_export_progress_report",
         "duration_seconds": 5.4,
         "seq_score": 7,
         "hesitation_count": 0,
         "completed": 1,
-        "notes": f"Generated progress report: ID {report.get('id')}",
+        "notes": f"Approved and exported progress report: ID {report.get('id')}",
     })
 
     # Calculate session totals

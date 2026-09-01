@@ -131,6 +131,27 @@ def apply_schema_v22(connection: sqlite3.Connection) -> None:
             SELECT RAISE(ABORT, 'CEFR mapping user_id does not own class_id');
         END;
         """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_cefr_mapping_objective_owner_v22
+        BEFORE INSERT ON cefr_objective_mappings
+        WHEN NOT EXISTS (
+            SELECT 1 FROM class_objectives
+            WHERE id = NEW.objective_id AND user_id = NEW.user_id AND class_id = NEW.class_id
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'CEFR mapping objective ownership mismatch');
+        END;
+        """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_cefr_mapping_owner_update_v22
+        BEFORE UPDATE OF objective_id, user_id, class_id ON cefr_objective_mappings
+        WHEN NEW.objective_id IS NOT OLD.objective_id
+          OR NEW.user_id IS NOT OLD.user_id
+          OR NEW.class_id IS NOT OLD.class_id
+        BEGIN
+            SELECT RAISE(ABORT, 'CEFR mapping ownership is immutable');
+        END;
+        """,
     )
     for trigger in triggers:
         connection.execute(trigger)

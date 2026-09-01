@@ -73,6 +73,10 @@ def apply_schema_v20(connection: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_retrieval_class_due ON retrieval_review_items(class_id, next_review_date);",
         "CREATE INDEX IF NOT EXISTS idx_retrieval_item_uuid ON retrieval_review_items(item_uuid);",
         "CREATE INDEX IF NOT EXISTS idx_retrieval_logs_item ON retrieval_review_logs(item_id, created_at DESC);",
+        # One review decision per item/day prevents duplicate callback retries
+        # from corrupting stage history. The service also treats replays as
+        # idempotent for a friendly API-level response.
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_retrieval_logs_item_review_date ON retrieval_review_logs(item_id, user_id, review_date);",
     )
     for statement in indexes:
         connection.execute(statement)
@@ -85,6 +89,21 @@ def apply_schema_v20(connection: sqlite3.Connection) -> None:
             SELECT 1 FROM classes WHERE id = NEW.class_id AND user_id = NEW.user_id
         )
         BEGIN SELECT RAISE(ABORT, 'retrieval item class owner mismatch'); END
+        """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_retrieval_item_owner_update_v20
+        BEFORE UPDATE OF user_id, class_id ON retrieval_review_items
+        WHEN NEW.user_id IS NOT OLD.user_id OR NEW.class_id IS NOT OLD.class_id
+        BEGIN SELECT RAISE(ABORT, 'retrieval item ownership is immutable'); END
+        """,
+        """
+        CREATE TRIGGER IF NOT EXISTS trg_retrieval_log_owner_v20
+        BEFORE INSERT ON retrieval_review_logs
+        WHEN NOT EXISTS (
+            SELECT 1 FROM retrieval_review_items
+            WHERE id = NEW.item_id AND user_id = NEW.user_id AND class_id = NEW.class_id
+        )
+        BEGIN SELECT RAISE(ABORT, 'retrieval log ownership mismatch'); END
         """,
     )
     for trigger in triggers:

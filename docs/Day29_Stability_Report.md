@@ -47,3 +47,15 @@ The final line should be:
 ```text
 ✅ Day 29 stability check passed
 ```
+
+## Automated acceptance gate
+
+The offline Day 29 gate checks every stability contract without requiring Telegram,
+OpenRouter, or a payment provider:
+
+```bash
+python backend/day29_acceptance_check.py
+```
+
+It writes `outputs/day29/acceptance_report.json` and must print `DAY 29 ACCEPTANCE: PASS`.
+The full regression suite includes the same gate and currently runs 281 tests.

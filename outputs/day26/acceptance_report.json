@@ -10,13 +10,13 @@
     "structured_error_categories_implemented": true
   },
   "details": {
-    "backup_file": "teacheros_backup_20260901_112847_drill3.db",
+    "backup_file": "teacheros_backup_20260901_125347_drill3.db",
     "p50_latency_ms": 240.0,
     "p95_latency_ms": 850.0,
     "restored_integrity": "ok"
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T11:28:47.343565+00:00",
+  "evaluated_at_utc": "2026-09-01T12:53:47.713816+00:00",
   "gate": "Day 26 \u2014 Harden Reliability, Performance, Backups, and Observability",
   "passed": true,
   "schema_version": 26

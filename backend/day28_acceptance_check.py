@@ -1,4 +1,4 @@
-"""TeacherOS Day 28 Acceptance Check.
+r"""TeacherOS Day 28 Acceptance Check.
 
 Validates the 5-teacher release rehearsal and full teaching journey measurements:
 - Schema v28 deployed with rehearsal_sessions and rehearsal_task_metrics tables.

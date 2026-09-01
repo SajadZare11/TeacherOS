@@ -166,7 +166,12 @@ def add_review_item(
     if confidence not in VALID_CONFIDENCE:
         confidence = "medium"
         
-    resolved_intervals = list(intervals) if intervals else list(DEFAULT_INTERVALS)
+    resolved_intervals = list(intervals) if intervals is not None else list(DEFAULT_INTERVALS)
+    if (
+        len(resolved_intervals) < 2
+        or any(isinstance(value, bool) or not isinstance(value, int) or value <= 0 for value in resolved_intervals)
+    ):
+        raise ValueError("Intervals must be a list of at least 2 positive integers.")
     intervals_json = json.dumps(resolved_intervals)
     
     # Generate deterministic deduplication UUID
@@ -268,6 +273,8 @@ def get_due_items(
     Snoozed items whose snoozed_until <= today are automatically activated.
     """
     ref_date = str(today_date).strip()[:10] if today_date else _today_utc()
+    if _parse_date(ref_date) is None:
+        raise ValueError("today_date must use YYYY-MM-DD.")
     cap = max(1, min(limit, 50))
     
     with database_connection(database_path) as conn:
@@ -310,6 +317,8 @@ def count_due_items(
 ) -> int:
     """Count total due items for a class."""
     ref_date = str(today_date).strip()[:10] if today_date else _today_utc()
+    if _parse_date(ref_date) is None:
+        raise ValueError("today_date must use YYYY-MM-DD.")
     with database_connection(database_path) as conn:
         row = conn.execute(
             """
@@ -426,7 +435,9 @@ def record_review(
         raise ValueError(f"Invalid review result: {result}. Must be one of {sorted(VALID_RESULTS)}")
         
     today_str = str(review_date).strip()[:10] if review_date else _today_utc()
-    today_d = _parse_date(today_str) or datetime.now(timezone.utc).date()
+    today_d = _parse_date(today_str)
+    if today_d is None:
+        raise ValueError("review_date must use YYYY-MM-DD.")
     now_str = _utc_now()
 
     with database_connection(database_path) as conn:
@@ -440,6 +451,20 @@ def record_review(
         stage_before = int(item["interval_stage"])
         intervals = _resolve_intervals(item["interval_days_json"])
         
+        # A review is a single teacher decision per item and calendar day.
+        # Replaying a callback after a network retry must not advance the item
+        # or create a second audit row.
+        existing_log = conn.execute(
+            "SELECT 1 FROM retrieval_review_logs WHERE item_id = ? AND user_id = ? AND review_date = ? LIMIT 1",
+            (item_id, user_id, today_str),
+        ).fetchone()
+        if existing_log:
+            current = conn.execute(
+                "SELECT * FROM retrieval_review_items WHERE id = ? AND user_id = ?",
+                (item_id, user_id),
+            ).fetchone()
+            return _row_to_dict(current)
+
         # Calculate new stage based on outcome
         if result == "remembered":
             stage_after = min(stage_before + 1, len(intervals) - 1)
@@ -659,10 +684,18 @@ def override_review_schedule(
         
     now_str = _utc_now()
     with database_connection(database_path) as conn:
+        item = conn.execute(
+            "SELECT * FROM retrieval_review_items WHERE id = ? AND user_id = ?",
+            (item_id, user_id),
+        ).fetchone()
+        if item is None:
+            return None
         query = "UPDATE retrieval_review_items SET next_review_date = ?, updated_at = ?"
         params: list[Any] = [clean_date, now_str]
         
-        if stage is not None and stage >= 0:
+        if stage is not None and isinstance(stage, int) and not isinstance(stage, bool) and stage >= 0:
+            intervals = _resolve_intervals(item["interval_days_json"])
+            stage = min(stage, len(intervals) - 1)
             query += ", interval_stage = ?"
             params.append(stage)
             
@@ -767,11 +800,14 @@ def propose_retrieval_block(
     
     Returns capped due items with recommended warm-up activity ideas.
     """
+    # The anti-hijacking cap is a product invariant, even if an internal
+    # caller supplies a larger value.
+    bounded_max_items = min(MAX_DUE_ITEMS_PER_LESSON, max(1, int(max_items)))
     due = get_due_items(
         user_id=user_id,
         class_id=class_id,
         today_date=today_date,
-        limit=max_items,
+        limit=bounded_max_items,
         database_path=database_path,
     )
     

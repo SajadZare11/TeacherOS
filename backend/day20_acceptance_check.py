@@ -212,25 +212,27 @@ def evaluate_day20() -> dict[str, Any]:
                 stage1_ok = (rec1["interval_stage"] == 1 and rec1["next_review_date"] == expected_date_1 and rec1["review_count"] == 1)
 
                 # Advance with 'partly_remembered': stage 1 -> 1 (+7 days)
+                review_date_2 = (today_d + timedelta(days=1)).strftime("%Y-%m-%d")
                 rec2 = record_review(
                     user_id=user_a_id,
                     item_id=item_id,
                     result="partly_remembered",
-                    review_date=today_str,
+                    review_date=review_date_2,
                     database_path=path,
                 )
-                expected_date_2 = (today_d + timedelta(days=DEFAULT_INTERVALS[1])).strftime("%Y-%m-%d")
+                expected_date_2 = (today_d + timedelta(days=1 + DEFAULT_INTERVALS[1])).strftime("%Y-%m-%d")
                 stage2_ok = (rec2["interval_stage"] == 1 and rec2["next_review_date"] == expected_date_2 and rec2["review_count"] == 2)
 
                 # Step back with 'forgotten': stage 1 -> 0 (+2 days)
+                review_date_3 = (today_d + timedelta(days=2)).strftime("%Y-%m-%d")
                 rec3 = record_review(
                     user_id=user_a_id,
                     item_id=item_id,
                     result="forgotten",
-                    review_date=today_str,
+                    review_date=review_date_3,
                     database_path=path,
                 )
-                expected_date_3 = (today_d + timedelta(days=DEFAULT_INTERVALS[0])).strftime("%Y-%m-%d")
+                expected_date_3 = (today_d + timedelta(days=2 + DEFAULT_INTERVALS[0])).strftime("%Y-%m-%d")
                 stage3_ok = (rec3["interval_stage"] == 0 and rec3["next_review_date"] == expected_date_3 and rec3["review_count"] == 3)
 
                 transitions_valid = stage1_ok and stage2_ok and stage3_ok

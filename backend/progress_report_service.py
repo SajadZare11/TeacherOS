@@ -14,7 +14,7 @@ import json
 import logging
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -85,6 +85,15 @@ def generate_progress_report(
     """Generate an evidence-safe progress report grounded strictly in approved records."""
     if report_type not in VALID_REPORT_TYPES:
         raise ValueError(f"Invalid report type: {report_type}")
+    try:
+        period_start = date.fromisoformat(str(reporting_period_start).strip()[:10])
+        period_end = date.fromisoformat(str(reporting_period_end).strip()[:10])
+    except ValueError as exc:
+        raise ValueError("Reporting period dates must use YYYY-MM-DD.") from exc
+    if period_start > period_end:
+        raise ValueError("Reporting period start must not be after the end.")
+    reporting_period_start = period_start.isoformat()
+    reporting_period_end = period_end.isoformat()
 
     now_str = _utc_now()
     report_uuid = f"rep_{uuid.uuid4().hex[:12]}"
@@ -107,6 +116,7 @@ def generate_progress_report(
             FROM lesson_outcomes AS o
             JOIN class_lessons AS l ON l.id = o.class_lesson_id
             WHERE o.class_id = ? AND o.user_id = ?
+            AND o.status IN ('saved', 'approved')
             AND o.created_at BETWEEN ? AND ?
             ORDER BY o.created_at ASC
             """,
@@ -144,6 +154,14 @@ def generate_progress_report(
             (class_id, user_id),
         ).fetchall()
         objectives = [dict(r) for r in objectives_rows]
+
+        if unit_id is not None:
+            unit_owner = conn.execute(
+                "SELECT 1 FROM class_curriculum_units WHERE id = ? AND class_id = ? AND user_id = ?",
+                (unit_id, class_id, user_id),
+            ).fetchone()
+            if unit_owner is None:
+                raise ValueError("Curriculum unit does not belong to this class.")
 
         # Build source ID references
         sources: list[dict[str, Any]] = []
@@ -193,9 +211,11 @@ def generate_progress_report(
                 if a.get("approved_summary"):
                     strength_items.append(f"• Evidence finding: {a['approved_summary'][:120]}")
             for w in writing_feedbacks[:3]:
-                if w.get("student_label"):
-                    strength_items.append(f"• Writing progress recorded for {w['student_label']}")
-            strengths_text = "\n".join(strength_items) if strength_items else "Observed steady engagement across communicative tasks."
+                # Keep report exports whole-class and privacy-safe; never
+                # reproduce student labels even when a source record contains
+                # an anonymized display token.
+                strength_items.append("• Approved writing feedback record available for instructional planning")
+            strengths_text = "\n".join(strength_items) if strength_items else "No specific strengths were recorded in the approved evidence for this period."
 
             # Priorities
             support_objs = [f"• Target needing scaffolding: {obj['objective']}" for obj in objectives if obj.get("status") == "needs_support"]
@@ -207,7 +227,7 @@ def generate_progress_report(
             # Next steps
             next_steps_text = "Prioritize guided review on identified support targets and conduct spaced retrieval."
 
-        teacher_comments = "Reviewed and prepared for class record."
+        teacher_comments = "No teacher comments recorded."
 
         evidence_summary = {
             "outcomes_count": len(outcomes),
@@ -335,11 +355,17 @@ def update_progress_report_section(
             (report_id, user_id, new_version, field_name, old_value, new_value, now_str),
         )
 
+        # Any edit after approval invalidates the previous share-safe approval;
+        # the teacher must explicitly approve the revised version again.
+        approval_reset = ""
+        if report["status"] == "approved":
+            approval_reset = ", status = 'draft', share_safe_verified = 0, approved_at = NULL"
+
         # Update report
         conn.execute(
             f"""
             UPDATE class_progress_reports
-            SET {field_name} = ?, version = ?, updated_at = ?
+            SET {field_name} = ?, version = ?, updated_at = ?{approval_reset}
             WHERE id = ? AND user_id = ?
             """,
             (new_value, new_version, now_str, report_id, user_id),

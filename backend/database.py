@@ -1947,13 +1947,14 @@ def get_user_entitlement(
     *,
     telegram_user_id: int,
     include_sandbox: bool | None = None,
+    database_path: Path | None = None,
 ) -> dict[str, Any]:
     """Return the effective plan and generation quota for one Telegram user."""
-    initialize_database()
+    initialize_database(database_path)
     allow_sandbox = ZARINPAL_SANDBOX if include_sandbox is None else bool(include_sandbox)
     day_start = _usage_day_start_utc()
 
-    with _connection() as connection:
+    with _connection(database_path) as connection:
         user = connection.execute(
             "SELECT id FROM users WHERE telegram_user_id = ?",
             (telegram_user_id,),

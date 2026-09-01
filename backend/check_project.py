@@ -282,7 +282,9 @@ def main() -> None:
             print(f"- {error}")
         raise SystemExit(1)
 
-    print("\n✅ TeacherOS project check passed")
+    # Keep the release gate's output stable so operators and CI can distinguish
+    # the Day 29 stability check from the older generic project diagnostic.
+    print("\n✅ Day 29 stability check passed")
 
 
 if __name__ == "__main__":

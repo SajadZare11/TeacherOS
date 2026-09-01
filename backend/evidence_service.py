@@ -296,6 +296,31 @@ def submit_evidence_batch(
 
     batch_uuid = f"ev-batch-{secrets.token_hex(10)}"
 
+    # Resolve plan limits before opening the write transaction. The entitlement
+    # lookup initializes/opens SQLite itself; doing that while this connection
+    # is active can deadlock SQLite in WAL mode.
+    from entitlement_service import check_feature_access
+    batch_access = check_feature_access(
+        int(telegram_user.id),
+        "evidence_batches_per_class",
+        class_id=class_id,
+        database_path=database_path,
+    )
+    if not batch_access["allowed"]:
+        raise ValueError(batch_access.get("upgrade_prompt") or "Evidence batch limit reached.")
+    item_limit_access = check_feature_access(
+        int(telegram_user.id),
+        "evidence_items_per_batch",
+        class_id=class_id,
+        database_path=database_path,
+    )
+    if item_limit_access.get("enforced") and item_limit_access.get("limit") is not None:
+        if len(items) > int(item_limit_access["limit"]):
+            raise ValueError(
+                item_limit_access.get("upgrade_prompt")
+                or f"This plan allows {item_limit_access['limit']} evidence items per batch."
+            )
+
     with database_connection(database_path) as connection:
         user_id = ensure_database_user(connection, telegram_user)
 

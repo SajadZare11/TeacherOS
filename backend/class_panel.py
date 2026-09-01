@@ -15,6 +15,8 @@ from class_setup_panel import CHOICE_LABELS, SETUP_ACTIONS, handle_setup_callbac
 from class_setup_service import get_setup_draft
 from feature_flags import feature_enabled
 from home_ui import teacheros_home_text
+from database import register_telegram_user
+from ui_service import set_active_class
 from keyboards import (
     analyze_picker_keyboard,
     class_detail_keyboard,
@@ -324,6 +326,17 @@ async def class_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             "display_name": str(class_record["display_name"]),
             "revision": int(class_record["revision"]),
         }
+        # Persist the verified active class for class-aware tools (favorites,
+        # search, and quick return). Never trust a callback ID without the
+        # ownership check already performed by get_class above.
+        if class_record["status"] == "active":
+            try:
+                set_active_class(
+                    register_telegram_user(user),
+                    int(class_record["id"]),
+                )
+            except Exception:
+                logger.exception("Could not persist active class preference")
         class_name = str(class_record["display_name"])
         if action == "analyze":
             await _safe_edit(

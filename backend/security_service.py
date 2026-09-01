@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from database import database_connection
+from resilience import redact_sensitive_text
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +154,18 @@ def log_security_event(
 
     log_uuid = f"sec_{uuid.uuid4().hex[:12]}"
     now_str = _utc_now()
-    details_json = json.dumps(details or {}, ensure_ascii=False)
+    # Security telemetry must remain useful without becoming a side channel
+    # for credentials, email addresses, card PANs, or pasted secrets.
+    def _redact(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {str(k): _redact(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [_redact(v) for v in value]
+        if isinstance(value, str):
+            return redact_sensitive_text(value)
+        return value
+
+    details_json = json.dumps(_redact(details or {}), ensure_ascii=False)
 
     with database_connection(database_path) as conn:
         cursor = conn.execute(
@@ -168,9 +180,9 @@ def log_security_event(
                 user_id,
                 event_type,
                 severity,
-                target_resource,
+                redact_sensitive_text(target_resource) if target_resource else None,
                 details_json,
-                ip_address,
+                redact_sensitive_text(ip_address) if ip_address else None,
                 now_str,
             ),
         )
