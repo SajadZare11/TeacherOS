@@ -31,6 +31,7 @@ from evidence_service import (
     update_evidence_item_label,
     validate_file_submission,
 )
+from ui_service import resolve_lang
 
 
 logger = logging.getLogger(__name__)
@@ -73,6 +74,8 @@ async def handle_evidence_callback(
         )
         return
 
+    lang = resolve_lang(update, context)
+
     try:
         if action == "inbox":
             class_id = _decode_b36(parts[3])
@@ -93,7 +96,7 @@ async def handle_evidence_callback(
                 "• Deletable at any time by teacher\n"
                 "• Automated privacy retention (30 days default)"
             )
-            await _safe_edit(query, text, evidence_inbox_keyboard(class_id, revision, batches))
+            await _safe_edit(query, text, evidence_inbox_keyboard(class_id, revision, batches, lang=lang))
             return
 
         if action == "new":
@@ -168,7 +171,7 @@ async def handle_evidence_callback(
                     "Send a .txt or .docx document in this chat (up to 2 MB, max 50 student items).\n\n"
                     "Note: PDF and audio are deferred until consent and extraction verification."
                 )
-            await _safe_edit(query, msg, evidence_inbox_keyboard(class_id, revision, []))
+            await _safe_edit(query, msg, evidence_inbox_keyboard(class_id, revision, [], lang=lang))
             return
 
         if action == "batch":
@@ -291,7 +294,7 @@ async def handle_evidence_callback(
                 await _safe_edit(
                     query,
                     "✅ Evidence batch and all student items were permanently deleted.",
-                    evidence_inbox_keyboard(class_id, revision, batches),
+                    evidence_inbox_keyboard(class_id, revision, batches, lang=lang),
                 )
                 return
             await _safe_edit(query, "Batch deleted.", class_recovery_keyboard())

@@ -132,6 +132,7 @@ Return only the completed worksheet in this order:
 TITLE
 
 STUDENT WORKSHEET
+Level: {LEVEL}
 
 Exercise 1
 Exercise 2
@@ -143,6 +144,7 @@ COMMUNICATIVE EXTENSION
 ANSWER KEY
 
 SHORT TEACHER NOTES
+Level: {LEVEL}
 
 Use clean plain-text headings. Do not use markdown tables, asterisks, code fences, or commentary before or after the worksheet.
 

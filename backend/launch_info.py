@@ -13,12 +13,15 @@ from keyboards import account_home_keyboard, launch_info_keyboard
 logger = logging.getLogger(__name__)
 
 ABOUT_TEXT = (
-    "ℹ️ About TeacherOS\n\n"
-    "TeacherOS is an AI lesson-creation workspace for English teachers.\n\n"
-    "You can create lesson plans, classroom activities, worksheets, and assessments; "
-    "save everything automatically; search your library; and export materials to Word or PDF.\n\n"
-    "TeacherOS supports CEFR levels A1–C2 and is designed to reduce preparation time—not replace "
-    "a teacher's professional judgment."
+    "🍎 About TeacherOS\n\n"
+    "TeacherOS was created out of deep respect for educators, with one clear purpose: to make a teacher's daily life easier.\n\n"
+    "TeacherOS is your AI co-pilot, designed to handle the time-consuming groundwork so you can teach with clarity and joy.\n\n"
+    "At your fingertips:\n"
+    "• Smart lesson plans & engaging classroom activities\n"
+    "• CEFR-aligned worksheets and quizzes (A1–C2)\n"
+    "• Effortless auto-saving & one-click Word/PDF export\n\n"
+    "Built to reduce preparation hours while honoring your professional judgment—because the heart of the classroom will always be you. 🌟\n\n"
+    "🍎 Made by @SajadZare11"
 )
 
 PRIVACY_TEXT = (

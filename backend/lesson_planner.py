@@ -9,6 +9,7 @@ from telegram.ext import ContextTypes
 from ai_gateway import generate_artifact, generation_provenance
 from database import save_generated_material
 from home_ui import teacheros_home_text
+from typing_action import typing_heartbeat
 
 from keyboards import (
     GRAMMAR_OPTIONS,
@@ -33,6 +34,17 @@ logger = logging.getLogger(__name__)
 def _lesson_data(context: ContextTypes.DEFAULT_TYPE) -> dict | None:
     lesson = context.user_data.get("lesson")
     return lesson if isinstance(lesson, dict) else None
+
+
+async def lesson_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Open Quick Create's lesson flow directly from Telegram commands."""
+    context.user_data.clear()
+    context.user_data["lesson"] = {"state": "level"}
+    if update.message is not None:
+        await update.message.reply_text(
+            "📚 Lesson Planner\n\nStep 1 of 5\n\nChoose your CEFR level.",
+            reply_markup=level_keyboard("lesson", "lesson_back_main"),
+        )
 
 
 async def _answer_callback(update: Update) -> None:
@@ -389,21 +401,25 @@ async def generate_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             "{DURATION}": str(lesson["duration"]),
             "{GOALS}": "Create a complete classroom-ready lesson for the stated topic and language focus.",
         }
-        generation = await generate_artifact(
-            feature="lesson",
-            telegram_user_id=user.id,
-            model=selected_openrouter_model(access),
-            current_request=(
-                f"Create a {lesson['duration']}-minute {lesson['level']} lesson about "
-                f"{lesson['topic']} with the {lesson['grammar']} grammar focus."
-            ),
-            prompt_replacements=replacements,
-            class_id=int(lesson["class_id"]) if lesson.get("class_mode") else None,
-            quality_requirements={
-                "level": str(lesson["level"]),
-                "duration_minutes": str(lesson["duration"]),
-            },
-        )
+        async with typing_heartbeat(
+            context.bot,
+            update.effective_chat.id if update.effective_chat else None,
+        ):
+            generation = await generate_artifact(
+                feature="lesson",
+                telegram_user_id=user.id,
+                model=selected_openrouter_model(access),
+                current_request=(
+                    f"Create a {lesson['duration']}-minute {lesson['level']} lesson about "
+                    f"{lesson['topic']} with the {lesson['grammar']} grammar focus."
+                ),
+                prompt_replacements=replacements,
+                class_id=int(lesson["class_id"]) if lesson.get("class_mode") else None,
+                quality_requirements={
+                    "level": str(lesson["level"]),
+                    "duration_minutes": str(lesson["duration"]),
+                },
+            )
         result = generation.content
     except Exception:
         logger.exception("Lesson generation failed")

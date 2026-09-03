@@ -11,7 +11,9 @@ from config import is_admin_telegram_user
 from database import get_user_entitlement, register_telegram_user
 from home_ui import teacheros_home_text
 from keyboards import account_home_keyboard, account_plan_keyboard, start_menu_keyboard
+from string_catalog import tr
 from subscription_service import format_subscription_expiry
+from ui_service import resolve_lang
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +25,22 @@ def _plan_name_fa(value: object) -> str:
     )
 
 
-def _account_home_text(entitlement: dict[str, Any]) -> str:
+def _account_home_text(entitlement: dict[str, Any], lang: str = "en") -> str:
     remaining = entitlement.get("remaining")
     remaining_text = "نامحدود" if remaining is None else str(remaining)
+    plan = str(entitlement.get("plan_name", "Free"))
+    if lang == "fa":
+        return (
+            f"{tr('account_title', 'fa')}\n\n"
+            f"{tr('account_plan_label', 'fa')} {plan} ({_plan_name_fa(plan)})\n"
+            f"{tr('account_remaining_label', 'fa')} {remaining_text}\n\n"
+            f"{tr('account_manage_prompt', 'fa')}"
+        )
     return (
-        "👤 حساب کاربری TeacherOS\n\n"
-        f"پلن فعلی: {_plan_name_fa(entitlement['plan_name'])}\n"
-        f"تعداد تولید باقی‌مانده امروز: {remaining_text}\n\n"
-        "از این بخش می‌توانید مصرف، پلن، کتابخانه و تنظیمات حساب خود را مدیریت کنید."
+        "👤 TeacherOS Account & Settings\n\n"
+        f"Plan: {plan} ({_plan_name_fa(plan)})\n"
+        f"Remaining Today: {remaining_text}\n\n"
+        "Manage your usage, plan, general library, and settings below."
     )
 
 
@@ -39,26 +49,27 @@ def _plan_text(entitlement: dict[str, Any]) -> str:
     limit_text = "نامحدود" if daily_limit is None else str(daily_limit)
     remaining = entitlement.get("remaining")
     remaining_text = "نامحدود" if remaining is None else str(remaining)
+    plan = str(entitlement.get("plan_name", "Free"))
 
     lines = [
-        "🪪 پلن من",
-        "",
-        f"پلن: {_plan_name_fa(entitlement['plan_name'])}",
-        f"سقف تولید روزانه: {limit_text}",
-        f"مصرف امروز: {int(entitlement.get('used_today') or 0)}",
-        f"باقی‌مانده امروز: {remaining_text}",
+        "╭─ 🪪 My Plan / پلن من ─╮",
+        f"│ 💎 Plan: {plan} ({_plan_name_fa(plan)})",
+        f"│ 📊 Daily Limit: {limit_text}",
+        f"│ 📈 Used Today: {int(entitlement.get('used_today') or 0)}",
+        f"│ ✨ Remaining: {remaining_text}",
+        "╰───────────────────────╯",
     ]
 
     if entitlement.get("expires_at"):
         mode = " · آزمایشی" if entitlement.get("is_sandbox") else ""
         lines.append(
-            f"اعتبار تا: {format_subscription_expiry(entitlement['expires_at'])}{mode}"
+            f"📅 اعتبار تا: {format_subscription_expiry(entitlement['expires_at'])}{mode}"
         )
     else:
         lines.append("اشتراک پولی فعالی ندارید.")
 
     if entitlement.get("priority"):
-        lines.append("دسترسی اولویت‌دار: فعال")
+        lines.append("⚡ دسترسی اولویت‌دار: فعال")
 
     return "\n".join(lines)
 
@@ -89,6 +100,7 @@ async def account_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     data = query.data or ""
     await query.answer()
     context.user_data.clear()
+    lang = resolve_lang(update, context)
 
     try:
         if data == "account_home":
@@ -97,9 +109,10 @@ async def account_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 return
             await _safe_edit(
                 query,
-                _account_home_text(entitlement),
+                _account_home_text(entitlement, lang=lang),
                 reply_markup=account_home_keyboard(
-                    show_admin=is_admin_telegram_user(user.id)
+                    show_admin=is_admin_telegram_user(user.id),
+                    lang=lang,
                 ),
             )
             return
@@ -118,8 +131,8 @@ async def account_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if data == "account_main":
             await _safe_edit(
                 query,
-                teacheros_home_text(),
-                reply_markup=start_menu_keyboard(),
+                teacheros_home_text(lang=lang) if lang == "fa" else teacheros_home_text(),
+                reply_markup=start_menu_keyboard(lang=lang),
             )
             return
     except Exception:
@@ -128,7 +141,7 @@ async def account_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             query,
             "❌ حساب کاربری در حال حاضر بارگذاری نشد.\n\n"
             "لطفاً ربات را دوباره راه‌اندازی و مجدداً تلاش کنید.",
-            reply_markup=start_menu_keyboard(),
+            reply_markup=start_menu_keyboard(lang=lang),
         )
         return
 
@@ -136,6 +149,30 @@ async def account_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         query,
         "⚠️ این گزینه حساب کاربری دیگر در دسترس نیست.",
         reply_markup=account_home_keyboard(
-            show_admin=is_admin_telegram_user(user.id)
+            show_admin=is_admin_telegram_user(user.id),
+            lang=lang,
         ),
     )
+
+
+async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Open the same account hub from Telegram's slash-command picker."""
+    user = update.effective_user
+    if update.message is None or user is None or not isinstance(getattr(user, "id", None), int):
+        return
+    lang = resolve_lang(update, context)
+    try:
+        entitlement = await _load_entitlement(update)
+        if entitlement is None:
+            return
+        context.user_data.clear()
+        await update.message.reply_text(
+            _account_home_text(entitlement, lang=lang),
+            reply_markup=account_home_keyboard(show_admin=is_admin_telegram_user(user.id), lang=lang),
+        )
+    except Exception:
+        logger.exception("Could not open account panel from command")
+        await update.message.reply_text(
+            "❌ Account is temporarily unavailable. Please try again.",
+            reply_markup=start_menu_keyboard(lang=lang),
+        )

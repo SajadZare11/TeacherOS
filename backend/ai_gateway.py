@@ -19,11 +19,12 @@ from prompt_contracts import (
     structured_output_instruction,
 )
 from validators import ValidationResult, validate_model_response
+from config import OPENROUTER_TOTAL_TIMEOUT_SECONDS, OPENROUTER_REQUEST_TIMEOUT_SECONDS
 
 
 PROVIDER = "openrouter"
-TOTAL_TIMEOUT_SECONDS = 24.0
-CALL_TIMEOUT_SECONDS = 8.0
+TOTAL_TIMEOUT_SECONDS = OPENROUTER_TOTAL_TIMEOUT_SECONDS
+CALL_TIMEOUT_SECONDS = OPENROUTER_REQUEST_TIMEOUT_SECONDS
 MAX_PROVIDER_ATTEMPTS = 2
 
 
@@ -116,7 +117,7 @@ async def _call_model(
     try:
         return await asyncio.wait_for(
             generate_response(messages, model=model),
-            timeout=min(CALL_TIMEOUT_SECONDS, remaining),
+            timeout=remaining,
         )
     except asyncio.TimeoutError as exc:
         raise TimeoutError("provider_timeout") from exc

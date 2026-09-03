@@ -19,9 +19,49 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_MODEL = os.getenv(
     "OPENROUTER_MODEL",
-    "nvidia/nemotron-3-super-120b-a12b:free",
+    "openrouter/free",
 ).strip()
+OPENROUTER_FALLBACK_MODELS_RAW = os.getenv(
+    "OPENROUTER_FALLBACK_MODELS",
+    "openrouter/free,nvidia/nemotron-3-super-120b-a12b:free,poolside/laguna-s-2.1:free,google/gemma-4-31b-it:free,google/gemma-4-26b-a4b-it:free",
+).strip()
+OPENROUTER_FALLBACK_MODELS = [
+    m.strip() for m in OPENROUTER_FALLBACK_MODELS_RAW.split(",") if m.strip()
+]
+if OPENROUTER_MODEL and OPENROUTER_MODEL not in OPENROUTER_FALLBACK_MODELS:
+    OPENROUTER_FALLBACK_MODELS.insert(0, OPENROUTER_MODEL)
 
+
+def _positive_int(value: str, fallback: int) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return fallback
+    return parsed if parsed > 0 else fallback
+
+
+def _positive_float(value: str, fallback: float) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    return parsed if parsed > 0 else fallback
+
+
+# Keep AI requests bounded so a slow free model cannot block the bot for minutes.
+# Operators can raise these values when using a consistently fast paid model.
+OPENROUTER_REQUEST_TIMEOUT_SECONDS = _positive_float(
+    os.getenv("OPENROUTER_REQUEST_TIMEOUT_SECONDS", "20"), 20.0
+)
+OPENROUTER_TOTAL_TIMEOUT_SECONDS = _positive_float(
+    os.getenv("OPENROUTER_TOTAL_TIMEOUT_SECONDS", "24.5"), 24.5
+)
+OPENROUTER_MAX_FALLBACK_MODELS = _positive_int(
+    os.getenv("OPENROUTER_MAX_FALLBACK_MODELS", "5"), 5
+)
+OPENROUTER_MAX_TOKENS = _positive_int(
+    os.getenv("OPENROUTER_MAX_TOKENS", "4000"), 4000
+)
 # Day 15 database setting. Leave this out of .env to use the default location:
 # TeacherOS/database/teacheros.db
 _database_path_value = os.getenv(
@@ -61,17 +101,16 @@ _payment_server_port_value = os.getenv("PAYMENT_SERVER_PORT", "8080").strip()
 _payment_test_amount_value = os.getenv("PAYMENT_TEST_AMOUNT_TOMAN", "10000").strip()
 
 
-def _positive_int(value: str, fallback: int) -> int:
-    try:
-        parsed = int(value)
-    except ValueError:
-        return fallback
-    return parsed if parsed > 0 else fallback
-
-
 PAYMENT_SERVER_PORT = _positive_int(_payment_server_port_value, 8080)
 PAYMENT_TEST_AMOUNT_TOMAN = _positive_int(_payment_test_amount_value, 10000)
 PAYMENT_CURRENCY = "IRT"  # Explicit toman units; avoids rial/toman ambiguity.
+
+# Telegram update workers let one teacher's model request continue without
+# blocking every other teacher. Keep this bounded to avoid duplicate taps and
+# SQLite contention; per-flow state still guards repeated Generate actions.
+MAX_CONCURRENT_UPDATES = _positive_int(
+    os.getenv("TEACHEROS_MAX_CONCURRENT_UPDATES", "8"), 8
+)
 
 # Day 26 subscription plans. These are editable MVP launch defaults.
 _free_limit_value = os.getenv("TEACHEROS_FREE_DAILY_LIMIT", "10").strip()

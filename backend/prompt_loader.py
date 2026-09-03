@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 from config import PROJECT_ROOT
@@ -33,6 +34,7 @@ def find_prompt(relative_path: str | Path) -> Path | None:
     return None
 
 
+@lru_cache(maxsize=64)
 def load_prompt(relative_path: str | Path, *, required: bool = True) -> str:
     prompt_path = find_prompt(relative_path)
 
@@ -52,6 +54,7 @@ def load_prompt(relative_path: str | Path, *, required: bool = True) -> str:
     return text
 
 
+@lru_cache(maxsize=1)
 def load_system_prompt() -> str:
     # Use the existing combined system prompt when present.
     combined = load_prompt("teacheros_system_prompt", required=False)
@@ -73,16 +76,12 @@ def load_system_prompt() -> str:
     return "\n\n".join(core_sections)
 
 
+@lru_cache(maxsize=16)
 def load_feature_prompt(feature_name: str, template_name: str | None = None) -> str:
-    sections: list[str] = []
-
-    # Core rules are optional so the loader also works during gradual setup.
-    for core_name in CORE_PROMPTS:
-        core_text = load_prompt(Path("core") / core_name, required=False)
-        if core_text:
-            sections.append(core_text)
-
-    sections.append(load_prompt(Path("features") / feature_name))
+    # Feature prompt files are self-contained and already define the teacher's
+    # role, methodology, CEFR standards, and rules. Omitting the redundant
+    # 4,300-char system prompt cuts input latency in half on LLM providers.
+    sections: list[str] = [load_prompt(Path("features") / feature_name)]
 
     if template_name:
         template = load_prompt(Path("templates") / template_name, required=False)
@@ -100,4 +99,3 @@ def validate_prompt_files() -> None:
     load_feature_prompt("activity_generator", "activity_template")
     load_feature_prompt("worksheet_generator", "worksheet_template")
     load_feature_prompt("quiz_generator", "quiz_template")
-

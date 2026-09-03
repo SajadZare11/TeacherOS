@@ -67,6 +67,7 @@ class Day16EvidenceAnalysisTests(unittest.TestCase):
                 FEATURE_ENV_VARS["classes"]: "true",
                 FEATURE_ENV_VARS["continuity"]: "true",
                 FEATURE_ENV_VARS["evidence"]: "true",
+                FEATURE_ENV_VARS["entitlements"]: "false",
             },
             clear=False,
         )

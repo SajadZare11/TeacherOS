@@ -20,7 +20,7 @@
     "objective_id": 1
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T12:53:42.518475+00:00",
+  "evaluated_at_utc": "2026-09-02T07:35:04.202580+00:00",
   "gate": "Day 21 \u2014 Build Evidence-Linked Class Progress, Not Decorative Analytics",
   "passed": true,
   "schema_version": 21

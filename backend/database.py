@@ -31,6 +31,7 @@ from day25_migration import apply_schema_v25
 from day26_migration import apply_schema_v26
 from day27_migration import apply_schema_v27
 from day28_migration import apply_schema_v28
+from student_diagnostic_migration import apply_student_diagnostic_schema
 from config import (
     DATABASE_PATH,
     FREE_DAILY_GENERATION_LIMIT,
@@ -66,6 +67,9 @@ def _connection(database_path: Path | None = None) -> Iterator[sqlite3.Connectio
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute("PRAGMA busy_timeout = 10000")
+    connection.execute("PRAGMA synchronous = NORMAL")
+    connection.execute("PRAGMA temp_store = MEMORY")
+    connection.execute("PRAGMA cache_size = -64000")
     try:
         yield connection
         connection.commit()
@@ -312,6 +316,7 @@ def initialize_database(database_path: Path | None = None) -> Path:
         apply_schema_v26(connection)
         apply_schema_v27(connection)
         apply_schema_v28(connection)
+        apply_student_diagnostic_schema(connection)
 
     return target_path
 

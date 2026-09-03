@@ -111,6 +111,8 @@ async def handle_ui_callback(
     if action in {"slen", "slfa"}:
         new_lang = "en" if action == "slen" else "fa"
         set_user_language(user_id, new_lang)
+        if context and hasattr(context, "user_data") and isinstance(context.user_data, dict):
+            context.user_data["lang"] = new_lang
         await _answer_query(query, tr("lang_switched", new_lang))
         text = tr("lang_choose", new_lang) + "\n\n" + tr("lang_switched", new_lang)
         await _safe_edit(

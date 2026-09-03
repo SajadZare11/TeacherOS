@@ -161,9 +161,26 @@ def structured_output_instruction(contract: PromptContract) -> str:
 
 def repair_instruction(contract: PromptContract, errors: list[str]) -> str:
     safe_errors = [str(error)[:160] for error in errors[:8]]
+    hints: list[str] = []
+    for error in safe_errors:
+        if error.startswith("quality_failed:level"):
+            hints.append("Explicitly state the target CEFR level in the content (e.g. 'Level: B1' or 'CEFR Level: B2').")
+        elif error.startswith("quality_failed:timing"):
+            hints.append("Include explicit timing guidance (e.g. 'Suggested time: 45 minutes').")
+        elif error.startswith("quality_failed:resource_requirements"):
+            hints.append("Include required materials or resources (e.g. 'Materials: Handouts, paper').")
+        elif error.startswith("quality_failed:answer_key"):
+            hints.append("Include a complete ANSWER KEY section.")
+        elif error.startswith("quality_failed:instructions"):
+            hints.append("Include clear student instructions or directions.")
+        elif error.startswith("missing_section:"):
+            section = error.split(":", 1)[1]
+            hints.append(f"Ensure the required section heading is present: {section.upper()}.")
+    hint_text = (" Required corrections: " + " ".join(hints)) if hints else ""
     return (
         structured_output_instruction(contract)
         + " Repair the candidate so it satisfies the schema and pedagogical checks. "
         + "Validation errors: "
         + json.dumps(safe_errors, ensure_ascii=False, separators=(",", ":"))
+        + hint_text
     )

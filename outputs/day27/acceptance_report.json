@@ -17,7 +17,7 @@
     "victim_id": 1
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T12:53:48.502525+00:00",
+  "evaluated_at_utc": "2026-09-02T07:35:10.441478+00:00",
   "gate": "Day 27 \u2014 Red-Team Ownership, Files, Prompts, Privacy, and Deletion",
   "passed": true,
   "schema_version": 27

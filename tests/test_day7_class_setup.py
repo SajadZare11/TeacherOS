@@ -50,6 +50,17 @@ def query(data: str) -> SimpleNamespace:
     return SimpleNamespace(data=data, answer=AsyncMock(), edit_message_text=AsyncMock())
 
 
+def b36(n: int) -> str:
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+    if n == 0:
+        return "0"
+    res = []
+    while n:
+        n, r = divmod(n, 36)
+        res.append(alphabet[r])
+    return "".join(reversed(res))
+
+
 def callback_values(markup: object) -> list[str]:
     return [
         button.callback_data
@@ -292,11 +303,39 @@ class Day7SetupTests(unittest.IsolatedAsyncioTestCase):
             10,
         )
 
-    def test_draft_appears_in_my_classes_navigation(self) -> None:
-        start_setup_draft(telegram_user=self.teacher)
-        markup = class_list_keyboard([], archived=False, has_draft=True)
-        self.assertIn("v1|cl|resume|0|0", callback_values(markup))
+    async def test_fast_setup_two_steps_to_review(self) -> None:
+        """Verify the 30-second express setup: name -> level -> review with smart defaults."""
+        _, route_context = await self._route("v1|cl|qbegin|0|0")
+        draft = get_setup_draft(telegram_user_id=self.teacher.id)
+        self.assertIsNotNone(draft)
+        self.assertEqual(draft["step"], "name")
+        self.assertTrue(draft["payload"].get("fast_setup"))
+
+        # Step 1: Type name
+        good_message = SimpleNamespace(text="Super Teens", reply_text=AsyncMock())
+        await get_class_setup_text(
+            SimpleNamespace(message=good_message, effective_user=self.teacher),
+            route_context,
+        )
+        draft = get_setup_draft(telegram_user_id=self.teacher.id)
+        self.assertEqual(draft["step"], "level")
+        self.assertEqual(draft["payload"]["display_name"], "Super Teens")
+
+        # Step 2: Choose level B1
+        rev = int(draft["revision"])
+        await self._route(f"v1|cl|level|b1|{b36(rev)}", context=route_context)
+        draft = get_setup_draft(telegram_user_id=self.teacher.id)
+        self.assertEqual(draft["step"], "review")
+        self.assertEqual(draft["payload"]["level_choice"], "B1")
+        self.assertEqual(draft["payload"]["duration_choice"], 60)
+        self.assertEqual(draft["payload"]["goal_choice"], "general_english")
+
+        # Save class
+        route_query, _ = await self._route(f"v1|cl|save|{b36(int(draft['id']))}|0", context=route_context)
+        text = route_query.edit_message_text.await_args.args[0]
+        self.assertIn("Super Teens", text)
 
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+

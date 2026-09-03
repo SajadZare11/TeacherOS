@@ -4,6 +4,7 @@ from typing import Any, Sequence
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from evidence_service import EVIDENCE_TYPES, EVIDENCE_TYPE_LABELS, RETENTION_POLICIES, RETENTION_LABELS
+from string_catalog import tr
 
 
 def b36(number: int) -> str:
@@ -41,13 +42,14 @@ RETENTION_REV = {v: k for k, v in RETENTION_CODES.items()}
 
 
 def evidence_inbox_keyboard(
-    class_id: int, revision: int, batches: Sequence[dict[str, Any]]
+    class_id: int, revision: int, batches: Sequence[dict[str, Any]], lang: str = "en"
 ) -> InlineKeyboardMarkup:
     cid = b36(class_id)
     rev = b36(revision)
     rows: list[list[InlineKeyboardButton]] = [
         [
-            InlineKeyboardButton("➕ Submit Evidence", callback_data=f"v1|ev|new|{cid}|{rev}"),
+            InlineKeyboardButton(tr("btn_submit_evidence", lang), callback_data=f"v1|ev|new|{cid}|{rev}"),
+            InlineKeyboardButton(tr("btn_writing_feedback", lang), callback_data=f"v1|wf|start|{cid}|{rev}"),
         ]
     ]
 
@@ -60,7 +62,7 @@ def evidence_inbox_keyboard(
         rows.append([InlineKeyboardButton(btn_text, callback_data=f"v1|ev|batch|{bid}|{rev}")])
 
     rows.append([
-        InlineKeyboardButton("◀ Back to Dashboard", callback_data=f"v1|cl|open|{cid}|{rev}")
+        InlineKeyboardButton(tr("btn_back_to_dashboard", lang), callback_data=f"v1|cl|open|{cid}|{rev}")
     ])
     return InlineKeyboardMarkup(rows)
 

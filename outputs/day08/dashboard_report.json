@@ -1,11 +1,11 @@
 {
-  "callbacks_checked": 68,
+  "callbacks_checked": 72,
   "dashboard_primary_action": "Plan Next Lesson",
   "day": 8,
   "destructive_confirmations_checked": 2,
   "engineering_status": "PASS",
   "invalid_callbacks": [],
-  "maximum_callback_bytes": 35,
+  "maximum_callback_bytes": 34,
   "over_limit_callbacks": [],
   "passed": true,
   "phone_message_character_budget": 700,

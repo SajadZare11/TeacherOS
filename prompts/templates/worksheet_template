@@ -8,6 +8,7 @@ TITLE
 [Write a specific and engaging title. Do not write "Worksheet" as the title.]
 
 STUDENT WORKSHEET
+Level: {LEVEL}
 
 Exercise 1 — [Descriptive task name]
 Instructions: [One clear student-facing instruction.]
@@ -37,6 +38,7 @@ Exercise 3: [Numbered answers]
 Communicative extension: [Sample ideas, responses, or success criteria]
 
 SHORT TEACHER NOTES
+Level: {LEVEL}
 Suggested time: [Realistic total]
 Likely difficulties: [Maximum two concise points]
 Support: [One practical adaptation]

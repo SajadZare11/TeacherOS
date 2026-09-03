@@ -9,6 +9,8 @@ from telegram.ext import ContextTypes
 from ai_gateway import generate_artifact, generation_provenance
 from database import save_generated_material
 from home_ui import teacheros_home_text
+from ui_service import resolve_lang
+from typing_action import typing_heartbeat
 from keyboards import (
     ASSESSMENT_TYPE_OPTIONS,
     QUIZ_FORMAT_OPTIONS,
@@ -73,6 +75,17 @@ _DIGIT_TRANSLATION = str.maketrans(
 def _quiz_data(context: ContextTypes.DEFAULT_TYPE) -> dict | None:
     quiz = context.user_data.get("quiz")
     return quiz if isinstance(quiz, dict) else None
+
+
+async def assessment_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Open Quick Create's assessment flow directly from Telegram commands."""
+    context.user_data.clear()
+    context.user_data["quiz"] = {"state": "assessment_type"}
+    if update.message is not None:
+        await update.message.reply_text(
+            "✅ Assessment Generator\n\nStep 1 of 6\n\nChoose the assessment type.",
+            reply_markup=quiz_assessment_type_keyboard(),
+        )
 
 
 def _parse_question_count(value: object) -> int | None:
@@ -541,41 +554,65 @@ async def generate_quiz(
         )
         return
 
+    lang = resolve_lang(update, context)
     quiz["state"] = "generating"
-    await query.edit_message_text(
-        "🧠 Generating your classroom-ready assessment...\n\n"
-        "TeacherOS is creating the questions, answer key, scoring guide, and notes."
+    generating_msg = (
+        "🧠 در حال ساخت آزمون کلاسی شما...\n\n"
+        "TeacherOS در حال آماده‌سازی سوالات، پاسخ‌نامه، راهنمای تصحیح و نکات آموزشی است."
+        if lang == "fa"
+        else (
+            "🧠 Generating your classroom-ready assessment...\n\n"
+            "TeacherOS is creating the questions, answer key, scoring guide, and notes."
+        )
     )
+    await query.edit_message_text(generating_msg)
 
     try:
-        generation = await generate_artifact(
-            feature="assessment",
-            telegram_user_id=user.id,
-            model=selected_openrouter_model(access),
-            current_request=(
-                f"Create a {quiz['assessment_type']} with {quiz['question_count']} "
-                f"{quiz['question_format']} items for {quiz['level']} learners about "
-                f"{quiz['topic']}."
-            ),
-            prompt_replacements=_prompt_replacements(quiz),
-            class_id=int(quiz["class_id"]) if quiz.get("class_mode") else None,
-            quality_requirements={"level": str(quiz["level"]), "answer_key": True},
-        )
+        async with typing_heartbeat(
+            context.bot,
+            update.effective_chat.id if update.effective_chat else None,
+        ):
+            generation = await generate_artifact(
+                feature="assessment",
+                telegram_user_id=user.id,
+                model=selected_openrouter_model(access),
+                current_request=(
+                    f"Create a {quiz['assessment_type']} with {quiz['question_count']} "
+                    f"{quiz['question_format']} items for {quiz['level']} learners about "
+                    f"{quiz['topic']}."
+                ),
+                prompt_replacements=_prompt_replacements(quiz),
+                class_id=int(quiz["class_id"]) if quiz.get("class_mode") else None,
+                quality_requirements={"level": str(quiz["level"]), "answer_key": True},
+            )
         result = generation.content
     except Exception:
         logger.exception("Assessment generation failed")
         quiz["state"] = "confirm"
+        fail_msg = (
+            "❌ تولید آزمون در این لحظه انجام نشد.\n\n"
+            "انتخاب‌های شما ذخیره شده است. لطفاً وضعیت اینترنت یا تنظیمات را بررسی کرده "
+            "و سپس روی «تولید آزمون» بزنید تا دوباره تلاش شود."
+            if lang == "fa"
+            else (
+                "❌ I could not generate the assessment right now.\n\n"
+                "Your choices are still saved. Check your connection or OpenRouter settings, "
+                "then tap Generate Assessment to retry."
+            )
+        )
         await query.edit_message_text(
-            "❌ I could not generate the assessment right now.\n\n"
-            "Your choices are still saved. Check your connection or OpenRouter settings, "
-            "then tap Generate Assessment to retry.",
-            reply_markup=quiz_confirm_keyboard(class_mode=bool(quiz.get("class_mode"))),
+            fail_msg,
+            reply_markup=quiz_confirm_keyboard(class_mode=bool(quiz.get("class_mode")), lang=lang),
         )
         return
 
     question_count = int(quiz["question_count"])
     material_id: int | None = None
-    save_message = "✅ Assessment generated. It appears below."
+    save_message = (
+        "✅ آزمون با موفقیت تولید شد و در زیر نمایش داده شده است."
+        if lang == "fa"
+        else "✅ Assessment generated. It appears below."
+    )
     try:
         if update.effective_user is None:
             raise ValueError("Telegram user details are unavailable.")
@@ -598,15 +635,26 @@ async def generate_quiz(
             quality_scores=generation.quality_scores,
         )
         save_message = (
-            "✅ Assessment generated and saved automatically.\n"
-            f"Library ID: {material_id}\n\n"
-            "Use the buttons below to download Word or PDF immediately."
+            "✅ آزمون تولید و به طور خودکار ذخیره شد.\n"
+            f"شناسه کتابخانه: {material_id}\n\n"
+            "از دکمه‌های زیر برای دانلود نسخه Word یا PDF استفاده کنید."
+            if lang == "fa"
+            else (
+                "✅ Assessment generated and saved automatically.\n"
+                f"Library ID: {material_id}\n\n"
+                "Use the buttons below to download Word or PDF immediately."
+            )
         )
     except Exception:
         logger.exception("Assessment was generated but could not be saved")
         save_message = (
-            "⚠️ Assessment generated, but TeacherOS could not save it.\n\n"
-            "The assessment still appears below, but export buttons are unavailable."
+            "⚠️ آزمون تولید شد اما ذخیره آن ناموفق بود.\n\n"
+            "متن آزمون در زیر قابل مشاهده است."
+            if lang == "fa"
+            else (
+                "⚠️ Assessment generated, but TeacherOS could not save it.\n\n"
+                "The assessment still appears below, but export buttons are unavailable."
+            )
         )
 
     await query.edit_message_text(
@@ -616,6 +664,7 @@ async def generate_quiz(
                 material_id,
                 material_type="assessment",
                 class_id=int(quiz["class_id"]) if quiz.get("class_mode") else None,
+                lang=lang,
             )
             if material_id is not None
             else None

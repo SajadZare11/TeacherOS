@@ -16,7 +16,7 @@
     "user_a_id": 1
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T12:53:47.085383+00:00",
+  "evaluated_at_utc": "2026-09-02T07:35:09.090740+00:00",
   "gate": "Day 25 \u2014 Package Paid Value Around Recurring Outcomes",
   "passed": true,
   "schema_version": 25

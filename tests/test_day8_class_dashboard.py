@@ -355,17 +355,24 @@ class Day8ClassDashboardTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertLess(len(text), 700)
         self.assertTrue(text.startswith("🏫 Active class: B1 Evening"))
-        self.assertIn("🎯 NEXT: Plan Next Lesson", text)
-        self.assertIn("No history yet", text)
-        self.assertEqual(labels(markup)[0], "🎯 Plan Next Lesson")
+        self.assertIn("🎯 NEXT:", text)
         for label in (
-            "🔬 Analyze Work", "🧰 Create Materials", "✅ Record Outcome",
-            "📈 Progress", "📁 Library", "👤 Profile",
+            "🏫 1. Class & Students",
+            "📝 2. Planning & Prep",
+            "📊 3. Assessment & Feedback",
+            "🧰 4. TeacherOS Tools",
+            "⬅ My Classes",
         ):
             self.assertIn(label, labels(markup))
         self.assertNotIn("Last active:", text)
 
-        details_callback = next(value for value in callbacks(markup) if "|details|" in value)
+        tools_callback = next(value for value in callbacks(markup) if "|m_tls|" in value)
+        tools_query, _ = await self._route(tools_callback, context=route_context)
+        tools_markup = tools_query.edit_message_text.await_args.kwargs["reply_markup"]
+        adv_callback = next(value for value in callbacks(tools_markup) if "|adv|" in value)
+        adv_query, _ = await self._route(adv_callback, context=route_context)
+        adv_markup = adv_query.edit_message_text.await_args.kwargs["reply_markup"]
+        details_callback = next(value for value in callbacks(adv_markup) if "|details|" in value)
         details_query, _ = await self._route(details_callback, context=route_context)
         details_text = details_query.edit_message_text.await_args.args[0]
         self.assertIn("Last active:", details_text)
@@ -421,9 +428,17 @@ class Day8ClassDashboardTests(unittest.IsolatedAsyncioTestCase):
         open_query, route_context = await self._route(
             f"v1|cl|open|{b36(class_id)}|{b36(revision)}"
         )
-        profile_callback = next(
+        cls_callback = next(
             value
             for value in callbacks(open_query.edit_message_text.await_args.kwargs["reply_markup"])
+            if "|m_cls|" in value
+        )
+        cls_query, route_context = await self._route(
+            cls_callback, context=route_context
+        )
+        profile_callback = next(
+            value
+            for value in callbacks(cls_query.edit_message_text.await_args.kwargs["reply_markup"])
             if "|profile|" in value
         )
         profile_query, route_context = await self._route(

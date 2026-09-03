@@ -83,6 +83,57 @@ def set_user_language(
         return dict(row) if row else {}
 
 
+def get_user_language_by_telegram_id(
+    telegram_user_id: int | None,
+    database_path: Path | None = None,
+) -> str:
+    """Look up a teacher's display language preference by their Telegram user ID."""
+    if not isinstance(telegram_user_id, int):
+        return "en"
+    with database_connection(database_path) as conn:
+        row = conn.execute(
+            """
+            SELECT p.language_code
+            FROM user_ui_preferences p
+            JOIN users u ON u.id = p.user_id
+            WHERE u.telegram_user_id = ?
+            """,
+            (telegram_user_id,),
+        ).fetchone()
+        if row and row["language_code"] in VALID_LANGUAGES:
+            return str(row["language_code"])
+    return "en"
+
+
+def resolve_lang(
+    update: Any = None,
+    context: Any = None,
+    telegram_user_id: int | None = None,
+    database_path: Path | None = None,
+) -> str:
+    """Resolve the active language code ('en' or 'fa') with memory-first caching."""
+    if context and hasattr(context, "user_data") and isinstance(context.user_data, dict):
+        cached = context.user_data.get("lang")
+        if cached in VALID_LANGUAGES:
+            return str(cached)
+
+    tg_user_id = telegram_user_id
+    if tg_user_id is None and update:
+        tg_user = getattr(update, "effective_user", None)
+        if tg_user is None and hasattr(update, "callback_query") and update.callback_query:
+            tg_user = getattr(update.callback_query, "from_user", None)
+        if tg_user is None:
+            tg_user = getattr(update, "from_user", None)
+        tg_user_id = getattr(tg_user, "id", None) if tg_user else None
+
+    lang = get_user_language_by_telegram_id(tg_user_id, database_path=database_path)
+
+    if context and hasattr(context, "user_data") and isinstance(context.user_data, dict):
+        context.user_data["lang"] = lang
+
+    return lang
+
+
 def set_active_class(
     user_id: int,
     class_id: int,

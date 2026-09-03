@@ -48,16 +48,37 @@ def _parse_schema(raw: object) -> tuple[str | None, list[str]]:
     if not text:
         return None, ["response_empty"]
     if text.startswith("```"):
-        return None, ["response_has_code_fence"]
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
     try:
         value = json.loads(text)
     except json.JSONDecodeError:
-        return None, ["response_not_json"]
+        fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
+        if fence_match:
+            try:
+                value = json.loads(fence_match.group(1).strip())
+            except json.JSONDecodeError:
+                value = None
+        else:
+            obj_match = re.search(r"(\{[\s\S]*\})", text)
+            if obj_match:
+                try:
+                    value = json.loads(obj_match.group(1).strip())
+                except json.JSONDecodeError:
+                    value = None
+            else:
+                value = None
+        if value is None:
+            return None, ["response_not_json"]
     if not isinstance(value, dict):
         return None, ["response_not_object"]
-    if set(value) != {"content"}:
-        return None, ["response_keys_invalid"]
     content = value.get("content")
+    if not isinstance(content, str):
+        content = value.get("result") or value.get("assessment") or value.get("output") or value.get("text")
     if not isinstance(content, str):
         return None, ["content_not_text"]
     normalized = content.strip()
@@ -108,7 +129,10 @@ def _quality_errors(
         "level": not expected_level
         or bool(re.search(rf"(?<![a-z0-9]){re.escape(expected_level)}(?![a-z0-9])", normalized)),
         "resource_requirements": bool(
-            re.search(r"\b(materials?|resources?|equipment|required resources)\b", normalized)
+            re.search(
+                r"\b(materials?|resources?|equipment|required resources|printed|copies|handouts?|paper|test sheets?)\b",
+                normalized,
+            )
         ),
         "answer_key": not answer_key_required or "answer key" in normalized,
         "objective_alignment": not objective_required

@@ -12,11 +12,11 @@
   },
   "details": {
     "class_a_id": 1,
-    "strings_en_count": 49,
-    "strings_fa_count": 53
+    "strings_en_count": 155,
+    "strings_fa_count": 159
   },
   "engineering_status": "PASS",
-  "evaluated_at_utc": "2026-09-01T12:53:46.207575+00:00",
+  "evaluated_at_utc": "2026-09-02T08:46:24.108973+00:00",
   "gate": "Day 24 \u2014 Polish Telegram Speed, Clarity, Accessibility, and Localization",
   "passed": true,
   "schema_version": 24

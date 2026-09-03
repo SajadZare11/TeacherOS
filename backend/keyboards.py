@@ -3,6 +3,7 @@ from __future__ import annotations
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from feature_flags import feature_enabled
+from string_catalog import tr
 
 GRAMMAR_OPTIONS: dict[str, str] = {
     "present_simple": "Present Simple",
@@ -63,7 +64,7 @@ ACTIVITY_TYPE_OPTIONS: dict[str, str] = {
 }
 
 
-def start_menu_keyboard(*, show_admin: bool = False) -> InlineKeyboardMarkup:
+def start_menu_keyboard(*, show_admin: bool = False, lang: str = "en") -> InlineKeyboardMarkup:
     """Return the legacy or class-aware TeacherOS home screen.
 
     ``show_admin`` remains in the signature for backward compatibility. The owner-only
@@ -75,57 +76,59 @@ def start_menu_keyboard(*, show_admin: bool = False) -> InlineKeyboardMarkup:
             [
                 [
                     InlineKeyboardButton(
-                        "🏫 My Classes",
+                        tr("menu_my_classes", lang),
                         callback_data="v1|cl|list|0|0",
                     ),
                     InlineKeyboardButton(
-                        "⚡ Quick Create",
+                        tr("menu_quick_create", lang),
                         callback_data="home_quick",
                     ),
                 ],
                 [
                     InlineKeyboardButton(
-                        "🔬 Analyze Work",
+                        tr("menu_analyze_work", lang),
                         callback_data="home_analyze",
                     ),
-                    InlineKeyboardButton("🔎 Search", callback_data="search_start"),
+                    InlineKeyboardButton(tr("menu_search", lang), callback_data="search_start"),
                 ],
-                [InlineKeyboardButton("👤 Account", callback_data="account_home")],
+                [InlineKeyboardButton(tr("menu_account", lang), callback_data="account_home")],
             ]
         )
+    # Keep a complete, usable fallback when the Classes feature is disabled.
+    # This is also the rollback path used during staged launches.
     return InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("📚 Lesson Planner", callback_data="lesson"),
-                InlineKeyboardButton("🎲 Activities", callback_data="activity_start"),
+                InlineKeyboardButton(tr("menu_lesson_planner", lang), callback_data="lesson"),
+                InlineKeyboardButton(tr("menu_activities", lang), callback_data="activity_start"),
             ],
             [
-                InlineKeyboardButton("📝 Worksheets", callback_data="worksheet_start"),
-                InlineKeyboardButton("✅ Assessments", callback_data="quiz_start"),
+                InlineKeyboardButton(tr("menu_worksheets", lang), callback_data="worksheet_start"),
+                InlineKeyboardButton(tr("menu_assessments", lang), callback_data="quiz_start"),
             ],
             [
-                InlineKeyboardButton("🔎 Search", callback_data="search_start"),
-                InlineKeyboardButton("👤 Account", callback_data="account_home"),
+                InlineKeyboardButton(tr("menu_search", lang), callback_data="search_start"),
+                InlineKeyboardButton(tr("menu_account", lang), callback_data="account_home"),
             ],
         ]
     )
 
 
-def quick_create_keyboard() -> InlineKeyboardMarkup:
+def quick_create_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     """Keep every proven generator callback unchanged under Quick Create."""
     return InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("📚 Lesson Planner", callback_data="lesson"),
-                InlineKeyboardButton("🎲 Activities", callback_data="activity_start"),
+                InlineKeyboardButton(tr("menu_lesson_planner", lang), callback_data="lesson"),
+                InlineKeyboardButton(tr("menu_activities", lang), callback_data="activity_start"),
             ],
             [
-                InlineKeyboardButton("📝 Worksheets", callback_data="worksheet_start"),
-                InlineKeyboardButton("✅ Assessments", callback_data="quiz_start"),
+                InlineKeyboardButton(tr("menu_worksheets", lang), callback_data="worksheet_start"),
+                InlineKeyboardButton(tr("menu_assessments", lang), callback_data="quiz_start"),
             ],
             [
                 InlineKeyboardButton(
-                    "🏠 Main Menu",
+                    tr("nav_home", lang),
                     callback_data="v1|cl|home|0|0",
                 )
             ],
@@ -151,6 +154,7 @@ def class_list_keyboard(
     *,
     archived: bool,
     has_draft: bool = False,
+    lang: str = "en",
 ) -> InlineKeyboardMarkup:
     """Build an owned class list with revisioned compact callbacks."""
     keyboard: list[list[InlineKeyboardButton]] = []
@@ -171,40 +175,40 @@ def class_list_keyboard(
         )
     if archived:
         keyboard.append(
-            [InlineKeyboardButton("⬅ Active Classes", callback_data="v1|cl|list|0|0")]
+            [InlineKeyboardButton(tr("btn_active_classes", lang), callback_data="v1|cl|list|0|0")]
         )
     else:
         keyboard.append(
-            [InlineKeyboardButton("☀ Today", callback_data="v1|cl|today|0|0")]
+            [InlineKeyboardButton(tr("btn_today", lang), callback_data="v1|cl|today|0|0")]
         )
         if has_draft:
             keyboard.append(
-                [InlineKeyboardButton("▶ Resume Class Draft", callback_data="v1|cl|resume|0|0")]
+                [InlineKeyboardButton(tr("btn_resume_draft", lang), callback_data="v1|cl|resume|0|0")]
             )
         keyboard.append(
             [
-                InlineKeyboardButton("➕ Create a Class", callback_data="v1|cl|new|0|0"),
+                InlineKeyboardButton(tr("btn_new_class", lang), callback_data="v1|cl|new|0|0"),
                 InlineKeyboardButton(
-                    "🗃 Archived",
+                    tr("btn_archived_classes", lang),
                     callback_data="v1|cl|archive|0|0",
                 ),
             ]
         )
     keyboard.append(
         [
-            InlineKeyboardButton("💡 Why Classes?", callback_data="v1|cl|why|0|0"),
-            InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0"),
+            InlineKeyboardButton(tr("btn_why_classes", lang), callback_data="v1|cl|why|0|0"),
+            InlineKeyboardButton(tr("nav_home", lang), callback_data="v1|cl|home|0|0"),
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def class_intro_keyboard() -> InlineKeyboardMarkup:
+def class_intro_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("⬅ My Classes", callback_data="v1|cl|list|0|0")],
-            [InlineKeyboardButton("⚡ Quick Create instead", callback_data="home_quick")],
-            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+            [InlineKeyboardButton(tr("btn_my_classes", lang), callback_data="v1|cl|list|0|0")],
+            [InlineKeyboardButton("⚡ Quick Create instead" if lang == "en" else "⚡ ساخت سریع محتوا", callback_data="home_quick")],
+            [InlineKeyboardButton(tr("nav_home", lang), callback_data="v1|cl|home|0|0")],
         ]
     )
 
@@ -214,6 +218,7 @@ def class_detail_keyboard(
     revision: int,
     *,
     archived: bool = False,
+    lang: str = "en",
 ) -> InlineKeyboardMarkup:
     encoded_id = _base36(class_id)
     encoded_revision = _base36(revision)
@@ -222,7 +227,7 @@ def class_detail_keyboard(
         keyboard.append(
             [
                 InlineKeyboardButton(
-                    "🔬 Analyze Work for this Class",
+                    tr("btn_analyze_for_class", lang),
                     callback_data=(
                         f"v1|cl|analyze|{encoded_id}|{encoded_revision}"
                     ),
@@ -231,17 +236,17 @@ def class_detail_keyboard(
         )
     keyboard.extend(
         [
-            [InlineKeyboardButton("⚡ Quick Create (one-off)", callback_data="home_quick")],
+            [InlineKeyboardButton(tr("btn_quick_create_oneoff", lang), callback_data="home_quick")],
             [
-                InlineKeyboardButton("⬅ My Classes", callback_data="v1|cl|list|0|0"),
-                InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0"),
+                InlineKeyboardButton(tr("btn_my_classes", lang), callback_data="v1|cl|list|0|0"),
+                InlineKeyboardButton(tr("nav_home", lang), callback_data="v1|cl|home|0|0"),
             ],
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def analyze_picker_keyboard(classes: list[dict[str, object]]) -> InlineKeyboardMarkup:
+def analyze_picker_keyboard(classes: list[dict[str, object]], lang: str = "en") -> InlineKeyboardMarkup:
     keyboard: list[list[InlineKeyboardButton]] = []
     for class_record in classes:
         class_id = int(class_record["id"])
@@ -260,57 +265,60 @@ def analyze_picker_keyboard(classes: list[dict[str, object]]) -> InlineKeyboardM
         )
     keyboard.extend(
         [
-            [InlineKeyboardButton("🏫 My Classes", callback_data="v1|cl|list|0|0")],
-            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+            [InlineKeyboardButton(tr("menu_my_classes", lang), callback_data="v1|cl|list|0|0")],
+            [InlineKeyboardButton(tr("nav_home", lang), callback_data="v1|cl|home|0|0")],
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def class_linked_back_keyboard(class_id: int, revision: int) -> InlineKeyboardMarkup:
+def class_linked_back_keyboard(class_id: int, revision: int, lang: str = "en") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "⬅ Back to Class",
+                    tr("btn_back_to_class", lang),
                     callback_data=(
                         f"v1|cl|open|{_base36(class_id)}|{_base36(revision)}"
                     ),
                 )
             ],
-            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|cl|home|0|0")],
+            [InlineKeyboardButton(tr("nav_home", lang), callback_data="v1|cl|home|0|0")],
         ]
     )
 
 
-def class_recovery_keyboard() -> InlineKeyboardMarkup:
+def class_recovery_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("🔄 Refresh My Classes", callback_data="v1|cl|list|0|0")],
-            [InlineKeyboardButton("🏠 Main Menu", callback_data="v1|rc|home|0|0")],
+            [InlineKeyboardButton(tr("btn_refresh_classes", lang), callback_data="v1|cl|list|0|0")],
+            [InlineKeyboardButton(tr("nav_home", lang), callback_data="v1|rc|home|0|0")],
         ]
     )
 
 
-def account_home_keyboard(*, show_admin: bool = False) -> InlineKeyboardMarkup:
+def account_home_keyboard(*, show_admin: bool = False, lang: str = "en") -> InlineKeyboardMarkup:
     """Account hub for private user tools and subscription actions."""
     keyboard = [
         [
-            InlineKeyboardButton("📊 My Usage", callback_data="usage_show"),
-            InlineKeyboardButton("🪪 پلن من", callback_data="account_plan"),
+            InlineKeyboardButton(tr("btn_my_usage", lang), callback_data="usage_show"),
+            InlineKeyboardButton(tr("btn_my_plan", lang), callback_data="account_plan"),
         ],
         [
-            InlineKeyboardButton("📁 Library", callback_data="library_start"),
-            InlineKeyboardButton("⬆️ ارتقای حساب", callback_data="payment_home"),
+            InlineKeyboardButton(tr("btn_general_library", lang), callback_data="library_start"),
+            InlineKeyboardButton(tr("btn_rate_teacheros", lang), callback_data="feedback_start"),
         ],
         [
-            InlineKeyboardButton("⭐ Rate TeacherOS", callback_data="feedback_start"),
-            InlineKeyboardButton("ℹ️ Help & Policies", callback_data="info_home"),
+            InlineKeyboardButton("🌐 Language / زبان", callback_data="v1|ui|lang|0|0"),
+            InlineKeyboardButton(tr("btn_guide", lang), callback_data="v1|ui|onb1|0|0"),
+        ],
+        [
+            InlineKeyboardButton(tr("btn_help_policies", lang), callback_data="info_home"),
         ],
     ]
     if show_admin:
-        keyboard.append([InlineKeyboardButton("🛡 Admin", callback_data="admin_overview")])
-    keyboard.append([InlineKeyboardButton("🏠 Main Menu", callback_data="account_main")])
+        keyboard.append([InlineKeyboardButton(tr("btn_admin", lang), callback_data="admin_overview")])
+    keyboard.append([InlineKeyboardButton(tr("nav_home", lang), callback_data="account_main")])
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -399,13 +407,17 @@ def account_plan_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def back_cancel_keyboard(back_callback: str, cancel_callback: str) -> InlineKeyboardMarkup:
+def back_cancel_keyboard(
+    back_callback: str,
+    cancel_callback: str,
+    lang: str = "en",
+) -> InlineKeyboardMarkup:
     """Reusable navigation row for steps that require typed text."""
     return InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("⬅ Back", callback_data=back_callback),
-                InlineKeyboardButton("❌ Cancel", callback_data=cancel_callback),
+                InlineKeyboardButton(tr("nav_back", lang), callback_data=back_callback),
+                InlineKeyboardButton(tr("nav_cancel", lang), callback_data=cancel_callback),
             ]
         ]
     )
@@ -414,6 +426,7 @@ def back_cancel_keyboard(back_callback: str, cancel_callback: str) -> InlineKeyb
 def level_keyboard(
     flow: str,
     back_callback: str | None = None,
+    lang: str = "en",
 ) -> InlineKeyboardMarkup:
     levels = ("A1", "A2", "B1", "B2", "C1", "C2")
     keyboard = [
@@ -430,61 +443,79 @@ def level_keyboard(
     if back_callback is not None:
         keyboard.append(
             [
-                InlineKeyboardButton("⬅ Back", callback_data=back_callback),
-                InlineKeyboardButton("❌ Cancel", callback_data=f"{flow}_cancel"),
+                InlineKeyboardButton(tr("nav_back", lang), callback_data=back_callback),
+                InlineKeyboardButton(tr("nav_cancel", lang), callback_data=f"{flow}_cancel"),
             ]
         )
 
     return InlineKeyboardMarkup(keyboard)
 
 
-def grammar_keyboard() -> InlineKeyboardMarkup:
+def grammar_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton(label, callback_data=f"lesson_grammar_{code}")]
         for code, label in GRAMMAR_OPTIONS.items()
     ]
+    skip_label = "رد شدن از گرامر" if lang == "fa" else "Skip Grammar"
     keyboard[-1][0] = InlineKeyboardButton(
-        "Skip Grammar",
+        skip_label,
         callback_data="lesson_grammar_none",
     )
     keyboard.append(
         [
-            InlineKeyboardButton("⬅ Back", callback_data="lesson_back_topic"),
-            InlineKeyboardButton("❌ Cancel", callback_data="lesson_cancel"),
+            InlineKeyboardButton(tr("nav_back", lang), callback_data="lesson_back_topic"),
+            InlineKeyboardButton(tr("nav_cancel", lang), callback_data="lesson_cancel"),
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def duration_keyboard() -> InlineKeyboardMarkup:
+def duration_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
+    labels = {
+        30: "۳۰ دقیقه" if lang == "fa" else "30 min",
+        45: "۴۵ دقیقه" if lang == "fa" else "45 min",
+        60: "۶۰ دقیقه" if lang == "fa" else "60 min",
+        90: "۹۰ دقیقه" if lang == "fa" else "90 min",
+    }
     keyboard = [
-        [InlineKeyboardButton(f"{minutes} min", callback_data=f"lesson_duration_{minutes}")]
+        [InlineKeyboardButton(labels[minutes], callback_data=f"lesson_duration_{minutes}")]
         for minutes in (30, 45, 60, 90)
     ]
     keyboard.append(
         [
-            InlineKeyboardButton("⬅ Back", callback_data="lesson_back_grammar"),
-            InlineKeyboardButton("❌ Cancel", callback_data="lesson_cancel"),
+            InlineKeyboardButton(tr("nav_back", lang), callback_data="lesson_back_grammar"),
+            InlineKeyboardButton(tr("nav_cancel", lang), callback_data="lesson_cancel"),
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def lesson_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
-    override = [[InlineKeyboardButton("✏ ONE-TIME level/duration override", callback_data="lesson_override")]] if class_mode else []
+def lesson_confirm_keyboard(*, class_mode: bool = False, lang: str = "en") -> InlineKeyboardMarkup:
+    override_text = "✏ تغییر موقت سطح/مدت" if lang == "fa" else "✏ ONE-TIME level/duration override"
+    gen_text = "🚀 تولید طرح درس" if lang == "fa" else "🚀 Generate Lesson"
+    override = [[InlineKeyboardButton(override_text, callback_data="lesson_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("🚀 Generate Lesson", callback_data="lesson_generate")],
+            [InlineKeyboardButton(gen_text, callback_data="lesson_generate")],
             *override,
             [
-                InlineKeyboardButton("⬅ Back", callback_data="lesson_back_duration"),
-                InlineKeyboardButton("❌ Cancel", callback_data="lesson_cancel"),
+                InlineKeyboardButton(tr("nav_back", lang), callback_data="lesson_back_duration"),
+                InlineKeyboardButton(tr("nav_cancel", lang), callback_data="lesson_cancel"),
             ],
         ]
     )
 
 
-def activity_type_keyboard() -> InlineKeyboardMarkup:
+def activity_type_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
+    fa_labels = {
+        "speaking": "مکالمه و گفت‌وگو",
+        "role_play": "ایفای نقش (Roleplay)",
+        "debate": "مناظره و بحث آزاد",
+        "pair_work": "تمرین دونفره (Pair Work)",
+        "group_work": "کار گروهی (Group Work)",
+        "information_gap": "شکاف اطلاعاتی (Info Gap)",
+        "icebreaker": "یخ‌شکن (Icebreaker)",
+    }
     icons = {
         "speaking": "🗣",
         "role_play": "🎭",
@@ -497,7 +528,7 @@ def activity_type_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
         [
             InlineKeyboardButton(
-                f"{icons[code]} {label}",
+                f"{icons[code]} {fa_labels.get(code, label) if lang == 'fa' else label}",
                 callback_data=f"activity_type_{code}",
             )
         ]
@@ -505,29 +536,36 @@ def activity_type_keyboard() -> InlineKeyboardMarkup:
     ]
     keyboard.append(
         [
-            InlineKeyboardButton("⬅ Back", callback_data="activity_back_main"),
-            InlineKeyboardButton("❌ Cancel", callback_data="activity_cancel"),
+            InlineKeyboardButton(tr("nav_back", lang), callback_data="activity_back_main"),
+            InlineKeyboardButton(tr("nav_cancel", lang), callback_data="activity_cancel"),
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def activity_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
-    override = [[InlineKeyboardButton("✏ ONE-TIME level override", callback_data="activity_override")]] if class_mode else []
+def activity_confirm_keyboard(*, class_mode: bool = False, lang: str = "en") -> InlineKeyboardMarkup:
+    override_text = "✏ تغییر موقت سطح" if lang == "fa" else "✏ ONE-TIME level override"
+    gen_text = "🚀 تولید فعالیت" if lang == "fa" else "🚀 Generate Activity"
+    override = [[InlineKeyboardButton(override_text, callback_data="activity_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("🚀 Generate Activity", callback_data="activity_generate")],
+            [InlineKeyboardButton(gen_text, callback_data="activity_generate")],
             *override,
             [
-                InlineKeyboardButton("⬅ Back", callback_data="activity_back_topic"),
-                InlineKeyboardButton("❌ Cancel", callback_data="activity_cancel"),
+                InlineKeyboardButton(tr("nav_back", lang), callback_data="activity_back_topic"),
+                InlineKeyboardButton(tr("nav_cancel", lang), callback_data="activity_cancel"),
             ],
         ]
     )
 
 
-
-def worksheet_type_keyboard() -> InlineKeyboardMarkup:
+def worksheet_type_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
+    fa_labels = {
+        "vocabulary": "واژگان (Vocabulary)",
+        "grammar": "گرامر (Grammar)",
+        "reading": "درک مطلب (Reading)",
+        "writing": "نگارش (Writing)",
+    }
     icons = {
         "vocabulary": "🔤",
         "grammar": "🧩",
@@ -537,7 +575,7 @@ def worksheet_type_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
         [
             InlineKeyboardButton(
-                f"{icons[code]} {label}",
+                f"{icons[code]} {fa_labels.get(code, label) if lang == 'fa' else label}",
                 callback_data=f"worksheet_type_{code}",
             )
         ]
@@ -545,33 +583,41 @@ def worksheet_type_keyboard() -> InlineKeyboardMarkup:
     ]
     keyboard.append(
         [
-            InlineKeyboardButton("⬅ Back", callback_data="worksheet_back_main"),
-            InlineKeyboardButton("❌ Cancel", callback_data="worksheet_cancel"),
+            InlineKeyboardButton(tr("nav_back", lang), callback_data="worksheet_back_main"),
+            InlineKeyboardButton(tr("nav_cancel", lang), callback_data="worksheet_cancel"),
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def worksheet_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
-    override = [[InlineKeyboardButton("✏ ONE-TIME level override", callback_data="worksheet_override")]] if class_mode else []
+def worksheet_confirm_keyboard(*, class_mode: bool = False, lang: str = "en") -> InlineKeyboardMarkup:
+    override_text = "✏ تغییر موقت سطح" if lang == "fa" else "✏ ONE-TIME level override"
+    gen_text = "🚀 تولید کاربرگ" if lang == "fa" else "🚀 Generate Worksheet"
+    override = [[InlineKeyboardButton(override_text, callback_data="worksheet_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "🚀 Generate Worksheet",
+                    gen_text,
                     callback_data="worksheet_generate",
                 )
             ],
             *override,
             [
-                InlineKeyboardButton("⬅ Back", callback_data="worksheet_back_topic"),
-                InlineKeyboardButton("❌ Cancel", callback_data="worksheet_cancel"),
+                InlineKeyboardButton(tr("nav_back", lang), callback_data="worksheet_back_topic"),
+                InlineKeyboardButton(tr("nav_cancel", lang), callback_data="worksheet_cancel"),
             ],
         ]
     )
 
 
-def quiz_assessment_type_keyboard() -> InlineKeyboardMarkup:
+def quiz_assessment_type_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
+    fa_labels = {
+        "quiz": "کوئیز کلاسی (Quiz)",
+        "test": "آزمون درس (Test)",
+        "exam": "امتحان جامع (Exam)",
+        "homework": "تکلیف ارزیابی (Homework)",
+    }
     icons = {
         "quiz": "⚡",
         "test": "📋",
@@ -581,7 +627,7 @@ def quiz_assessment_type_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
         [
             InlineKeyboardButton(
-                f"{icons[code]} {label}",
+                f"{icons[code]} {fa_labels.get(code, label) if lang == 'fa' else label}",
                 callback_data=f"quiz_assessment_{code}",
             )
         ]
@@ -589,14 +635,21 @@ def quiz_assessment_type_keyboard() -> InlineKeyboardMarkup:
     ]
     keyboard.append(
         [
-            InlineKeyboardButton("⬅ Back", callback_data="quiz_back_main"),
-            InlineKeyboardButton("❌ Cancel", callback_data="quiz_cancel"),
+            InlineKeyboardButton(tr("nav_back", lang), callback_data="quiz_back_main"),
+            InlineKeyboardButton(tr("nav_cancel", lang), callback_data="quiz_cancel"),
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def quiz_format_keyboard() -> InlineKeyboardMarkup:
+def quiz_format_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
+    fa_labels = {
+        "mixed": "ترکیبی (چندگزینه‌ای، جای خالی، وصل‌کردنی)",
+        "multiple_choice": "فقط چندگزینه‌ای (Multiple Choice)",
+        "fill_blank": "پرکردن جای خالی (Fill in the Blank)",
+        "matching": "وصل‌کردنی (Matching)",
+        "true_false": "درست / نادرست (True/False)",
+    }
     icons = {
         "mixed": "🧰",
         "multiple_choice": "🔘",
@@ -607,7 +660,7 @@ def quiz_format_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
         [
             InlineKeyboardButton(
-                f"{icons[code]} {label}",
+                f"{icons[code]} {fa_labels.get(code, label) if lang == 'fa' else label}",
                 callback_data=f"quiz_format_{code}",
             )
         ]
@@ -616,85 +669,92 @@ def quiz_format_keyboard() -> InlineKeyboardMarkup:
     keyboard.append(
         [
             InlineKeyboardButton(
-                "⬅ Back",
+                tr("nav_back", lang),
                 callback_data="quiz_back_assessment_type",
             ),
-            InlineKeyboardButton("❌ Cancel", callback_data="quiz_cancel"),
+            InlineKeyboardButton(tr("nav_cancel", lang), callback_data="quiz_cancel"),
         ]
     )
     return InlineKeyboardMarkup(keyboard)
 
 
-def quiz_question_count_keyboard() -> InlineKeyboardMarkup:
+def quiz_question_count_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     """Quick assessment-length choices plus a custom-number option."""
+    count_5 = "۵ سوال" if lang == "fa" else "5 questions"
+    count_10 = "۱۰ سوال" if lang == "fa" else "10 questions"
+    count_15 = "۱۵ سوال" if lang == "fa" else "15 questions"
+    count_20 = "۲۰ سوال" if lang == "fa" else "20 questions"
+    count_25 = "۲۵ سوال" if lang == "fa" else "25 questions"
+    count_30 = "۳۰ سوال" if lang == "fa" else "30 questions"
+    custom_label = "✍️ تعداد دلخواه" if lang == "fa" else "✍️ Custom number"
     return InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("5 questions", callback_data="quiz_count_5"),
-                InlineKeyboardButton("10 questions", callback_data="quiz_count_10"),
+                InlineKeyboardButton(count_5, callback_data="quiz_count_5"),
+                InlineKeyboardButton(count_10, callback_data="quiz_count_10"),
             ],
             [
-                InlineKeyboardButton("15 questions", callback_data="quiz_count_15"),
-                InlineKeyboardButton("20 questions", callback_data="quiz_count_20"),
+                InlineKeyboardButton(count_15, callback_data="quiz_count_15"),
+                InlineKeyboardButton(count_20, callback_data="quiz_count_20"),
             ],
             [
-                InlineKeyboardButton("25 questions", callback_data="quiz_count_25"),
-                InlineKeyboardButton("30 questions", callback_data="quiz_count_30"),
+                InlineKeyboardButton(count_25, callback_data="quiz_count_25"),
+                InlineKeyboardButton(count_30, callback_data="quiz_count_30"),
             ],
             [
                 InlineKeyboardButton(
-                    "✍️ Custom number",
+                    custom_label,
                     callback_data="quiz_count_custom",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    "⬅ Back",
+                    tr("nav_back", lang),
                     callback_data="quiz_back_question_format",
                 ),
-                InlineKeyboardButton("❌ Cancel", callback_data="quiz_cancel"),
+                InlineKeyboardButton(tr("nav_cancel", lang), callback_data="quiz_cancel"),
             ],
         ]
     )
 
 
 def generated_material_export_keyboard(
-    material_id: int, *, material_type: str | None = None, class_id: int | None = None
+    material_id: int, *, material_type: str | None = None, class_id: int | None = None, lang: str = "en"
 ) -> InlineKeyboardMarkup:
     """Day 10 post-generation toolbar; export callbacks remain backward compatible."""
     mat_b36 = _base36(material_id)
     actions = [
-        InlineKeyboardButton("💾 Save", callback_data=f"ma|sv|{material_id}"),
-        InlineKeyboardButton("🎯 Differentiate", callback_data=f"v1|df|gen|{mat_b36}|sup"),
+        InlineKeyboardButton("💾 ذخیره" if lang == "fa" else "💾 Save", callback_data=f"ma|sv|{material_id}"),
+        InlineKeyboardButton("🎯 تدریس تمایزیافته" if lang == "fa" else "🎯 Differentiate", callback_data=f"v1|df|gen|{mat_b36}|sup"),
     ]
     extra = []
     if material_type == "lesson" and class_id is not None:
-        extra.append([InlineKeyboardButton("➡ Use as Next Lesson", callback_data=f"ma|nx|{material_id}")])
+        extra.append([InlineKeyboardButton("➡ استفاده به عنوان درس بعدی" if lang == "fa" else "➡ Use as Next Lesson", callback_data=f"ma|nx|{material_id}")])
     return InlineKeyboardMarkup(
         [
             actions,
             [
-                InlineKeyboardButton("⚡ Adapt Material", callback_data=f"v1|ad|menu|{mat_b36}"),
-                InlineKeyboardButton("✏ Custom Edit", callback_data=f"ma|ad|{material_id}"),
+                InlineKeyboardButton("⚡ تطبیق محتوا" if lang == "fa" else "⚡ Adapt Material", callback_data=f"v1|ad|menu|{mat_b36}"),
+                InlineKeyboardButton("✏ ویرایش دلخواه" if lang == "fa" else "✏ Custom Edit", callback_data=f"ma|ad|{material_id}"),
             ],
             [
                 InlineKeyboardButton(
-                    "📄 Download Word",
+                    "📄 دانلود نسخه Word" if lang == "fa" else "📄 Download Word",
                     callback_data=f"export_library_{material_id}_all_0",
                 ),
                 InlineKeyboardButton(
-                    "🧾 Download PDF",
+                    "🧾 دانلود نسخه PDF" if lang == "fa" else "🧾 Download PDF",
                     callback_data=f"pdf_library_{material_id}_all_0",
                 ),
             ],
             [
-                InlineKeyboardButton("🔁 Regenerate with change", callback_data=f"ma|rg|{material_id}"),
-                InlineKeyboardButton("🚩 Report Problem", callback_data=f"ma|rp|{material_id}"),
+                InlineKeyboardButton("🔁 بازتولید با تغییرات" if lang == "fa" else "🔁 Regenerate with change", callback_data=f"ma|rg|{material_id}"),
+                InlineKeyboardButton("🚩 گزارش مشکل" if lang == "fa" else "🚩 Report Problem", callback_data=f"ma|rp|{material_id}"),
             ],
             *extra,
             [
-                InlineKeyboardButton("📁 Open Library", callback_data="library_start"),
-                InlineKeyboardButton("🏠 Main Menu", callback_data="account_main"),
+                InlineKeyboardButton("📁 باز کردن کتابخانه" if lang == "fa" else "📁 Open Library", callback_data="library_start"),
+                InlineKeyboardButton("🏠 منوی اصلی" if lang == "fa" else "🏠 Main Menu", callback_data="account_main"),
             ],
         ]
     )
@@ -729,34 +789,39 @@ def lesson_replace_keyboard(material_id: int, date_code: str) -> InlineKeyboardM
     )
 
 
-def quiz_confirm_keyboard(*, class_mode: bool = False) -> InlineKeyboardMarkup:
-    override = [[InlineKeyboardButton("✏ ONE-TIME level override", callback_data="quiz_override")]] if class_mode else []
+def quiz_confirm_keyboard(*, class_mode: bool = False, lang: str = "en") -> InlineKeyboardMarkup:
+    override_text = "✏ تغییر موقت سطح" if lang == "fa" else "✏ ONE-TIME level override"
+    gen_text = "🚀 تولید آزمون" if lang == "fa" else "🚀 Generate Assessment"
+    override = [[InlineKeyboardButton(override_text, callback_data="quiz_override")]] if class_mode else []
     return InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "🚀 Generate Assessment",
+                    gen_text,
                     callback_data="quiz_generate",
                 )
             ],
             *override,
             [
-                InlineKeyboardButton("⬅ Back", callback_data="quiz_back_topic"),
-                InlineKeyboardButton("❌ Cancel", callback_data="quiz_cancel"),
+                InlineKeyboardButton(tr("nav_back", lang), callback_data="quiz_back_topic"),
+                InlineKeyboardButton(tr("nav_cancel", lang), callback_data="quiz_cancel"),
             ],
         ]
     )
 
 
 def class_library_keyboard(
-    materials: list[dict[str, object]], class_id: int, revision: int
+    materials: list[dict[str, object]],
+    class_id: int,
+    revision: int,
+    lang: str = "en",
 ) -> InlineKeyboardMarkup:
     rows = [
         [InlineKeyboardButton(str(item["title"])[:48], callback_data=f"library_item_{item['id']}_0")]
         for item in materials[:20]
     ]
     rows.append([InlineKeyboardButton(
-        "⬅ Class Home",
+        tr("btn_class_home", lang),
         callback_data=f"v1|cl|open|{_base36(class_id)}|{_base36(revision)}",
     )])
     return InlineKeyboardMarkup(rows)

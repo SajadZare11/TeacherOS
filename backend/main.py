@@ -6,6 +6,7 @@ from contextlib import suppress
 
 from telegram import BotCommand, Update
 from telegram.constants import ChatAction
+from telegram.request import HTTPXRequest
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -15,9 +16,10 @@ from telegram.ext import (
     filters,
 )
 
-from account_panel import account_callback
+from account_panel import account_callback, account_command
 from ai_gateway import generate_artifact
-from class_panel import class_callback, home_callback
+from class_panel import analyze_command, class_callback, classes_command, home_callback, quick_command
+from typing_action import typing_heartbeat
 from class_dashboard_panel import get_class_dashboard_text
 from class_dashboard_keyboards import outcome_result_keyboard
 from class_setup_panel import get_class_setup_text
@@ -46,11 +48,16 @@ from progress_report_panel import (
     handle_progress_report_callback,
     handle_progress_report_message,
 )
+from student_panel import (
+    handle_student_dashboard_callback,
+    handle_class_assessment_callback,
+    handle_student_message_input,
+)
 from ui_panel import handle_ui_callback
 from ui_keyboards import language_switcher_keyboard, onboarding_walkthrough_keyboard
 from material_actions import material_action_callback, get_material_action_text
 from feedback_panel import feedback_callback, feedback_command, get_feedback_text
-from activity_generator import activity_callback, get_activity_topic
+from activity_generator import activity_callback, activity_command, get_activity_topic
 from admin_panel import (
     admin_callback,
     admin_command,
@@ -64,6 +71,7 @@ from admin_panel import (
     myid_command,
 )
 from config import (
+    MAX_CONCURRENT_UPDATES,
     TELEGRAM_BOT_TOKEN,
     admin_setting_problem,
     is_admin_telegram_user,
@@ -78,7 +86,7 @@ from database import (
 from keyboards import start_menu_keyboard, subscription_limit_keyboard
 from feature_flags import feature_enabled
 from home_ui import teacheros_home_text
-from lesson_planner import get_lesson_topic, lesson_callback
+from lesson_planner import get_lesson_topic, lesson_callback, lesson_command
 from launch_info import (
     about_command,
     launch_info_callback,
@@ -90,10 +98,10 @@ from prompt_loader import validate_prompt_files
 from pdf_export import pdf_export_callback
 from payment_panel import payment_callback, payments_command, upgrade_command
 from payment_server import start_payment_callback_server
-from quiz_generator import get_quiz_topic, quiz_callback
+from quiz_generator import assessment_command, get_quiz_topic, quiz_callback
 from teacher_library import library_callback, library_command
 from usage_tracking import usage_callback, usage_command
-from worksheet_generator import get_worksheet_topic, worksheet_callback
+from worksheet_generator import get_worksheet_topic, worksheet_callback, worksheet_command
 from word_export import word_export_callback
 from subscription_service import (
     generation_access_for_user,
@@ -104,6 +112,7 @@ from outcome_checkin_service import (
     claim_due_outcome_reminders,
     release_failed_reminder,
 )
+from ui_service import resolve_lang
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -112,6 +121,8 @@ logging.basicConfig(
 
 # Prevent HTTP request URLs and secret tokens from appearing in the terminal.
 logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("telegram.ext.ExtBot").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -121,28 +132,36 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     if update.message is None:
         return
 
+    lang = resolve_lang(update, context)
+
     if update.effective_user is not None:
         try:
             register_telegram_user(update.effective_user)
         except Exception:
             logger.exception("Could not register Telegram user in the database")
 
-    plan_line = "Plan: Free"
+    plan_line = "طرح: رایگان" if lang == "fa" else "Plan: Free"
     if update.effective_user is not None and isinstance(getattr(update.effective_user, "id", None), int):
         try:
             entitlement = get_user_entitlement(telegram_user_id=update.effective_user.id)
-            plan_line = f"Plan: {entitlement['plan_name']}"
-            if entitlement.get("remaining") is not None:
-                plan_line += f" · {entitlement['remaining']} generations left today"
+            if lang == "fa":
+                plan_line = f"طرح: {entitlement['plan_name']}"
+                if entitlement.get("remaining") is not None:
+                    plan_line += f" · {entitlement['remaining']} اعتبار باقیمانده امروز"
+            else:
+                plan_line = f"Plan: {entitlement['plan_name']}"
+                if entitlement.get("remaining") is not None:
+                    plan_line += f" · {entitlement['remaining']} generations left today"
         except Exception:
             logger.exception("Could not load plan for start menu")
 
     await update.message.reply_text(
-        teacheros_home_text(plan_line),
+        teacheros_home_text(plan_line, lang=lang),
         reply_markup=start_menu_keyboard(
             show_admin=is_admin_telegram_user(
                 getattr(update.effective_user, "id", None)
-            )
+            ),
+            lang=lang,
         ),
     )
 
@@ -156,12 +175,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "Use /start to open the main menu.\n"
         "Use /library to browse your saved materials.\n"
         "Use /search to find saved materials by topic, title, level, or content.\n"
-        "Use /usage to view your generation and export totals.\n"
-        "برای مشاهده پلن و خرید اشتراک از /plan یا /upgrade استفاده کنید.\n"
-        "برای مشاهده سوابق پرداخت خصوصی خود از /payments استفاده کنید.\n"
-        "Use /feedback to send a fast rating.\n"
-        "Use /about to learn what TeacherOS does.\n"
-        "Use /privacy and /terms to read the launch policies.\n"
         "Use /myid to view your Telegram user ID.\n"
         "Use /cancel to stop the current lesson, activity, worksheet, or assessment flow.\n"
         "Use /lang to change your display language (English / فارسی).\n"
@@ -194,10 +207,12 @@ async def walkthrough_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data.clear()
+    lang = resolve_lang(update, context)
     if update.message is not None:
+        msg = "❌ عملیات فعلی لغو شد." if lang == "fa" else "❌ Current operation cancelled."
         await update.message.reply_text(
-            "❌ Current operation cancelled.",
-            reply_markup=start_menu_keyboard(),
+            msg,
+            reply_markup=start_menu_keyboard(lang=lang),
         )
 
 
@@ -208,9 +223,11 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     await query.answer()
     context.user_data.clear()
+    lang = resolve_lang(update, context)
+    text = "⚠️ آن گزینه قدیمی دیگر در دسترس نیست. یکی از گزینه‌های زیر را انتخاب کنید." if lang == "fa" else "⚠️ That old menu option is no longer available. Choose an option below."
     await query.edit_message_text(
-        "⚠️ That old menu option is no longer available. Choose an option below.",
-        reply_markup=start_menu_keyboard(),
+        text,
+        reply_markup=start_menu_keyboard(lang=lang),
     )
 
 
@@ -273,6 +290,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
     if isinstance(report_edit, dict) and report_edit.get("state"):
         return
+    if context.user_data.get("student_input") or context.user_data.get("assessment_input"):
+        return
 
     user_message = (update.message.text or "").strip()
     if not user_message:
@@ -303,13 +322,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             and int(active_class["id"]) > 0
             else None
         )
-        generation = await generate_artifact(
-            feature="general_chat",
-            telegram_user_id=user.id,
-            model=selected_openrouter_model(access),
-            current_request=user_message,
-            class_id=class_id,
-        )
+        async with typing_heartbeat(context.bot, update.effective_chat.id):
+            generation = await generate_artifact(
+                feature="general_chat",
+                telegram_user_id=user.id,
+                model=selected_openrouter_model(access),
+                current_request=user_message,
+                class_id=class_id,
+            )
         ai_response = generation.content
     except Exception:
         logger.exception("General TeacherOS chat request failed")
@@ -372,13 +392,26 @@ async def post_init(application: Application) -> None:
     """Publish the Telegram command menu and public bot description."""
     commands = [
         BotCommand("start", "Open the TeacherOS main menu"),
-        BotCommand("help", "Show help and available commands"),
+        BotCommand("menu", "Open the main menu"),
+        BotCommand("classes", "Manage your classes and continuity"),
+        BotCommand("create", "Quick Create: standalone tools"),
+        BotCommand("analyze", "Analyze student work and evidence"),
+        BotCommand("lesson", "Create a lesson plan"),
+        BotCommand("activity", "Create a classroom activity"),
+        BotCommand("worksheet", "Create a worksheet"),
+        BotCommand("assessment", "Create an assessment"),
+        BotCommand("account", "Open account and settings"),
         BotCommand("library", "Browse saved teaching materials"),
         BotCommand("search", "Search your private library"),
         BotCommand("usage", "View generations and exports"),
         BotCommand("plan", "مشاهده پلن و خرید اشتراک"),
+        BotCommand("upgrade", "Upgrade your plan"),
+        BotCommand("payments", "View private payment history"),
         BotCommand("feedback", "Rate TeacherOS quickly"),
+        BotCommand("lang", "Choose display language"),
+        BotCommand("walkthrough", "View the first-run guide"),
         BotCommand("about", "About TeacherOS"),
+        BotCommand("help", "Show help and available commands"),
         BotCommand("privacy", "Read the privacy notice"),
         BotCommand("terms", "Read the terms of use"),
         BotCommand("cancel", "Cancel the current creation flow"),
@@ -421,24 +454,68 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
             logger.exception("Could not send the fallback error message")
 
 
+async def student_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    if query is None or not query.data:
+        return
+    parts = query.data.split("|")
+    if len(parts) >= 3:
+        action = parts[2]
+        object_id = parts[3] if len(parts) > 3 else "0"
+        extra_id = parts[4] if len(parts) > 4 else None
+        await handle_student_dashboard_callback(update, context, action, object_id, extra_id)
+
+
+async def class_assessment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    if query is None or not query.data:
+        return
+    parts = query.data.split("|")
+    if len(parts) >= 3:
+        action = parts[2]
+        object_id = parts[3] if len(parts) > 3 else "0"
+        extra_id = parts[4] if len(parts) > 4 else None
+        await handle_class_assessment_callback(update, context, action, object_id, extra_id)
+
+
 def main() -> None:
     validate_settings()
     validate_prompt_files()
     database_path = initialize_database()
 
+    request = HTTPXRequest(
+        connect_timeout=30.0,
+        read_timeout=30.0,
+        write_timeout=30.0,
+        pool_timeout=30.0,
+    )
+
     app = (
         Application.builder()
         .token(TELEGRAM_BOT_TOKEN)
-        .concurrent_updates(False)
+        .request(request)
+        .concurrent_updates(MAX_CONCURRENT_UPDATES)
         .post_init(post_init)
         .post_shutdown(post_shutdown)
         .build()
     )
 
     app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("menu", start_command))
+    app.add_handler(CommandHandler("classes", classes_command))
+    app.add_handler(CommandHandler("class", classes_command))
+    app.add_handler(CommandHandler("create", quick_command))
+    app.add_handler(CommandHandler("quick", quick_command))
+    app.add_handler(CommandHandler("analyze", analyze_command))
+    app.add_handler(CommandHandler("evidence", analyze_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("cancel", cancel_command))
     app.add_handler(CommandHandler("library", library_command))
+    app.add_handler(CommandHandler("lesson", lesson_command))
+    app.add_handler(CommandHandler("activity", activity_command))
+    app.add_handler(CommandHandler("worksheet", worksheet_command))
+    app.add_handler(CommandHandler("assessment", assessment_command))
+    app.add_handler(CommandHandler("account", account_command))
     app.add_handler(CommandHandler("search", search_command))
     app.add_handler(CommandHandler("usage", usage_command))
     app.add_handler(CommandHandler("upgrade", upgrade_command))
@@ -513,6 +590,12 @@ def main() -> None:
     app.add_handler(
         CallbackQueryHandler(handle_ui_callback, pattern=r"^v1\|ui\|")
     )
+    app.add_handler(
+        CallbackQueryHandler(student_callback, pattern=r"^v1\|st\|")
+    )
+    app.add_handler(
+        CallbackQueryHandler(class_assessment_callback, pattern=r"^v1\|ca\|")
+    )
     app.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^menu_"))
 
     app.add_handler(
@@ -574,6 +657,10 @@ def main() -> None:
     app.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_progress_report_message),
         group=14,
+    )
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_student_message_input),
+        group=15,
     )
 
     app.add_error_handler(error_handler)

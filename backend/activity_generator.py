@@ -9,6 +9,7 @@ from telegram.ext import ContextTypes
 from ai_gateway import generate_artifact, generation_provenance
 from database import save_generated_material
 from home_ui import teacheros_home_text
+from typing_action import typing_heartbeat
 
 from keyboards import (
     ACTIVITY_TYPE_OPTIONS,
@@ -32,6 +33,17 @@ logger = logging.getLogger(__name__)
 def _activity_data(context: ContextTypes.DEFAULT_TYPE) -> dict | None:
     activity = context.user_data.get("activity")
     return activity if isinstance(activity, dict) else None
+
+
+async def activity_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Open Quick Create's activity flow directly from Telegram commands."""
+    context.user_data.clear()
+    context.user_data["activity"] = {"state": "type"}
+    if update.message is not None:
+        await update.message.reply_text(
+            "🎲 Activity Generator\n\nStep 1 of 4\n\nChoose an activity type.",
+            reply_markup=activity_type_keyboard(),
+        )
 
 
 async def _answer_callback(update: Update) -> None:
@@ -323,18 +335,22 @@ async def generate_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             "{{target_language}}": "Not specified",
             "{{context}}": "General English class",
         }
-        generation = await generate_artifact(
-            feature="activity",
-            telegram_user_id=user.id,
-            model=selected_openrouter_model(access),
-            current_request=(
-                f"Create a {activity['type']} activity for {activity['level']} learners "
-                f"about {activity['topic']}."
-            ),
-            prompt_replacements=replacements,
-            class_id=int(activity["class_id"]) if activity.get("class_mode") else None,
-            quality_requirements={"level": str(activity["level"])},
-        )
+        async with typing_heartbeat(
+            context.bot,
+            update.effective_chat.id if update.effective_chat else None,
+        ):
+            generation = await generate_artifact(
+                feature="activity",
+                telegram_user_id=user.id,
+                model=selected_openrouter_model(access),
+                current_request=(
+                    f"Create a {activity['type']} activity for {activity['level']} learners "
+                    f"about {activity['topic']}."
+                ),
+                prompt_replacements=replacements,
+                class_id=int(activity["class_id"]) if activity.get("class_mode") else None,
+                quality_requirements={"level": str(activity["level"])},
+            )
         result = generation.content
     except Exception:
         logger.exception("Activity generation failed")

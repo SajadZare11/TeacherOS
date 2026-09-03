@@ -9,6 +9,7 @@ from telegram.ext import ContextTypes
 from ai_gateway import generate_artifact, generation_provenance
 from database import save_generated_material
 from home_ui import teacheros_home_text
+from typing_action import typing_heartbeat
 
 from keyboards import (
     WORKSHEET_TYPE_OPTIONS,
@@ -34,6 +35,17 @@ _VALID_LEVELS = {"A1", "A2", "B1", "B2", "C1", "C2"}
 def _worksheet_data(context: ContextTypes.DEFAULT_TYPE) -> dict | None:
     worksheet = context.user_data.get("worksheet")
     return worksheet if isinstance(worksheet, dict) else None
+
+
+async def worksheet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Open Quick Create's worksheet flow directly from Telegram commands."""
+    context.user_data.clear()
+    context.user_data["worksheet"] = {"state": "type"}
+    if update.message is not None:
+        await update.message.reply_text(
+            "📝 Worksheet Generator\n\nStep 1 of 4\n\nChoose the worksheet type.",
+            reply_markup=worksheet_type_keyboard(),
+        )
 
 
 async def _answer_callback(update: Update) -> None:
@@ -349,18 +361,22 @@ async def generate_worksheet(
     )
 
     try:
-        generation = await generate_artifact(
-            feature="worksheet",
-            telegram_user_id=user.id,
-            model=selected_openrouter_model(access),
-            current_request=(
-                f"Create a {worksheet['type']} worksheet for {worksheet['level']} learners "
-                f"about {worksheet['topic']}."
-            ),
-            prompt_replacements=_prompt_replacements(worksheet),
-            class_id=int(worksheet["class_id"]) if worksheet.get("class_mode") else None,
-            quality_requirements={"level": str(worksheet["level"]), "answer_key": True},
-        )
+        async with typing_heartbeat(
+            context.bot,
+            update.effective_chat.id if update.effective_chat else None,
+        ):
+            generation = await generate_artifact(
+                feature="worksheet",
+                telegram_user_id=user.id,
+                model=selected_openrouter_model(access),
+                current_request=(
+                    f"Create a {worksheet['type']} worksheet for {worksheet['level']} learners "
+                    f"about {worksheet['topic']}."
+                ),
+                prompt_replacements=_prompt_replacements(worksheet),
+                class_id=int(worksheet["class_id"]) if worksheet.get("class_mode") else None,
+                quality_requirements={"level": str(worksheet["level"]), "answer_key": True},
+            )
         result = generation.content
     except Exception:
         logger.exception("Worksheet generation failed")

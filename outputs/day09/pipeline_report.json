@@ -26,7 +26,7 @@
     "prompt_trace_renderable": false,
     "provider_retry_limit": 1,
     "repair_limit": 1,
-    "total_timeout_seconds": 24.0,
+    "total_timeout_seconds": 24.5,
     "valid_json_renderable": true
   },
   "privacy": {
@@ -69,7 +69,7 @@
     "quiz_generator.py": true,
     "worksheet_generator.py": true
   },
-  "schema_version": 10,
+  "schema_version": 28,
   "visible_retry_paths": {
     "activity_generator.py": true,
     "lesson_planner.py": true,
